@@ -1,0 +1,1271 @@
+✔ all Markdown fences are balanced and files end with a newline (1.624834ms)
+✔ every discovered safety/preview marker ID is globally unique (0.289042ms)
+✔ checked-in state-change inventory exactly matches discovery and client boundaries (1310.309083ms)
+✔ every non-Markdown client boundary retains implementation and adversarial-test evidence (3.263292ms)
+✔ every executable mutation has exactly one same-fence owner (0.447ms)
+✔ every commented mutation is owned by the nearest PREVIEW ONLY marker (0.203375ms)
+✔ every discovered manual portal mutation has one action-local gate or preview owner (5.287708ms)
+✖ install-graph-conditional-access: actual source gate is AST-dominated, explicit, and fail-closed (0.633041ms)
+✖ device-full-wipe: actual source gate is AST-dominated, explicit, and fail-closed (0.134833ms)
+✖ install-exchange-quarantine: actual source gate is AST-dominated, explicit, and fail-closed (0.267542ms)
+✖ quarantine-release-all: actual source gate is AST-dominated, explicit, and fail-closed (0.070333ms)
+✖ quarantine-release-one: actual source gate is AST-dominated, explicit, and fail-closed (0.040542ms)
+✖ quarantine-permanent-delete: actual source gate is AST-dominated, explicit, and fail-closed (0.0795ms)
+✖ install-exchange-spam: actual source gate is AST-dominated, explicit, and fail-closed (0.061625ms)
+✖ restricted-entity-unblock: actual source gate is AST-dominated, explicit, and fail-closed (0.0545ms)
+✖ install-exchange-whitelist: actual source gate is AST-dominated, explicit, and fail-closed (0.058375ms)
+✖ mailbox-permission-remove: actual source gate is AST-dominated, explicit, and fail-closed (0.101708ms)
+✖ mfa-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.076292ms)
+✖ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (0.08425ms)
+✖ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.076083ms)
+✖ print-queue-delete: actual source gate is AST-dominated, explicit, and fail-closed (0.155417ms)
+✖ security-account-block: actual source gate is AST-dominated, explicit, and fail-closed (0.060166ms)
+✖ security-synced-ad-disable: actual source gate is AST-dominated, explicit, and fail-closed (0.046625ms)
+✖ security-synced-cloud-gap-block: actual source gate is AST-dominated, explicit, and fail-closed (0.068292ms)
+✖ security-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.099875ms)
+✖ sharepoint-access-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.039917ms)
+✖ install-teams-module: actual source gate is AST-dominated, explicit, and fail-closed (0.035334ms)
+✖ automation-bulk-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.03525ms)
+✖ automation-bulk-license: actual source gate is AST-dominated, explicit, and fail-closed (0.031625ms)
+✖ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.03ms)
+✖ automation-compliance-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.031959ms)
+✖ automation-compliance-assignment: actual source gate is AST-dominated, explicit, and fail-closed (0.059208ms)
+✖ rollback-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.050959ms)
+✖ rollback-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.042625ms)
+✖ rollback-group-change: actual source gate is AST-dominated, explicit, and fail-closed (0.041ms)
+✖ rollback-bulk-usage-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.040375ms)
+✖ rollback-bulk-usage-location: actual source gate is AST-dominated, explicit, and fail-closed (0.039834ms)
+✖ rollback-policy-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.039041ms)
+✖ safety-whatif-disable: actual source gate is AST-dominated, explicit, and fail-closed (0.038042ms)
+✖ safety-bulk-disable-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.041792ms)
+✖ safety-bulk-disable: actual source gate is AST-dominated, explicit, and fail-closed (0.038458ms)
+✖ safety-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.039041ms)
+✖ safety-delete-user-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.03875ms)
+✖ safety-delete-user: actual source gate is AST-dominated, explicit, and fail-closed (0.051125ms)
+✔ ad-connect-delta: preview region contains no executable mutation (0.097125ms)
+✔ ad-connect-initial: preview region contains no executable mutation (0.032417ms)
+✔ ad-connect-password-hash: preview region contains no executable mutation (0.024125ms)
+✔ device-retire: preview region contains no executable mutation (0.030833ms)
+✔ distribution-create: preview region contains no executable mutation (0.021625ms)
+✔ distribution-member-add: preview region contains no executable mutation (0.018958ms)
+✔ distribution-external-senders: preview region contains no executable mutation (0.034125ms)
+✔ email-allow-sender: preview region contains no executable mutation (0.019584ms)
+✔ email-allow-domain: preview region contains no executable mutation (0.026ms)
+✔ email-mailbox-safe-sender: preview region contains no executable mutation (0.019917ms)
+✔ gws-drive-sharing-gam-bulk-preview: preview region contains no executable mutation (0.02375ms)
+✔ device-rename-restart: preview region contains no executable mutation (0.02325ms)
+✔ new-user-ad-create: preview region contains no executable mutation (0.018791ms)
+✔ new-user-delta-sync: preview region contains no executable mutation (0.018167ms)
+✔ offboard-ad-disable-ps: preview region contains no executable mutation (0.018083ms)
+✔ offboard-delta-sync-ps: preview region contains no executable mutation (0.144ms)
+✔ offboard-cloud-block-ps: preview region contains no executable mutation (0.105125ms)
+✔ offboard-mailbox-convert-ps: preview region contains no executable mutation (0.034375ms)
+✔ offboard-mailbox-delegate-ps: preview region contains no executable mutation (0.043416ms)
+✔ offboard-group-removal: preview region contains no executable mutation (0.027333ms)
+✔ onedrive-client-reset: preview region contains no executable mutation (0.019917ms)
+✔ onedrive-client-restart: preview region contains no executable mutation (0.049208ms)
+✔ onedrive-sharepoint-module-install: preview region contains no executable mutation (0.015667ms)
+✔ onedrive-quota-change: preview region contains no executable mutation (0.016667ms)
+✔ onedrive-manager-admin: preview region contains no executable mutation (0.017458ms)
+✔ outlook-auto-reply: preview region contains no executable mutation (0.017875ms)
+✔ password-reset-delta-sync: preview region contains no executable mutation (0.018709ms)
+✔ shared-mailbox-create: preview region contains no executable mutation (0.020834ms)
+✔ shared-mailbox-send-on-behalf: preview region contains no executable mutation (0.015417ms)
+✔ shared-mailbox-convert: preview region contains no executable mutation (0.018583ms)
+✔ sharepoint-member-grant: preview region contains no executable mutation (0.025875ms)
+✔ sharepoint-item-grant: preview region contains no executable mutation (0.015917ms)
+✔ teams-policy-grant: preview region contains no executable mutation (0.017083ms)
+✔ evaluate-repo-clone: preview region contains no executable mutation (0.024917ms)
+✔ readme-hook-install: preview region contains no executable mutation (0.017292ms)
+✔ sample-t09-mailbox-grant: preview region contains no executable mutation (0.02075ms)
+✔ sample-t09-mailbox-undo: preview region contains no executable mutation (0.016458ms)
+✔ sample-t06-delta-sync: preview region contains no executable mutation (0.015625ms)
+✔ example-commit-attempt-stage: preview region contains no executable mutation (0.015375ms)
+✔ example-commit-attempt-create: preview region contains no executable mutation (0.0195ms)
+✔ example-recommit-stage: preview region contains no executable mutation (0.014375ms)
+✔ example-recommit-create: preview region contains no executable mutation (0.021833ms)
+✔ ticket-delta-sync-ps: preview region contains no executable mutation (0.015916ms)
+✔ ticket-mfa-method-remove-ps: preview region contains no executable mutation (0.01725ms)
+✔ ticket-license-remove-ps: preview region contains no executable mutation (0.014542ms)
+✔ automation-no-mfa-report: preview region contains no executable mutation (0.017542ms)
+✔ automation-group-members-report: preview region contains no executable mutation (0.017ms)
+✔ automation-inactive-users-report: preview region contains no executable mutation (0.0155ms)
+✔ safety-group-poststate-export: preview region contains no executable mutation (0.016333ms)
+✔ safety-bulk-license-route: preview region contains no executable mutation (0.016542ms)
+✔ safety-cryptic-bulk-mutation: preview region contains no executable mutation (0.018458ms)
+✔ safety-readable-bulk-mutation: preview region contains no executable mutation (0.015458ms)
+✔ hook-install-copy: preview region contains no executable mutation (0.015459ms)
+✔ hook-install-mode: preview region contains no executable mutation (0.016416ms)
+✔ workflow-user-create: preview region contains no executable mutation (0.015666ms)
+✔ workflow-delta-sync: preview region contains no executable mutation (0.014542ms)
+✔ compliance-guest-report-write: preview region contains no executable mutation (0.015459ms)
+✔ health-delta-sync: preview region contains no executable mutation (0.01575ms)
+✔ health-force-replication: preview region contains no executable mutation (0.015625ms)
+✔ infrastructure-delta-sync: preview region contains no executable mutation (0.015583ms)
+✔ infrastructure-gpo-refresh: preview region contains no executable mutation (0.014583ms)
+✔ infrastructure-local-gpo-refresh: preview region contains no executable mutation (0.018917ms)
+✔ infrastructure-force-replication: preview region contains no executable mutation (0.015167ms)
+✔ conditional-access-enable-portal: portal gate is action-local and fail-closed (0.968583ms)
+✔ device-full-wipe-portal: portal gate is action-local and fail-closed (0.3645ms)
+✔ distribution-external-senders-portal: portal gate is action-local and fail-closed (0.305125ms)
+✔ quarantine-release-all-portal: portal gate is action-local and fail-closed (0.283709ms)
+✔ quarantine-release-one-portal: portal gate is action-local and fail-closed (0.100792ms)
+✔ quarantine-delete-portal: portal gate is action-local and fail-closed (0.108042ms)
+✔ restricted-entity-unblock-portal: portal gate is action-local and fail-closed (0.558708ms)
+✔ fleet-device-actions-lock-portal: portal gate is action-local and fail-closed (1.478834ms)
+✔ fleet-device-actions-unlock-portal: portal gate is action-local and fail-closed (1.149ms)
+✔ fleet-device-actions-wipe-portal: portal gate is action-local and fail-closed (0.149875ms)
+✔ fleet-device-actions-run-script-portal: portal gate is action-local and fail-closed (0.172958ms)
+✔ fleet-device-actions-batch-script-portal: portal gate is action-local and fail-closed (0.108791ms)
+✔ fleet-device-actions-mdm-off-portal: portal gate is action-local and fail-closed (0.129ms)
+✔ fleet-device-actions-delete-portal: portal gate is action-local and fail-closed (0.124875ms)
+✔ fleet-device-actions-cancel-portal: portal gate is action-local and fail-closed (0.081291ms)
+✔ fleet-host-health-refetch-portal: portal gate is action-local and fail-closed (0.124167ms)
+✔ fleet-osquery-investigation-add-report-portal: portal gate is action-local and fail-closed (0.115625ms)
+✔ fleet-osquery-investigation-live-report-portal: portal gate is action-local and fail-closed (0.059417ms)
+✔ fleet-osquery-investigation-export-portal: portal gate is action-local and fail-closed (0.064334ms)
+✔ fleet-policy-failures-run-script-portal: portal gate is action-local and fail-closed (0.066417ms)
+✔ fleet-policy-failures-refetch-portal: portal gate is action-local and fail-closed (0.081834ms)
+✔ fleet-policy-failures-automation-portal: portal gate is action-local and fail-closed (0.066125ms)
+✔ fleet-vulnerable-software-add-software-portal: portal gate is action-local and fail-closed (0.075417ms)
+✔ fleet-vulnerable-software-install-host-portal: portal gate is action-local and fail-closed (0.066958ms)
+✔ fleet-vulnerable-software-patch-policy-portal: portal gate is action-local and fail-closed (0.055583ms)
+✔ fleet-vulnerable-software-install-automation-portal: portal gate is action-local and fail-closed (0.059583ms)
+✔ github-branch-protection-add-rule-portal: portal gate is action-local and fail-closed (0.062542ms)
+✔ github-branch-protection-strengthen-rule-portal: portal gate is action-local and fail-closed (0.064708ms)
+✔ github-branch-protection-create-ruleset-portal: portal gate is action-local and fail-closed (0.045042ms)
+✔ github-branch-protection-activate-ruleset-portal: portal gate is action-local and fail-closed (0.040166ms)
+✔ github-branch-protection-remove-bypass-portal: portal gate is action-local and fail-closed (0.048333ms)
+✔ github-branch-protection-allow-force-push-portal: portal gate is action-local and fail-closed (0.050667ms)
+✔ github-branch-protection-allow-deletion-portal: portal gate is action-local and fail-closed (0.032916ms)
+✔ github-branch-protection-lower-reviews-portal: portal gate is action-local and fail-closed (0.040584ms)
+✔ github-branch-protection-admin-bypass-portal: portal gate is action-local and fail-closed (0.034541ms)
+✔ github-branch-protection-add-bypass-portal: portal gate is action-local and fail-closed (0.0375ms)
+✔ github-branch-protection-delete-rule-portal: portal gate is action-local and fail-closed (0.030584ms)
+✔ github-branch-protection-disable-ruleset-portal: portal gate is action-local and fail-closed (0.04725ms)
+✔ github-offboard-member-revoke-invitation-portal: portal gate is action-local and fail-closed (0.033875ms)
+✔ github-offboard-member-convert-portal: portal gate is action-local and fail-closed (0.100334ms)
+✔ github-offboard-member-remove-portal: portal gate is action-local and fail-closed (0.077625ms)
+✔ github-offboard-member-remove-outside-portal: portal gate is action-local and fail-closed (0.536416ms)
+✔ github-org-security-2fa-require-portal: portal gate is action-local and fail-closed (0.04375ms)
+✔ github-org-security-owner-demote-portal: portal gate is action-local and fail-closed (0.030042ms)
+✔ github-org-security-owner-grant-portal: portal gate is action-local and fail-closed (0.036166ms)
+✔ github-repo-access-add-portal: portal gate is action-local and fail-closed (0.034083ms)
+✔ github-repo-access-grant-portal: portal gate is action-local and fail-closed (0.160459ms)
+✔ github-repo-access-change-role-portal: portal gate is action-local and fail-closed (0.033417ms)
+✔ github-repo-access-remove-portal: portal gate is action-local and fail-closed (0.02775ms)
+✔ github-repo-access-team-grant-portal: portal gate is action-local and fail-closed (0.040083ms)
+✔ github-repo-access-team-remove-portal: portal gate is action-local and fail-closed (0.027416ms)
+✔ github-repo-access-team-member-add-portal: portal gate is action-local and fail-closed (0.031416ms)
+✔ github-repo-access-team-member-remove-portal: portal gate is action-local and fail-closed (0.14425ms)
+✔ github-security-alerts-secret-revoked-portal: portal gate is action-local and fail-closed (0.038125ms)
+✔ github-security-alerts-secret-false-positive-portal: portal gate is action-local and fail-closed (0.044209ms)
+✔ github-security-alerts-secret-used-in-tests-portal: portal gate is action-local and fail-closed (0.070833ms)
+✔ github-security-alerts-secret-reopen-portal: portal gate is action-local and fail-closed (0.052791ms)
+✔ github-security-alerts-dependabot-dismiss-portal: portal gate is action-local and fail-closed (0.043667ms)
+✔ github-security-alerts-dependabot-reopen-portal: portal gate is action-local and fail-closed (0.038041ms)
+✔ github-security-alerts-dependabot-bulk-dismiss-portal: portal gate is action-local and fail-closed (0.052417ms)
+✔ gws-2sv-enforcement-allow-portal: portal gate is action-local and fail-closed (0.0505ms)
+✔ gws-2sv-enforcement-allow-rollback-portal: portal gate is action-local and fail-closed (0.071709ms)
+✔ gws-2sv-enforcement-exception-portal: portal gate is action-local and fail-closed (0.044541ms)
+✔ gws-2sv-enforcement-exempt-portal: portal gate is action-local and fail-closed (0.054958ms)
+✔ gws-2sv-enforcement-end-exemption-portal: portal gate is action-local and fail-closed (0.054ms)
+✔ gws-2sv-enforcement-group-reenforce-portal: portal gate is action-local and fail-closed (0.067334ms)
+✔ gws-2sv-enforcement-enforce-portal: portal gate is action-local and fail-closed (0.061208ms)
+✔ gws-2sv-enforcement-keys-only-portal: portal gate is action-local and fail-closed (0.060708ms)
+✔ gws-2sv-enforcement-methods-restore-portal: portal gate is action-local and fail-closed (0.040458ms)
+✔ gws-2sv-enforcement-off-portal: portal gate is action-local and fail-closed (0.0375ms)
+✔ gws-2sv-reset-backup-codes-portal: portal gate is action-local and fail-closed (0.064792ms)
+✔ gws-2sv-reset-key-remove-portal: portal gate is action-local and fail-closed (0.040084ms)
+✔ gws-2sv-reset-challenge-portal: portal gate is action-local and fail-closed (0.037292ms)
+✔ gws-2sv-reset-turn-off-portal: portal gate is action-local and fail-closed (0.043541ms)
+✔ gws-account-containment-suspend-portal: portal gate is action-local and fail-closed (0.060042ms)
+✔ gws-account-containment-password-portal: portal gate is action-local and fail-closed (0.067292ms)
+✔ gws-account-containment-app-passwords-portal: portal gate is action-local and fail-closed (0.060667ms)
+✔ gws-account-containment-oauth-portal: portal gate is action-local and fail-closed (0.0815ms)
+✔ gws-account-containment-reactivate-portal: portal gate is action-local and fail-closed (0.084ms)
+✔ gws-admin-roles-recovery-allow-portal: portal gate is action-local and fail-closed (0.058208ms)
+✔ gws-admin-roles-recovery-off-portal: portal gate is action-local and fail-closed (0.055208ms)
+✔ gws-admin-roles-assign-portal: portal gate is action-local and fail-closed (0.091416ms)
+✔ gws-admin-roles-remove-super-admin-portal: portal gate is action-local and fail-closed (0.043ms)
+✔ gws-admin-roles-remove-role-portal: portal gate is action-local and fail-closed (0.037958ms)
+✔ gws-chromeos-device-reenable-portal: portal gate is action-local and fail-closed (0.055291ms)
+✔ gws-chromeos-device-disable-portal: portal gate is action-local and fail-closed (0.083375ms)
+✔ gws-chromeos-device-clear-profiles-portal: portal gate is action-local and fail-closed (0.043875ms)
+✔ gws-chromeos-device-powerwash-portal: portal gate is action-local and fail-closed (0.0685ms)
+✔ gws-chromeos-device-deprovision-portal: portal gate is action-local and fail-closed (0.102459ms)
+✔ gws-drive-sharing-remove-access-portal: portal gate is action-local and fail-closed (0.082333ms)
+✔ gws-drive-sharing-allowlist-add-portal: portal gate is action-local and fail-closed (0.082708ms)
+✔ gws-drive-sharing-allowlist-remove-portal: portal gate is action-local and fail-closed (0.053916ms)
+✔ gws-drive-sharing-restrict-portal: portal gate is action-local and fail-closed (0.09375ms)
+✔ gws-drive-sharing-turn-off-portal: portal gate is action-local and fail-closed (0.049ms)
+✔ gws-drive-sharing-allow-portal: portal gate is action-local and fail-closed (0.054709ms)
+✔ gws-drive-transfer-drive-portal: portal gate is action-local and fail-closed (0.066083ms)
+✔ gws-drive-transfer-calendar-portal: portal gate is action-local and fail-closed (0.059208ms)
+✔ gws-gmail-delivery-mx-change-portal: portal gate is action-local and fail-closed (0.050333ms)
+✔ gws-gmail-delivery-spf-change-portal: portal gate is action-local and fail-closed (0.050542ms)
+✔ gws-gmail-delivery-dkim-generate-portal: portal gate is action-local and fail-closed (0.045834ms)
+✔ gws-gmail-delivery-dkim-dns-portal: portal gate is action-local and fail-closed (0.039ms)
+✔ gws-gmail-delivery-dkim-start-portal: portal gate is action-local and fail-closed (0.039583ms)
+✔ gws-gmail-delivery-dmarc-add-portal: portal gate is action-local and fail-closed (0.0425ms)
+✔ gws-group-membership-add-portal: portal gate is action-local and fail-closed (0.041041ms)
+✔ gws-group-membership-remove-portal: portal gate is action-local and fail-closed (0.044333ms)
+✔ gws-license-assign-assign-portal: portal gate is action-local and fail-closed (0.053458ms)
+✔ gws-license-assign-remove-portal: portal gate is action-local and fail-closed (0.046208ms)
+✔ gws-new-user-create-portal: portal gate is action-local and fail-closed (0.048084ms)
+✔ gws-new-user-group-add-portal: portal gate is action-local and fail-closed (0.037ms)
+✔ gws-offboard-okta-deactivate-portal: portal gate is action-local and fail-closed (0.036333ms)
+✔ gws-offboard-suspend-portal: portal gate is action-local and fail-closed (0.04225ms)
+✔ gws-offboard-drive-transfer-portal: portal gate is action-local and fail-closed (0.043791ms)
+✔ gws-offboard-calendar-transfer-portal: portal gate is action-local and fail-closed (0.043209ms)
+✔ gws-offboard-delete-portal: portal gate is action-local and fail-closed (0.040875ms)
+✔ gws-ou-move-user-portal: portal gate is action-local and fail-closed (0.061917ms)
+✔ gws-password-reset-password-portal: portal gate is action-local and fail-closed (0.045791ms)
+✔ gws-password-reset-cookies-portal: portal gate is action-local and fail-closed (0.037792ms)
+✔ gws-security-posture-forwarding-off-portal: portal gate is action-local and fail-closed (0.046167ms)
+✔ gws-security-posture-forwarding-allow-portal: portal gate is action-local and fail-closed (0.037584ms)
+✔ gws-security-posture-app-block-portal: portal gate is action-local and fail-closed (0.04475ms)
+✔ jamf-config-profiles-pilot-scope-portal: portal gate is action-local and fail-closed (0.065458ms)
+✔ jamf-config-profiles-all-computers-portal: portal gate is action-local and fail-closed (0.065625ms)
+✔ jamf-config-profiles-exclude-portal: portal gate is action-local and fail-closed (0.063042ms)
+✔ jamf-config-profiles-unexclude-portal: portal gate is action-local and fail-closed (0.042917ms)
+✔ jamf-config-profiles-distribute-all-portal: portal gate is action-local and fail-closed (0.049167ms)
+✔ jamf-config-profiles-remove-pilot-portal: portal gate is action-local and fail-closed (0.040167ms)
+✔ jamf-config-profiles-remove-all-computers-portal: portal gate is action-local and fail-closed (0.04125ms)
+✔ jamf-config-profiles-remove-group-portal: portal gate is action-local and fail-closed (0.040166ms)
+✔ jamf-enroll-mac-assign-portal: portal gate is action-local and fail-closed (0.0465ms)
+✔ jamf-enroll-mac-prestage-portal: portal gate is action-local and fail-closed (0.04225ms)
+✔ jamf-filevault-pilot-profile-portal: portal gate is action-local and fail-closed (0.049083ms)
+✔ jamf-filevault-widen-profile-portal: portal gate is action-local and fail-closed (0.066ms)
+✔ jamf-filevault-one-mac-scope-portal: portal gate is action-local and fail-closed (0.0495ms)
+✔ jamf-filevault-show-key-portal: portal gate is action-local and fail-closed (0.06325ms)
+✔ jamf-filevault-new-key-portal: portal gate is action-local and fail-closed (0.047375ms)
+✔ jamf-inventory-groups-saved-search-portal: portal gate is action-local and fail-closed (0.059292ms)
+✔ jamf-inventory-groups-smart-create-portal: portal gate is action-local and fail-closed (0.043292ms)
+✔ jamf-inventory-groups-smart-criteria-portal: portal gate is action-local and fail-closed (0.049417ms)
+✔ jamf-inventory-groups-static-members-portal: portal gate is action-local and fail-closed (0.043458ms)
+✔ jamf-inventory-groups-delete-portal: portal gate is action-local and fail-closed (0.0385ms)
+✔ jamf-lock-erase-lock-portal: portal gate is action-local and fail-closed (0.050417ms)
+✔ jamf-lock-erase-wipe-portal: portal gate is action-local and fail-closed (0.047458ms)
+✔ jamf-lock-erase-remove-mdm-portal: portal gate is action-local and fail-closed (0.055084ms)
+✔ jamf-lock-erase-lost-mode-portal: portal gate is action-local and fail-closed (0.047208ms)
+✔ jamf-patch-management-add-title-portal: portal gate is action-local and fail-closed (0.045333ms)
+✔ jamf-patch-management-pilot-policy-portal: portal gate is action-local and fail-closed (0.045208ms)
+✔ jamf-patch-management-widen-policy-portal: portal gate is action-local and fail-closed (0.044042ms)
+✔ jamf-patch-management-pilot-plan-portal: portal gate is action-local and fail-closed (0.048959ms)
+✔ jamf-patch-management-fleet-plan-portal: portal gate is action-local and fail-closed (0.049625ms)
+✔ jamf-patch-management-app-installer-portal: portal gate is action-local and fail-closed (0.051792ms)
+✔ jamf-patch-management-app-installer-rollout-portal: portal gate is action-local and fail-closed (0.060292ms)
+✔ jamf-patch-management-stop-policy-portal: portal gate is action-local and fail-closed (0.041541ms)
+✔ jamf-policies-self-service-create-portal: portal gate is action-local and fail-closed (0.051875ms)
+✔ jamf-policies-self-service-test-install-portal: portal gate is action-local and fail-closed (0.04975ms)
+✔ jamf-policies-self-service-change-portal: portal gate is action-local and fail-closed (0.048375ms)
+✔ jamf-policies-self-service-disable-portal: portal gate is action-local and fail-closed (0.042791ms)
+✔ jamf-policies-self-service-flush-one-portal: portal gate is action-local and fail-closed (0.044458ms)
+✔ jamf-policies-self-service-flush-all-portal: portal gate is action-local and fail-closed (0.043416ms)
+✔ license-remove-portal: portal gate is action-local and fail-closed (0.038541ms)
+✔ linear-intake-create-portal: portal gate is action-local and fail-closed (0.058167ms)
+✔ linear-intake-label-priority-portal: portal gate is action-local and fail-closed (0.117833ms)
+✔ linear-ticket-note-post-portal: portal gate is action-local and fail-closed (0.0775ms)
+✔ linear-ticket-note-replace-portal: portal gate is action-local and fail-closed (0.102541ms)
+✔ linear-ticket-note-delete-portal: portal gate is action-local and fail-closed (0.049583ms)
+✔ linear-triage-fields-portal: portal gate is action-local and fail-closed (0.206084ms)
+✔ linear-triage-accept-portal: portal gate is action-local and fail-closed (0.346417ms)
+✔ linear-triage-duplicate-portal: portal gate is action-local and fail-closed (0.255208ms)
+✔ linear-triage-decline-portal: portal gate is action-local and fail-closed (0.164875ms)
+✔ linear-triage-snooze-portal: portal gate is action-local and fail-closed (0.16325ms)
+✔ linear-triage-priority-portal: portal gate is action-local and fail-closed (0.132875ms)
+✔ linear-workspace-admin-delete-portal: portal gate is action-local and fail-closed (0.119416ms)
+✔ linear-workspace-admin-restore-portal: portal gate is action-local and fail-closed (0.064834ms)
+✔ linear-workspace-admin-bulk-move-portal: portal gate is action-local and fail-closed (0.082375ms)
+✔ linear-workspace-admin-bulk-delete-portal: portal gate is action-local and fail-closed (0.058416ms)
+✔ linear-workspace-admin-suspend-portal: portal gate is action-local and fail-closed (0.051958ms)
+✔ linear-workspace-admin-unsuspend-portal: portal gate is action-local and fail-closed (0.066666ms)
+✔ linear-workspace-admin-export-portal: portal gate is action-local and fail-closed (0.063083ms)
+✔ mac-new-hire-laptop-assign-portal: portal gate is action-local and fail-closed (0.068625ms)
+✔ mac-new-hire-laptop-prestage-scope-portal: portal gate is action-local and fail-closed (0.093417ms)
+✔ mac-troubleshoot-filevault-enable-portal: portal gate is action-local and fail-closed (0.06675ms)
+✔ mac-troubleshoot-wifi-forget-portal: portal gate is action-local and fail-closed (0.05875ms)
+✔ mac-troubleshoot-blank-push-portal: portal gate is action-local and fail-closed (0.075833ms)
+✔ mailbox-full-access-grant-portal: portal gate is action-local and fail-closed (0.091458ms)
+✔ mailbox-send-as-grant-portal: portal gate is action-local and fail-closed (0.063875ms)
+✔ mailbox-send-as-remove-portal: portal gate is action-local and fail-closed (0.04175ms)
+✔ mailbox-permission-remove-portal: portal gate is action-local and fail-closed (0.034667ms)
+✔ mfa-session-revoke-portal: portal gate is action-local and fail-closed (0.067709ms)
+✔ mfa-temporary-access-pass-portal: portal gate is action-local and fail-closed (0.077333ms)
+✔ mfa-method-delete-portal: portal gate is action-local and fail-closed (0.046625ms)
+✔ mfa-require-reregister-portal: portal gate is action-local and fail-closed (0.069917ms)
+✔ offboard-ad-disable-portal: portal gate is action-local and fail-closed (0.046917ms)
+✔ offboard-cloud-block-portal: portal gate is action-local and fail-closed (0.034584ms)
+✔ offboard-revoke-sessions-portal: portal gate is action-local and fail-closed (0.034ms)
+✔ offboard-password-reset-portal: portal gate is action-local and fail-closed (0.034583ms)
+✔ offboard-clear-mfa-portal: portal gate is action-local and fail-closed (0.032583ms)
+✔ offboard-mailbox-convert-portal: portal gate is action-local and fail-closed (0.031209ms)
+✔ offboard-mailbox-delegate-portal: portal gate is action-local and fail-closed (0.03075ms)
+✔ offboard-onedrive-portal: portal gate is action-local and fail-closed (0.032292ms)
+✔ offboard-license-remove-portal: portal gate is action-local and fail-closed (0.041917ms)
+✔ offboard-group-strip-portal: portal gate is action-local and fail-closed (0.044167ms)
+✔ offboard-dl-strip-portal: portal gate is action-local and fail-closed (0.035083ms)
+✔ offboard-mailbox-delegation-strip-portal: portal gate is action-local and fail-closed (0.031875ms)
+✔ offboard-device-wipe-portal: portal gate is action-local and fail-closed (0.032084ms)
+✔ offboard-work-phone-wipe-portal: portal gate is action-local and fail-closed (0.038084ms)
+✔ offboard-work-phone-group-remove-portal: portal gate is action-local and fail-closed (0.041041ms)
+✔ offboard-voip-deactivate-portal: portal gate is action-local and fail-closed (0.038084ms)
+✔ offboard-voip-reclaim-extension-portal: portal gate is action-local and fail-closed (0.037209ms)
+✔ offboard-voicemail-clear-portal: portal gate is action-local and fail-closed (0.05125ms)
+✔ offboard-zoom-portal: portal gate is action-local and fail-closed (0.032625ms)
+✔ offboard-adobe-portal: portal gate is action-local and fail-closed (0.027917ms)
+✔ offboard-vpn-portal: portal gate is action-local and fail-closed (0.038542ms)
+✔ offboard-physical-portal: portal gate is action-local and fail-closed (0.05375ms)
+✔ offboard-disabled-ou-portal: portal gate is action-local and fail-closed (0.050958ms)
+✔ okta-app-assignment-assign-person-portal: portal gate is action-local and fail-closed (0.060875ms)
+✔ okta-app-assignment-assign-group-portal: portal gate is action-local and fail-closed (0.071209ms)
+✔ okta-app-assignment-unassign-person-portal: portal gate is action-local and fail-closed (0.081667ms)
+✔ okta-group-membership-add-person-portal: portal gate is action-local and fail-closed (0.037625ms)
+✔ okta-group-membership-remove-person-portal: portal gate is action-local and fail-closed (0.038667ms)
+✔ okta-group-membership-rule-create-portal: portal gate is action-local and fail-closed (0.073375ms)
+✔ okta-group-membership-rule-change-portal: portal gate is action-local and fail-closed (0.044333ms)
+✔ okta-group-membership-rule-deactivate-portal: portal gate is action-local and fail-closed (0.041ms)
+✔ okta-group-membership-bulk-add-portal: portal gate is action-local and fail-closed (0.039625ms)
+✔ okta-group-membership-bulk-remove-portal: portal gate is action-local and fail-closed (0.036709ms)
+✔ okta-mfa-reset-clear-sessions-portal: portal gate is action-local and fail-closed (0.039625ms)
+✔ okta-mfa-reset-tac-portal: portal gate is action-local and fail-closed (0.055417ms)
+✔ okta-mfa-reset-selected-portal: portal gate is action-local and fail-closed (0.058959ms)
+✔ okta-mfa-reset-all-portal: portal gate is action-local and fail-closed (0.070792ms)
+✔ okta-user-lifecycle-reset-password-portal: portal gate is action-local and fail-closed (0.044208ms)
+✔ okta-user-lifecycle-clear-sessions-portal: portal gate is action-local and fail-closed (0.029708ms)
+✔ okta-user-lifecycle-suspend-portal: portal gate is action-local and fail-closed (0.048458ms)
+✔ okta-user-lifecycle-unsuspend-portal: portal gate is action-local and fail-closed (0.054292ms)
+✔ okta-user-lifecycle-deactivate-portal: portal gate is action-local and fail-closed (0.043417ms)
+✔ okta-user-lifecycle-activate-portal: portal gate is action-local and fail-closed (0.06875ms)
+✔ okta-user-lifecycle-delete-portal: portal gate is action-local and fail-closed (0.06775ms)
+✔ password-reset-synced-portal: portal gate is action-local and fail-closed (0.067708ms)
+✔ password-reset-cloud-portal: portal gate is action-local and fail-closed (0.040833ms)
+✔ password-session-revoke-portal: portal gate is action-local and fail-closed (0.060833ms)
+✔ print-queue-delete-portal: portal gate is action-local and fail-closed (0.095292ms)
+✔ security-session-revoke-portal: portal gate is action-local and fail-closed (0.144375ms)
+✔ shared-mailbox-full-access-portal: portal gate is action-local and fail-closed (0.076083ms)
+✔ shared-mailbox-send-as-portal: portal gate is action-local and fail-closed (0.072584ms)
+✔ shared-mailbox-convert-portal: portal gate is action-local and fail-closed (0.058834ms)
+✔ sharepoint-access-revoke-portal: portal gate is action-local and fail-closed (0.118291ms)
+✔ slack-app-approval-approve-portal: portal gate is action-local and fail-closed (0.052959ms)
+✔ slack-app-approval-restrict-portal: portal gate is action-local and fail-closed (0.043375ms)
+✔ slack-app-approval-require-portal: portal gate is action-local and fail-closed (0.046042ms)
+✔ slack-app-approval-request-managers-grant-portal: portal gate is action-local and fail-closed (0.043708ms)
+✔ slack-app-approval-request-managers-remove-portal: portal gate is action-local and fail-closed (0.045959ms)
+✔ slack-guests-connect-time-limit-portal: portal gate is action-local and fail-closed (0.06025ms)
+✔ slack-guests-connect-approve-invitation-portal: portal gate is action-local and fail-closed (0.056125ms)
+✔ slack-guests-connect-decline-invitation-portal: portal gate is action-local and fail-closed (0.055125ms)
+✔ slack-guests-connect-remove-org-portal: portal gate is action-local and fail-closed (0.101833ms)
+✔ slack-guests-connect-disconnect-org-portal: portal gate is action-local and fail-closed (0.064375ms)
+✔ slack-guests-connect-archive-portal: portal gate is action-local and fail-closed (0.054375ms)
+✔ slack-guests-connect-unarchive-portal: portal gate is action-local and fail-closed (0.062583ms)
+✔ slack-guests-connect-readd-members-portal: portal gate is action-local and fail-closed (0.042208ms)
+✔ slack-incident-comms-status-post-portal: portal gate is action-local and fail-closed (0.059042ms)
+✔ slack-incident-comms-resolved-post-portal: portal gate is action-local and fail-closed (0.040709ms)
+✔ slack-retention-export-legal-hold-portal: portal gate is action-local and fail-closed (0.075916ms)
+✔ slack-retention-export-public-export-portal: portal gate is action-local and fail-closed (0.048792ms)
+✔ slack-retention-export-all-conversations-portal: portal gate is action-local and fail-closed (0.073959ms)
+✔ slack-retention-export-shorten-retention-portal: portal gate is action-local and fail-closed (0.088958ms)
+✔ slack-retention-export-delete-messages-portal: portal gate is action-local and fail-closed (0.048583ms)
+✔ slack-retention-export-delete-channel-portal: portal gate is action-local and fail-closed (0.03725ms)
+✔ slack-security-settings-2fa-require-portal: portal gate is action-local and fail-closed (0.041792ms)
+✔ slack-security-settings-2fa-off-portal: portal gate is action-local and fail-closed (0.032458ms)
+✔ slack-security-settings-saml-require-portal: portal gate is action-local and fail-closed (0.031167ms)
+✔ slack-security-settings-session-duration-portal: portal gate is action-local and fail-closed (0.028875ms)
+✔ slack-security-settings-approved-domains-portal: portal gate is action-local and fail-closed (0.031541ms)
+✔ slack-security-settings-file-sharing-portal: portal gate is action-local and fail-closed (0.031166ms)
+✔ slack-security-settings-sms-block-portal: portal gate is action-local and fail-closed (0.034667ms)
+✔ slack-user-lifecycle-invite-portal: portal gate is action-local and fail-closed (0.067291ms)
+✔ slack-user-lifecycle-channel-add-portal: portal gate is action-local and fail-closed (0.046917ms)
+✔ slack-user-lifecycle-channel-remove-portal: portal gate is action-local and fail-closed (0.034875ms)
+✔ slack-user-lifecycle-deactivate-portal: portal gate is action-local and fail-closed (0.051458ms)
+✔ slack-user-lifecycle-reactivate-portal: portal gate is action-local and fail-closed (0.194333ms)
+✔ slack-user-lifecycle-to-single-guest-portal: portal gate is action-local and fail-closed (0.113708ms)
+✔ slack-user-lifecycle-to-multi-guest-portal: portal gate is action-local and fail-closed (0.076333ms)
+✔ slack-user-lifecycle-to-member-portal: portal gate is action-local and fail-closed (0.078667ms)
+✔ slack-user-lifecycle-session-reset-portal: portal gate is action-local and fail-closed (0.038375ms)
+✔ zoom-room-restart-app-portal: portal gate is action-local and fail-closed (0.046ms)
+✔ zoom-room-restart-computer-portal: portal gate is action-local and fail-closed (0.078167ms)
+✔ ir-session-revoke: portal gate is action-local and fail-closed (0.045959ms)
+✔ ir-clear-mfa: portal gate is action-local and fail-closed (0.04275ms)
+✔ ir-phish-quarantine: portal gate is action-local and fail-closed (0.043375ms)
+✔ ir-sender-domain-block: portal gate is action-local and fail-closed (0.039625ms)
+✔ ir-work-device-wipe: portal gate is action-local and fail-closed (0.038208ms)
+✔ ir-intune-device-delete: portal gate is action-local and fail-closed (0.037333ms)
+✔ ir-byod-retire: portal gate is action-local and fail-closed (0.040958ms)
+✔ ir-endpoint-isolate: portal gate is action-local and fail-closed (0.049458ms)
+✔ ir-device-reimage: portal gate is action-local and fail-closed (0.040042ms)
+✔ ir-admin-role-remove: portal gate is action-local and fail-closed (0.04325ms)
+✔ ir-ca-restore: portal gate is action-local and fail-closed (0.038375ms)
+✖ PowerShell AST analyzer rejects bypass-shaped control flow (0.269584ms)
+✔ effect and target assertions reject omitted composite families and bindings (0.448125ms)
+✔ WhatIf exemption is command-local and cannot hide a later mutation (0.05475ms)
+✖ printer cleanup reports immutable completed, failed, and not-attempted sets when removal and restart fail (0.21525ms)
+✖ group rollback distinguishes verified recovery, unresolved recovery, and successful forward state (0.195708ms)
+✔ checkpointed Graph mutations bind and revalidate the exact checkpoint before the first remote sink (0.35675ms)
+✖ actual checkpoint revalidation rejects drift or deletion and result failure preserves a proven assignment ID (0.225541ms)
+✔ every PORTAL ACTION maps one-to-one to a discovered portal safety marker (2.12425ms)
+✔ manual PREVIEW ONLY regions cannot masquerade as gated portal actions (2.239875ms)
+✔ direct R1 inventory is exact and remains operator-only (0.225583ms)
+✔ visitor setup lines are exact, README-only, unmarked and counted (0.214041ms)
+✔ mixed-state commands and aliases remain operator-only with an execution boundary (0.221833ms)
+✔ reference surfaces state a non-executing boundary (0.118042ms)
+✔ safe read-only diagnostics remain live and available (0.103625ms)
+✔ provider lookups escape OData literals and bind mutations to exact returned names and immutable IDs (0.113041ms)
+✔ completion-note templates require cited read-backs or an explicit partial-state open note (0.2615ms)
+✔ inventory includes the named audit hot spots (0.106084ms)
+✔ G1 detector: every gam, gcloud, HTTP-API, jamf and macOS administration mutation in a shell fence is a sink (121.5375ms)
+✔ G1 detector: read-only diagnostics stay live and are not sinks (7.372666ms)
+✔ G1 fixtures: a GAM fence with no marker fails; the same fence with a correct marker passes (111.727375ms)
+✔ G1 shell gate analyzer rejects bypass-shaped control flow (163.498875ms)
+✔ G1 shell gate harness executes the fence's own lines up to the comparison (149.304167ms)
+✔ fleet-device-actions-lock-cli: shell gate is explicit, dominates its sinks, and is fail-closed (111.5195ms)
+✔ fleet-device-actions-run-script-cli: shell gate is explicit, dominates its sinks, and is fail-closed (113.250916ms)
+✔ gws-2sv-reset-backup-codes: shell gate is explicit, dominates its sinks, and is fail-closed (178.349667ms)
+✔ gws-2sv-reset-turn-off: shell gate is explicit, dominates its sinks, and is fail-closed (145.821584ms)
+✔ gws-account-containment-app-passwords: shell gate is explicit, dominates its sinks, and is fail-closed (129.365792ms)
+✔ gws-account-containment-oauth: shell gate is explicit, dominates its sinks, and is fail-closed (108.639458ms)
+✔ gws-chromeos-device-reenable: shell gate is explicit, dominates its sinks, and is fail-closed (233.960791ms)
+✔ gws-chromeos-device-disable: shell gate is explicit, dominates its sinks, and is fail-closed (232.329416ms)
+✔ gws-chromeos-device-wipe-users: shell gate is explicit, dominates its sinks, and is fail-closed (272.156458ms)
+✔ gws-chromeos-device-powerwash: shell gate is explicit, dominates its sinks, and is fail-closed (295.175167ms)
+✔ gws-chromeos-device-deprovision: shell gate is explicit, dominates its sinks, and is fail-closed (285.704375ms)
+✔ gws-drive-transfer-drive: shell gate is explicit, dominates its sinks, and is fail-closed (159.388458ms)
+✔ gws-drive-transfer-datatransfer: shell gate is explicit, dominates its sinks, and is fail-closed (175.7045ms)
+✔ gws-drive-transfer-calendar: shell gate is explicit, dominates its sinks, and is fail-closed (142.093542ms)
+✔ gws-group-membership-add: shell gate is explicit, dominates its sinks, and is fail-closed (150.611125ms)
+✔ gws-group-membership-remove: shell gate is explicit, dominates its sinks, and is fail-closed (142.891ms)
+✔ gws-license-assign-assign: shell gate is explicit, dominates its sinks, and is fail-closed (134.395291ms)
+✔ gws-license-assign-remove: shell gate is explicit, dominates its sinks, and is fail-closed (131.903917ms)
+✔ gws-new-user-create: shell gate is explicit, dominates its sinks, and is fail-closed (262.956875ms)
+✔ gws-new-user-group-add: shell gate is explicit, dominates its sinks, and is fail-closed (181.347041ms)
+✔ gws-offboard-okta-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed (138.779208ms)
+✔ gws-offboard-suspend: shell gate is explicit, dominates its sinks, and is fail-closed (134.553708ms)
+✔ gws-offboard-data-transfer: shell gate is explicit, dominates its sinks, and is fail-closed (126.7195ms)
+✔ gws-offboard-delete: shell gate is explicit, dominates its sinks, and is fail-closed (160.760208ms)
+✔ gws-ou-move-user: shell gate is explicit, dominates its sinks, and is fail-closed (157.00725ms)
+✔ gws-password-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (169.911167ms)
+✔ gws-password-reset-cookies: shell gate is explicit, dominates its sinks, and is fail-closed (127.797541ms)
+✔ gws-security-posture-users-export: shell gate is explicit, dominates its sinks, and is fail-closed (139.775291ms)
+✔ gws-security-posture-admins-export: shell gate is explicit, dominates its sinks, and is fail-closed (129.576834ms)
+✔ jamf-enroll-mac-renew: shell gate is explicit, dominates its sinks, and is fail-closed (128.977583ms)
+✔ jamf-enroll-mac-checkin: shell gate is explicit, dominates its sinks, and is fail-closed (127.383334ms)
+✔ jamf-inventory-groups-recon: shell gate is explicit, dominates its sinks, and is fail-closed (125.014792ms)
+✔ jamf-lock-erase-unmanage: shell gate is explicit, dominates its sinks, and is fail-closed (117.576291ms)
+✔ jamf-lock-erase-lock-api: shell gate is explicit, dominates its sinks, and is fail-closed (126.498416ms)
+✔ jamf-lock-erase-wipe-api: shell gate is explicit, dominates its sinks, and is fail-closed (121.782083ms)
+✔ mac-troubleshoot-prk-replace: shell gate is explicit, dominates its sinks, and is fail-closed (127.900125ms)
+✔ mac-troubleshoot-jamf-checkin: shell gate is explicit, dominates its sinks, and is fail-closed (118.167042ms)
+✔ okta-app-assignment-assign-person: shell gate is explicit, dominates its sinks, and is fail-closed (120.573459ms)
+✔ okta-app-assignment-assign-group: shell gate is explicit, dominates its sinks, and is fail-closed (114.80925ms)
+✔ okta-app-assignment-unassign-person: shell gate is explicit, dominates its sinks, and is fail-closed (115.668458ms)
+✔ okta-mfa-reset-factor: shell gate is explicit, dominates its sinks, and is fail-closed (119.918333ms)
+✔ okta-mfa-reset-all: shell gate is explicit, dominates its sinks, and is fail-closed (120.6365ms)
+✔ okta-user-lifecycle-reset-password: shell gate is explicit, dominates its sinks, and is fail-closed (129.184666ms)
+✔ okta-user-lifecycle-clear-sessions: shell gate is explicit, dominates its sinks, and is fail-closed (122.078583ms)
+✔ okta-user-lifecycle-suspend: shell gate is explicit, dominates its sinks, and is fail-closed (126.5395ms)
+✔ okta-user-lifecycle-unsuspend: shell gate is explicit, dominates its sinks, and is fail-closed (149.535958ms)
+✔ okta-user-lifecycle-deactivate: shell gate is explicit, dominates its sinks, and is fail-closed (121.638042ms)
+✔ okta-user-lifecycle-activate: shell gate is explicit, dominates its sinks, and is fail-closed (134.192208ms)
+✔ okta-user-lifecycle-delete: shell gate is explicit, dominates its sinks, and is fail-closed (128.626209ms)
+✔ G1 statements: a glued # is not a comment, continued lines are one statement, gate variables stay in their gated fence (197.107958ms)
+✔ every document with a gated shell fence keeps its gate variables inside gated fences (2.640125ms)
+✔ no shell fence beside a gated shell fence shadows read, [ or the shell (4.829542ms)
+✔ G1 portal grammar: Google, Okta and Jamf breadcrumbs that end in an action are mutation candidates (0.599583ms)
+✔ G1 portal grammar: the current Apple Business name and the selected-devices controls in G1 runbooks are candidates; Microsoft files keep their grammar (0.162958ms)
+✔ G2 detector: every fleetctl write and every Slack or Linear API write in a shell fence is a sink (13.085875ms)
+✔ G2 detector: fleetctl reads and API GET reads stay live and are not sinks (1.519333ms)
+✔ G2 portal grammar: Fleet, Slack and Linear actions are candidates in G2 runbooks; G1 and Microsoft files keep their grammar (0.5335ms)
+✔ batch 12, task 12: the lanes' shell and PowerShell sinks are detected, and their reads stay live (36.832167ms)
+✔ batch 12, task 12: the README's Windows setup lines are owned by the visitor inventory, exactly (0.116542ms)
+ℹ tests 481
+ℹ suites 0
+ℹ pass 440
+ℹ fail 41
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10481.336958
+
+✖ failing tests:
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ install-graph-conditional-access: actual source gate is AST-dominated, explicit, and fail-closed (0.633041ms)
+  AssertionError [ERR_ASSERTION]: install-graph-conditional-access: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ device-full-wipe: actual source gate is AST-dominated, explicit, and fail-closed (0.134833ms)
+  AssertionError [ERR_ASSERTION]: device-full-wipe: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ install-exchange-quarantine: actual source gate is AST-dominated, explicit, and fail-closed (0.267542ms)
+  AssertionError [ERR_ASSERTION]: install-exchange-quarantine: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ quarantine-release-all: actual source gate is AST-dominated, explicit, and fail-closed (0.070333ms)
+  AssertionError [ERR_ASSERTION]: quarantine-release-all: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ quarantine-release-one: actual source gate is AST-dominated, explicit, and fail-closed (0.040542ms)
+  AssertionError [ERR_ASSERTION]: quarantine-release-one: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ quarantine-permanent-delete: actual source gate is AST-dominated, explicit, and fail-closed (0.0795ms)
+  AssertionError [ERR_ASSERTION]: quarantine-permanent-delete: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ install-exchange-spam: actual source gate is AST-dominated, explicit, and fail-closed (0.061625ms)
+  AssertionError [ERR_ASSERTION]: install-exchange-spam: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ restricted-entity-unblock: actual source gate is AST-dominated, explicit, and fail-closed (0.0545ms)
+  AssertionError [ERR_ASSERTION]: restricted-entity-unblock: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ install-exchange-whitelist: actual source gate is AST-dominated, explicit, and fail-closed (0.058375ms)
+  AssertionError [ERR_ASSERTION]: install-exchange-whitelist: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ mailbox-permission-remove: actual source gate is AST-dominated, explicit, and fail-closed (0.101708ms)
+  AssertionError [ERR_ASSERTION]: mailbox-permission-remove: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ mfa-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.076292ms)
+  AssertionError [ERR_ASSERTION]: mfa-session-revoke: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed (0.08425ms)
+  AssertionError [ERR_ASSERTION]: password-cloud-reset: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.076083ms)
+  AssertionError [ERR_ASSERTION]: password-session-revoke: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ print-queue-delete: actual source gate is AST-dominated, explicit, and fail-closed (0.155417ms)
+  AssertionError [ERR_ASSERTION]: print-queue-delete: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ security-account-block: actual source gate is AST-dominated, explicit, and fail-closed (0.060166ms)
+  AssertionError [ERR_ASSERTION]: security-account-block: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ security-synced-ad-disable: actual source gate is AST-dominated, explicit, and fail-closed (0.046625ms)
+  AssertionError [ERR_ASSERTION]: security-synced-ad-disable: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ security-synced-cloud-gap-block: actual source gate is AST-dominated, explicit, and fail-closed (0.068292ms)
+  AssertionError [ERR_ASSERTION]: security-synced-cloud-gap-block: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ security-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.099875ms)
+  AssertionError [ERR_ASSERTION]: security-session-revoke: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ sharepoint-access-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.039917ms)
+  AssertionError [ERR_ASSERTION]: sharepoint-access-revoke: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ install-teams-module: actual source gate is AST-dominated, explicit, and fail-closed (0.035334ms)
+  AssertionError [ERR_ASSERTION]: install-teams-module: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ automation-bulk-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.03525ms)
+  AssertionError [ERR_ASSERTION]: automation-bulk-license-checkpoint-write: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ automation-bulk-license: actual source gate is AST-dominated, explicit, and fail-closed (0.031625ms)
+  AssertionError [ERR_ASSERTION]: automation-bulk-license: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed (0.03ms)
+  AssertionError [ERR_ASSERTION]: automation-token-revoke: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ automation-compliance-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.031959ms)
+  AssertionError [ERR_ASSERTION]: automation-compliance-checkpoint-write: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ automation-compliance-assignment: actual source gate is AST-dominated, explicit, and fail-closed (0.059208ms)
+  AssertionError [ERR_ASSERTION]: automation-compliance-assignment: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ rollback-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.050959ms)
+  AssertionError [ERR_ASSERTION]: rollback-license-checkpoint-write: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ rollback-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.042625ms)
+  AssertionError [ERR_ASSERTION]: rollback-group-checkpoint-write: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ rollback-group-change: actual source gate is AST-dominated, explicit, and fail-closed (0.041ms)
+  AssertionError [ERR_ASSERTION]: rollback-group-change: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ rollback-bulk-usage-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.040375ms)
+  AssertionError [ERR_ASSERTION]: rollback-bulk-usage-checkpoint-write: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ rollback-bulk-usage-location: actual source gate is AST-dominated, explicit, and fail-closed (0.039834ms)
+  AssertionError [ERR_ASSERTION]: rollback-bulk-usage-location: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ rollback-policy-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.039041ms)
+  AssertionError [ERR_ASSERTION]: rollback-policy-checkpoint-write: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ safety-whatif-disable: actual source gate is AST-dominated, explicit, and fail-closed (0.038042ms)
+  AssertionError [ERR_ASSERTION]: safety-whatif-disable: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ safety-bulk-disable-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.041792ms)
+  AssertionError [ERR_ASSERTION]: safety-bulk-disable-checkpoint-write: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ safety-bulk-disable: actual source gate is AST-dominated, explicit, and fail-closed (0.038458ms)
+  AssertionError [ERR_ASSERTION]: safety-bulk-disable: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ safety-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.039041ms)
+  AssertionError [ERR_ASSERTION]: safety-group-checkpoint-write: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ safety-delete-user-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed (0.03875ms)
+  AssertionError [ERR_ASSERTION]: safety-delete-user-checkpoint-write: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1649:3
+✖ safety-delete-user: actual source gate is AST-dominated, explicit, and fail-closed (0.051125ms)
+  AssertionError [ERR_ASSERTION]: safety-delete-user: PowerShell is required for AST validation
+      at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1659:22)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1709:1
+✖ PowerShell AST analyzer rejects bypass-shaped control flow (0.269584ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception.
+  Actual message: "valid-fixture: PowerShell is required for AST validation"
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1722:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: AssertionError [ERR_ASSERTION]: valid-fixture: PowerShell is required for AST validation
+        at analyzePowerShellGate (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1098:10)
+        at <home>/Code/Aegis/scripts/command-safety-gates.test.js:1715:18
+        at getActual (node:assert:611:5)
+        at strict.doesNotThrow (node:assert:779:32)
+        at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1722:10)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }
+
+test at scripts/command-safety-gates.test.js:1751:1
+✖ printer cleanup reports immutable completed, failed, and not-attempted sets when removal and restart fail (0.21525ms)
+  TypeError [ERR_INVALID_ARG_TYPE]: The "file" argument must be of type string. Received undefined
+      at normalizeSpawnArguments (node:child_process:585:3)
+      at spawnSync (node:child_process:887:8)
+      at runPowerShell (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1089:18)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1786:29)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'ERR_INVALID_ARG_TYPE'
+  }
+
+test at scripts/command-safety-gates.test.js:1796:1
+✖ group rollback distinguishes verified recovery, unresolved recovery, and successful forward state (0.195708ms)
+  TypeError [ERR_INVALID_ARG_TYPE]: The "file" argument must be of type string. Received undefined
+      at normalizeSpawnArguments (node:child_process:585:3)
+      at spawnSync (node:child_process:887:8)
+      at runPowerShell (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1089:18)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1826:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'ERR_INVALID_ARG_TYPE'
+  }
+
+test at scripts/command-safety-gates.test.js:1886:1
+✖ actual checkpoint revalidation rejects drift or deletion and result failure preserves a proven assignment ID (0.225541ms)
+  TypeError [ERR_INVALID_ARG_TYPE]: The "file" argument must be of type string. Received undefined
+      at normalizeSpawnArguments (node:child_process:585:3)
+      at spawnSync (node:child_process:887:8)
+      at runPowerShell (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1089:18)
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:1942:33)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    code: 'ERR_INVALID_ARG_TYPE'
+  }

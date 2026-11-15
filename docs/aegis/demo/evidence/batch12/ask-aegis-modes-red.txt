@@ -14,8 +14,8 @@ test at scripts/ask-aegis.test.js:596:1
 ✖ batch 12, tasks 2 and 3: a claimed check needs its call; an Engineer answer prints under its mode (60.907834ms)
   AssertionError [ERR_ASSERTION]: Asking Aegis. It reads only and changes nothing; this can take a few minutes.
   
-  Reply saved: /var/folders/7k/7l8yml8s0vb6d0g58ttx0kzh0000gn/T/aegis-ask-test-Kj97R8/home/aegis-asks/20261115T054018Z-7c3fe189/reply.md
-  Full tech answer saved: /var/folders/7k/7l8yml8s0vb6d0g58ttx0kzh0000gn/T/aegis-ask-test-Kj97R8/home/aegis-asks/20261115T054018Z-7c3fe189/answer.md
+  Reply saved: <tmp>/aegis-ask-test-XXXX/<test-home>/aegis-asks/20261115T054018Z-7c3fe189/reply.md
+  Full tech answer saved: <tmp>/aegis-ask-test-XXXX/<test-home>/aegis-asks/20261115T054018Z-7c3fe189/answer.md
   Cost: 0.01 US dollars
   ask-aegis: this reply did not pass its check, so read it before you send it: it says Aegis checked something with no matching call in the session's reading record ("I checked Google's help pages, and they describe the same delay for new accounts").
   

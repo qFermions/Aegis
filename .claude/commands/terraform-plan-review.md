@@ -215,7 +215,7 @@ fi
 1. Read the lock error: Who and Created name the holder and the time; Operation names what it was doing [unconfirmed: check the vendor page].
 2. Find that run: the pipeline's job list, or ask the person named in Who. A running apply holds the lock on purpose.
 
-**Try first:** let the holding run finish, or cancel it in the pipeline, which releases the lock by itself (IV-32).
+**Try first:** let the holding run finish, or cancel it in the pipeline; a run that ends normally releases its lock [unconfirmed: check the vendor page].
 
 **Stop if:** any run or person still holds the lock: a second writer can corrupt the state (IV-32).
 

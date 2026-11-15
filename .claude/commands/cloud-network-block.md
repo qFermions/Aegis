@@ -17,7 +17,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 - **How wide before why:** one caller or every caller, one subnet or all, this service or every service, and the cloud's status page, before any rule changes.
 - **A timeout is the network; a 403 is IAM.** A 403 goes to `/cloud-access-denied`.
-- **Least privilege (rule b):** one port, one protocol, from the narrowest source that works (a subnet, a security group, a service tag), with an owner and the ticket in the rule's description. Never `0.0.0.0/0` or `::/0` to SSH (22), RDP (3389) or a database port; the cloud vendor says the same (IV-04).
+- **Least privilege (rule b):** one port, one protocol, from the narrowest source that works (a subnet, a security group, a service tag), with an owner and the ticket in the rule's description. Never `0.0.0.0/0` or `::/0` to SSH (22), RDP (3389) or a database port; the cloud vendor says the same (IV-53).
 - **A rule change is not the first fix** when the path itself is wrong (a route, a missing NAT, a private endpoint's DNS).
 - **Flow logs and packet captures are data (SR-3).**
 
@@ -34,7 +34,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 | Name | Route 53, private hosted zone | private DNS zone for a private endpoint | Cloud DNS private zone | the name resolves to the address you expect, from the source |
 | Route | route table of the subnet | effective routes of the NIC | VPC routes | a route to the destination exists and its next hop is right (NAT, gateway, peering) |
 | Subnet filter | network ACL: stateless, numbered rules, lowest first, first match wins (IV-05) | NSG on the subnet | (none) | inbound and the return traffic both allowed |
-| Instance filter | security group: stateful, allow rules only (IV-04) | NSG on the NIC; priority 100 to 4096, lowest first, first match wins (IV-15) | VPC firewall rule: priority 0 to 65535, lowest number wins; implied deny ingress (IV-16) | an allow for this source, port and protocol |
+| Instance filter | security group: stateful, allow rules only (IV-04) | NSG on the NIC; priority 100 to 4096, lowest first, first match wins (IV-15) | VPC firewall rule: priority 0 to 65535, lowest number wins (IV-16); implied deny ingress (IV-56) | an allow for this source, port and protocol |
 | Host | OS firewall, the service listening | the same | the same | the port is listening on the right address |
 
 **The split:** `connection refused` came back from the host, so the path is open and nothing listens (or the OS firewall rejects); a timeout means something dropped it on the way.
@@ -72,7 +72,7 @@ curl -sv --max-time 10 https://api.internal.example.com/health
 
 **Azure.** portal.azure.com → Network Watcher → IP flow verify, with the VM, direction, protocol, addresses and ports: it returns allowed or denied and the rule's name (IV-41). Or the VM → Networking → Network settings → the interface → Help → Effective security rules, which merges the subnet NSG and the NIC NSG (IV-42).
 
-**Google Cloud.** Google Cloud console → VPC network → Firewall, sorted by priority, for rules that target the instance; the lowest number that matches wins (IV-16); with no matching ingress allow, the implied deny ingress drops it (IV-16).
+**Google Cloud.** Google Cloud console → VPC network → Firewall, sorted by priority, for rules that target the instance; the lowest number that matches wins (IV-16); with no matching ingress allow, the implied deny ingress drops it (IV-56).
 
 <details>
 <summary>Cloud reads (HUMAN-RUN read-only)</summary>
@@ -223,4 +223,4 @@ fi
 
 Post it with `/jira-update` on `[JIRA-###]`.
 
-**Sources (read 2026-11-14, `docs/aegis/batch12/vendor-facts-infrastructure.md`):** docs.aws.amazon.com security groups (IV-04), network ACLs (IV-05), flow log records (IV-06), AWS Health Dashboard (IV-38) · learn.microsoft.com NSG overview (IV-15), IP flow verify (IV-41), diagnose a traffic filter problem (IV-42), azure.status.microsoft (IV-39) · docs.cloud.google.com VPC firewall rules (IV-16), status.cloud.google.com (IV-40).
+**Sources (read 2026-11-14, `docs/aegis/batch12/vendor-facts-infrastructure.md`):** docs.aws.amazon.com security groups (IV-04, IV-53), network ACLs (IV-05), flow log records (IV-06), AWS Health Dashboard (IV-38) · learn.microsoft.com NSG overview (IV-15), IP flow verify (IV-41), diagnose a traffic filter problem (IV-42), azure.status.microsoft (IV-39) · docs.cloud.google.com VPC firewall rules (IV-16, IV-56), status.cloud.google.com (IV-40).

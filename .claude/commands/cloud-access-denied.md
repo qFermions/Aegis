@@ -89,7 +89,7 @@ az role definition list --name "[ROLE_NAME]" --output json
 1. Read the message: `Permission '<permission>' denied on resource '<resource>'` (or `PERMISSION_DENIED` with an error ID) names the permission and the resource.
 2. Policy Troubleshooter: Google Cloud console → IAM & Admin → Policy Troubleshooter, with the principal, resource and permission; it reads allow policies, deny policies and principal access boundary policies (IV-14).
 3. Bindings inherit down the hierarchy: organization, folders, projects, resources (IV-12). A binding with a condition grants the role only while the condition is true (IV-13), so an expired condition looks like a missing grant.
-4. Basic roles (Owner, Editor, Viewer) are for testing, not production (IV-12).
+4. Basic roles (Owner, Editor, Viewer) are for testing, not production (IV-55).
 
 <details>
 <summary>Google Cloud reads (HUMAN-RUN read-only)</summary>
@@ -221,4 +221,4 @@ fi
 
 Post it with `/jira-update` on `[JIRA-###]`.
 
-**Sources (read 2026-11-14, `docs/aegis/batch12/vendor-facts-infrastructure.md`):** docs.aws.amazon.com IAM policy evaluation logic (IV-01), STS DecodeAuthorizationMessage (IV-02), permissions boundaries (IV-03), the IAM policy simulator (IV-08) · learn.microsoft.com Azure RBAC scope (IV-09), Azure roles and Entra roles (IV-10), RBAC troubleshooting (IV-11) · docs.cloud.google.com IAM overview (IV-12), IAM conditions (IV-13), Policy Troubleshooter (IV-14).
+**Sources (read 2026-11-14, `docs/aegis/batch12/vendor-facts-infrastructure.md`):** docs.aws.amazon.com IAM policy evaluation logic (IV-01), STS DecodeAuthorizationMessage (IV-02), permissions boundaries (IV-03), the IAM policy simulator (IV-08) · learn.microsoft.com Azure RBAC scope (IV-09), Azure roles and Entra roles (IV-10), RBAC troubleshooting (IV-11) · docs.cloud.google.com IAM overview (IV-12, IV-55), IAM conditions (IV-13), Policy Troubleshooter (IV-14).

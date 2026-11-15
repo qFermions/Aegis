@@ -80,7 +80,7 @@ kubectl rollout history deployment/[WORKLOAD_NAME] -n [NAMESPACE]
 2. **OOMKilled:** a limit far below the usage seen in `top` is a sizing fault (Phase E); usage that climbs until the kill is a leak (the app team, with a heap profile).
 3. **ImagePullBackOff:** "not found" is the tag (fix the manifest); "unauthorized" is the pull secret, which must sit in the pod's namespace (IV-25); "too many requests" is the registry's rate limit.
 4. **Pending:** the `FailedScheduling` event says `Insufficient cpu`, `Insufficient memory`, `untolerated taint` (IV-21) or `unbound PersistentVolumeClaim`. The scheduler places pods by requests, not limits (IV-22).
-5. **Probes:** a failing liveness probe restarts the container (IV-18); a failing readiness probe only removes the pod from its Services (IV-18); a slow starter needs a startup probe, not a longer liveness timeout (IV-18).
+5. **Probes:** a failing liveness probe restarts the container (IV-18); a failing readiness probe only removes the pod from its Services (IV-18); a slow starter needs a startup probe, not a longer liveness timeout (IV-57).
 
 ## Phase C: DNS, Service, ingress and certificate (R0)
 
@@ -168,7 +168,7 @@ spec:
               cpu: "250m"
             limits:
               memory: "768Mi"   # above the peak seen in top, below the node's spare memory (IV-23)
-          startupProbe:          # gives a slow start its own time, liveness waits for it (IV-18)
+          startupProbe:          # gives a slow start its own time, liveness waits for it (IV-57)
             httpGet: { path: /healthz, port: 8080 }
             failureThreshold: 30
             periodSeconds: 5
@@ -251,4 +251,4 @@ A drain evicts the node's pods and respects PodDisruptionBudgets (IV-26); `kubec
 
 Post it with `/jira-update` on `[JIRA-###]`.
 
-**Sources (read 2026-11-14, `docs/aegis/batch12/vendor-facts-infrastructure.md`):** kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle (IV-17) · /concepts/configuration/liveness-readiness-startup-probes (IV-18) · /concepts/services-networking/dns-pod-service (IV-19) · /tasks/administer-cluster/dns-debugging-resolution (IV-20) · /concepts/scheduling-eviction/taint-and-toleration (IV-21) · /concepts/configuration/manage-resources-containers (IV-22, IV-23) · /concepts/containers/images (IV-24, IV-25) · /tasks/administer-cluster/safely-drain-node (IV-26) · /concepts/workloads/controllers/deployment (IV-27).
+**Sources (read 2026-11-14, `docs/aegis/batch12/vendor-facts-infrastructure.md`):** kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle (IV-17) · /concepts/configuration/liveness-readiness-startup-probes (IV-18, IV-57) · /concepts/services-networking/dns-pod-service (IV-19) · /tasks/administer-cluster/dns-debugging-resolution (IV-20) · /concepts/scheduling-eviction/taint-and-toleration (IV-21) · /concepts/configuration/manage-resources-containers (IV-22, IV-23) · /concepts/containers/images (IV-24, IV-25) · /tasks/administer-cluster/safely-drain-node (IV-26) · /concepts/workloads/controllers/deployment (IV-27).

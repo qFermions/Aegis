@@ -3962,6 +3962,94 @@
       ]
     },
     {
+      "id": "infra-safe-gcp-binding",
+      "file": "knowledge/infrastructure/safe-changes.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "gcloud-write",
+          "count": 1
+        },
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "infra-safe-k8s-rollback",
+      "file": "knowledge/infrastructure/safe-changes.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "infra-safe-network-rule",
+      "file": "knowledge/infrastructure/safe-changes.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "reversible state change",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "infra-safe-terraform-apply",
+      "file": "knowledge/infrastructure/safe-changes.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "infra-safe-unit-restart",
+      "file": "knowledge/infrastructure/safe-changes.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "redirect-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
       "id": "infrastructure-connect-upgrade",
       "file": "modules/systems/infrastructure.md",
       "kind": "portal",

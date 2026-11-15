@@ -59,7 +59,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
 - **Read-back:** none (R1: no change record)
 **PORTAL ACTION [backup-restore-test-restore-new-portal]:** Only after the restore point is in the ticket and the exact match:
-1. Azure VM: the vault → Backup items → the VM → Restore VM → pick `[SNAPSHOT_ID]` → Restore configuration: Create new → Restore Type: Create new virtual machine (or Restore disks), name `[RESTORE_TARGET]`, in an isolated network (IV-51).
+1. Azure VM: the vault → Backup items → the VM → Restore VM → pick `[SNAPSHOT_ID]` → Restore configuration: Create new → Restore Type: Create new virtual machine (or Restore disks), name `[RESTORE_TARGET]`, in an isolated network (IV-59).
 2. AWS: AWS Backup → the recovery point `[SNAPSHOT_ID]` → Restore → a new resource named `[RESTORE_TARGET]`, in a subnet with no route to production.
 3. Database: the database's point-in-time restore, always to a new server or instance named `[RESTORE_TARGET]`.
 
@@ -148,4 +148,4 @@ fi
 
 Post it with `/jira-update` on `[JIRA-###]`.
 
-**Sources (read 2026-11-14, `docs/aegis/batch12/vendor-facts-infrastructure.md`):** docs.aws.amazon.com AWS Backup restore testing (IV-50) · learn.microsoft.com Restore VMs with Azure Backup (IV-51).
+**Sources (read 2026-11-14, `docs/aegis/batch12/vendor-facts-infrastructure.md`):** docs.aws.amazon.com AWS Backup restore testing (IV-50) · learn.microsoft.com Restore VMs with Azure Backup (IV-51, IV-59).

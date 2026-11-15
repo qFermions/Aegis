@@ -11,6 +11,8 @@ disable-model-invocation: true
 
 ## What to check first
 - Is it a security group (access), M365 group (collab), or DL (mail)? Synced from on-prem AD or cloud-only?
+- **What each membership is checked against** (answer-format section 2, rule b): the lowest group that does the person's job, an owner who approved it, and an end date for temporary access. A membership with no approver on record, or past its end date, is stale access for step 6.
+- **A smell of compromise** (rule a): a member of an admin or privileged group nobody approved, or one added by an account whose owner says they did not add it. Name the escalation to the security lead or the security on-call (they need the group, the member, when and by whom it was added from the audit log, and what the group reaches); nobody calls it harmless before they have looked.
 > **PREVIEW ONLY [group-dynamic-rule-reference]:** `Entra → Groups → [GROUP] → Membership type = Dynamic` is a read-only inspection path here. Changing the rule is a separate group-wide access mutation; route it to an action-specific runbook with a policy export, resolved group ID, exact rule digest, approval, and read-back.
 
 ## Step-by-step (portal first)
@@ -45,6 +47,7 @@ Get-MgUserTransitiveMemberOf -UserId "[UPN]" | Select AdditionalProperties   # e
 - [ ] Member list / user's group list exported for the record
 - [ ] Nested + dynamic memberships accounted for (effective access mapped)
 - [ ] Stale access removed (owner/manager confirmed)
+- [ ] An unapproved privileged member, or one added by an account whose owner did not add it: escalated to the security lead or on-call with the group, member, time and audit entries (rule a)
 - [ ] A member who should never have been there: the logs were read for who added them, who else was added the same way, and what the membership let them open or download, before anyone said how serious it is
 - [ ] Synced groups edited on-prem; change visible in Entra after sync
 

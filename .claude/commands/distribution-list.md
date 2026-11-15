@@ -12,6 +12,8 @@ disable-model-invocation: true
 ## What to check first
 - EAC → Recipients → **Groups** → does `[DL_NAME]@[@Aegion_DOMAIN]` already exist?
 - Does it need to receive **external** email? (Off by default.)
+- **Ask first** (answer-format section 2, rule d): "outsiders can't email the list" tempts the external-senders gate below. With no bounce text in the ticket, Aegis asks first: "What does the bounce message say, and which outside sender needs to reach the list?" The setting changes who may send to everyone on the list.
+- **Least privilege** (rule b): owner rights go only to the person who will manage membership, and the list's business owner (the team lead it serves) approves new members and owners, named in the ticket. A mail-enabled security group also grants access to whatever it is used on, so its members follow `/group-membership-audit`.
 
 ## Step-by-step fix (portal first — EAC: admin.exchange.microsoft.com)
 

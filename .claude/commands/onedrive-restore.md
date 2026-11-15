@@ -12,6 +12,9 @@ disable-model-invocation: true
 ## What to check first
 - What was lost: a version, a deleted file, or many files? When? (Files Restore window = 30 days.)
 - Is it OneDrive (personal) or a SharePoint library (shared)?
+- **Restore to a safe place first** (answer-format section 2, rule c): look before replacing. One file: open the older version from Version history, which does not overwrite the current one (`docs/aegis/batch12/vendor-facts-runbook-rules.md` RR-05), and save it under a new name beside the live file; the owner compares the two, and only then is it restored over the live file, which makes it the current version (RR-06). A whole OneDrive: before Files Restore, copy the files changed after the restore point that are still good into a separate folder, since files created after that point go to the recycle bin (RR-07); the owner checks the result, and a wrong restore is undone by running Restore again (RR-08).
+- **A smell of compromise** (rule a): many files overwritten or renamed with a strange extension, or a ransom note, points to ransomware. Name the escalation to the security lead or the security on-call before any restore (they need the account, the device that synced the changes, when the changes started from the activity chart, and one affected file name); a device that is still syncing can overwrite a restore.
+- **Least privilege** (rule b): the access step 4 gives the manager is admin rights on the whole OneDrive. Who approves it (the leaver's manager, or the data owner for HR or finance data) is named in the ticket, and the access ends on a date written there, before the OneDrive's retention runs out.
 
 ## Step-by-step (portal/web first)
 
@@ -38,6 +41,7 @@ Connect-SPOService -Url "https://[@Aegion_DOMAIN_SP]-admin"          # SharePoin
 - Second-stage recycle bin and retention windows expire — act before the clock runs out.
 
 ## ✅ Verification checklist
+- [ ] The restore was checked as a copy, or the good later files were copied aside, before live data was replaced (rule c)
 - [ ] User confirms the restored file/version/library is correct
 - [ ] (Files Restore) only the intended time range was rolled back
 - [ ] (Departed user) manager has access; data transferred if needed

@@ -30,7 +30,7 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Microsoft | conditional-access | yes | Create a new policy - step by step (129) | conditional-access-enable-portal | pass | ca-policy-create (line 131) comes first |
 | Microsoft | device-wipe | yes | PowerShell - for reference only (47) | device-full-wipe | pass | device-remote-lock-preview (line 26) comes first |
 | Microsoft | device-wipe | yes | Step-by-step fix (portal first) (24) | device-full-wipe-portal | pass | device-remote-lock-preview (line 26) comes first |
-| Microsoft | distribution-list | no | Step-by-step fix (portal first - EAC: admin.exchange.microsoft.com) (16) | distribution-external-senders-portal | pass | distribution-portal (line 18) comes first |
+| Microsoft | distribution-list | no | Step-by-step fix (portal first - EAC: admin.exchange.microsoft.com) (18) | distribution-external-senders-portal | pass | distribution-portal (line 20) comes first |
 | Microsoft | email-quarantine | no | 4. Release the message (56) | quarantine-release-all-portal | pass | quarantine-release-dialog (line 59) comes first |
 | Microsoft | email-quarantine | no | 6. Add sender to allow list (Tenant Allow/Block List - preferred) (109) | quarantine-delete-portal | pass | quarantine-allow-entry (line 110) comes first |
 | Microsoft | email-quarantine | no | PowerShell - release to every original recipient (188) | quarantine-release-all | pass | quarantine-release-dialog (line 59) comes first |
@@ -120,19 +120,19 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Linear | linear-workspace-admin | no | Phase E: Export workspace data (R3) (250) | linear-workspace-admin-export-portal | fail | linear-workspace-admin-export-portal (line 257) has no lighter step before it in this section |
 | Microsoft | mfa-issue | yes | A new way in: the Temporary Access Pass (still step 1) (44) | mfa-temporary-access-pass-portal | pass | a user check line (line 46) comes first |
 | Microsoft | mfa-issue | yes | Require re-register MFA: not the lost-or-replaced-device path (80) | mfa-require-reregister-portal | pass | a lighter step line (line 84) comes first |
-| Microsoft | offboard | yes | STEP 1 - ⚠️ Disable the account (on-prem first - source of authority) (25) | offboard-ad-disable-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 3 - Reset password to long random (78) | offboard-password-reset-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 4 - Clear ALL MFA methods (95) | offboard-clear-mfa-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 7 - Remove ALL licenses (195) | offboard-license-remove-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 8 - Remove from groups, DLs, and shared-mailbox delegation (216) | offboard-group-strip-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 9 - ⚠️ Wipe or Retire the computer (267) | offboard-device-wipe-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 10 - Work phone: wipe, then separately remove deployment targeting (290) | offboard-work-phone-wipe-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 11 - [@Aegion_VOIP]: reclaim the extension (317) | offboard-voip-deactivate-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 12 - Zoom: deactivate (354) | offboard-zoom-portal | pass | offboard-zoom-transfer-portal (line 356) comes first |
-| Microsoft | offboard | yes | STEP 13 - Adobe: remove from product profile (371) | offboard-adobe-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 14 - Remote access: revoke VPN + legacy tools (388) | offboard-vpn-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 15 - Physical/site: alarm code + badge (405) | offboard-physical-portal | pass | the section says why no lighter step applies |
-| Microsoft | offboard | yes | STEP 16 - Document + AD disposal (426) | offboard-disabled-ou-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 1 - ⚠️ Disable the account (on-prem first - source of authority) (27) | offboard-ad-disable-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 3 - Reset password to long random (80) | offboard-password-reset-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 4 - Clear ALL MFA methods (97) | offboard-clear-mfa-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 7 - Remove ALL licenses (197) | offboard-license-remove-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 8 - Remove from groups, DLs, and shared-mailbox delegation (218) | offboard-group-strip-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 9 - ⚠️ Wipe or Retire the computer (269) | offboard-device-wipe-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 10 - Work phone: wipe, then separately remove deployment targeting (292) | offboard-work-phone-wipe-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 11 - [@Aegion_VOIP]: reclaim the extension (319) | offboard-voip-deactivate-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 12 - Zoom: deactivate (356) | offboard-zoom-portal | pass | offboard-zoom-transfer-portal (line 358) comes first |
+| Microsoft | offboard | yes | STEP 13 - Adobe: remove from product profile (373) | offboard-adobe-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 14 - Remote access: revoke VPN + legacy tools (390) | offboard-vpn-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 15 - Physical/site: alarm code + badge (407) | offboard-physical-portal | pass | the section says why no lighter step applies |
+| Microsoft | offboard | yes | STEP 16 - Document + AD disposal (428) | offboard-disabled-ou-portal | pass | the section says why no lighter step applies |
 | Okta | okta-app-assignment | no | Phase D: Unassign the app from one person (R2; R3 with Deactivate User on) (125) | okta-app-assignment-unassign-person-portal | fail | okta-app-assignment-unassign-person-portal (line 129) has no lighter step before it in this section |
 | Okta | okta-app-assignment | no | Okta API, the scale version (HUMAN-RUN, for reference) (173) | okta-app-assignment-unassign-person | pass | okta-app-assignment-assign-person (line 187) comes first |
 | Okta | okta-group-membership | no | Phase D1: Create a group rule (180) | okta-group-membership-rule-create-portal | fail | okta-group-membership-rule-create-portal (line 182) has no lighter step before it in this section |

@@ -12,6 +12,7 @@ disable-model-invocation: true
 ## What to check first
 - Whose mailbox (`[MAILBOX]`), which delegate (`[UPN]`), and what they actually need (read? send? calendar only?).
 - EAC → Recipients → Mailboxes → `[MAILBOX]` → **Delegation** to see current grants.
+- **Least privilege** (answer-format section 2, rule b): start at the lowest right that does the job: a calendar or folder share, or Send on Behalf, before Full Access; Send As only when mail must come from the mailbox itself. Name who approves it (the mailbox owner, or the data owner for an exec, HR or finance mailbox) and write that in the ticket. When several people need the same access, a mail-enabled security group is the better holder: Exchange accepts one for Full Access, and the mailbox then does not auto-map in Outlook (`docs/aegis/batch12/vendor-facts-runbook-rules.md` RR-01). The gates below grant to one person, so a grant to a group is its own reviewed change. Temporary access (cover for leave, a project) gets an end date in the ticket, and the removal gate below runs on that date: the grant has no end date of its own (RR-02).
 
 ## Step-by-step (portal first — EAC)
 
@@ -124,6 +125,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 
 ## ✅ Verification checklist
 - [ ] Delegate has exactly the right(s) requested — no more
+- [ ] The approver is named in the ticket, and temporary access has its end date there (rule b)
 - [ ] Send As / on-behalf produces the correct From line on a test send
 - [ ] Full Access mailbox auto-maps (or re-add profile if delayed)
 - [ ] Audit list reflects only authorized delegates

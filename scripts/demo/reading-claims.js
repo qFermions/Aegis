@@ -54,9 +54,14 @@ function claimsWithoutCalls(text, toolCalls = []) {
     // the noun read-back ("Aegis read-back passed"), and a claim under a condition, say nothing ran
     if (/^read$/i.test(claim[1]) && /^-?back\b/i.test(sentence.slice(claim.index + claim[0].length))) continue;
     if (CONDITIONED.test(sentence.slice(0, claim.index))) continue;
-    const kinds = KINDS.filter((k) => k.re.test(sentence));
-    if (kinds.some((k) => calls.some((c) => k.tool.test(c.tool)))) continue;
-    out.push({ sentence: sentence.slice(0, 160), kinds: kinds.map((k) => k.kind) });
+    // each claimed check in the sentence ("I checked X and looked up Y") needs its own call (found by the networking lane builder)
+    const parts = sentence.slice(claim.index).split(/\s+and\s+(?=(?:(?:also|then|just)\s+)?(?:checked|looked (?:at|up|into|over)|read|reviewed|tested|probed|fetched|confirmed|verified|resolved|queried|inspected|traced|pinged|scanned|went through|pulled up|opened)\b)/i);
+    const unbacked = parts.filter((part) => {
+      const kinds = KINDS.filter((k) => k.re.test(part));
+      return !kinds.some((k) => calls.some((c) => k.tool.test(c.tool)));
+    });
+    if (!unbacked.length) continue;
+    out.push({ sentence: sentence.slice(0, 160), kinds: KINDS.filter((k) => unbacked.some((p) => k.re.test(p))).map((k) => k.kind) });
   }
   return out;
 }

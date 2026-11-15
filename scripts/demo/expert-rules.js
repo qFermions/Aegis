@@ -149,6 +149,9 @@ const SMELLS = Object.freeze({
   rules: /\b(?:inbox|mailbox|forwarding|mail) rules?\b[^.!?\n]{0,80}\b(?:didn't|did not|never|don't recogni[sz]e|unknown|outside|external|strange|suspicious)\b|\bforward\w*\b[^.!?\n]{0,40}\b(?:outside|external|unknown|personal) (?:address|account|domain)\b/i,
   // a suspicious app or OAuth grant
   grant: /\b(?:suspicious|unknown|unrecogni[sz]ed|unexpected|strange|unapproved|malicious)\b[^.!?\n]{0,30}\b(?:oauth |third[- ]party )?(?:apps?|applications?|integrations?|grants?|consents?)\b|\b(?:approved|consented|granted)\b[^.!?\n]{0,30}\b(?:oauth|third[- ]party) (?:app|application)s?\b/i,
+  // network-side smells (found by the networking lane builder): DNS or name servers changed by nobody we know, a rogue
+  // DHCP server, a certificate nobody asked for, a hijacked domain or route
+  network: /\b(?:name ?servers?|NS records?|DNS records?|registrar|MX records?)\b[^.!?\n]{0,60}\b(?:changed|moved|updated|replaced|pointed)\b[^.!?\n]{0,60}\b(?:nobody|no one|not us|didn't|did not|without (?:us|our|anyone))\b|\b(?:DHCP|DNS) server\b[^.!?\n]{0,40}\b(?:we (?:do not|don't|didn't) (?:own|run|know)|unknown|rogue|not ours)\b|\brogue (?:DHCP|DNS|access point|AP)\b|\bcertificates?\b[^.!?\n]{0,60}\b(?:nobody|no one)\b[^.!?\n]{0,30}\b(?:requested|asked for|ordered|issued)\b|\b(?:domain|DNS|BGP|route|prefix)\b[^.!?\n]{0,20}\bhijack\w*/i,
   // an instruction embedded in pasted content
   injection: /\b(?:ignore (?:all |any |the )?(?:previous|prior|above|earlier) instructions|(?:note|message|instruction)s? (?:to|for) (?:the )?(?:AI|assistant|agent|model)|AI (?:assistant|agent)s? (?:reading this|should|must)|system prompt|disregard (?:your|the) (?:rules|instructions)|do not (?:tell|inform|alert) (?:anyone|IT|security|the user))\b/i,
 });

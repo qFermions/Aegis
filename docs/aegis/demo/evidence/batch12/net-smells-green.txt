@@ -1,0 +1,21 @@
+✔ each judgment rule: two fixture pairs on two platforms, the pass answer passes and the fail answer fails (21.194916ms)
+✔ rule e in the judged runner: fix-card-fits fails a card over 150 words and passes one within (1.468083ms)
+✔ rule a applies on a smell and only on a smell (1.944917ms)
+✔ rule a needs who and what they need, not the word security alone (0.14875ms)
+✔ rule b applies to new access only, and asks for an end date only when the access is temporary (0.111667ms)
+✔ rule c: not an account recovery, and a secret needs a revoke before any cleanup (0.096791ms)
+✔ rule d: evidence given means the answer may proceed; advice before the question fails (0.100458ms)
+✔ the mode row: first line names the mode, and the answer holds that mode's parts within its budget (1.649584ms)
+✔ claims of a check match the reading record, or are about what the asker sent (1.809958ms)
+✔ a fetched page is cited with its date, and only a page the record holds is called fetched (0.362416ms)
+✔ the asker reply: no stock opening, claims need calls, and a reply to a reporter for someone else passes (8.245125ms)
+✔ claims: a checklist item, a "Done when" condition and the noun read-back are not claims; a plain claim still is (0.0755ms)
+✔ rule a: network smells of compromise apply; claims: each claimed check in a sentence needs its own call (0.159292ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 77.558458

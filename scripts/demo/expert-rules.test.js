@@ -183,3 +183,18 @@ test('claims: a checklist item, a "Done when" condition and the noun read-back a
   }
   assert.equal(claimsWithoutCalls('Aegis has confirmed the reset event in the Admin log.', []).length, 1, 'a plain claim with no call');
 });
+
+// Found by the networking lane builder: network-side smells of compromise (name servers or DNS records changed by
+// nobody we know, a rogue DHCP server, a certificate nobody requested, a hijacked domain) apply rule a; and a sentence
+// with two claimed checks needs a call for each ("I checked the runbook and looked up your MX records" with only a
+// Read is half unbacked). Wrong implementations: a smell list with no network smells; a claim check that passes the
+// whole sentence on its first kind.
+test('rule a: network smells of compromise apply; claims: each claimed check in a sentence needs its own call', () => {
+  const card = answerOf('e-jamf-pass');
+  for (const ticket of ['Our domain\'s name servers were changed last night and nobody here did it.', 'Laptops on the second floor are getting addresses from a DHCP server we do not own.', 'We got an email that a certificate was issued for our domain, but nobody requested one.', 'I think our domain was hijacked: the website shows someone else\'s page.']) {
+    assert.equal(expert.escalateOnCompromise(card, { ticket }).applies, true, ticket);
+  }
+  const calls = [{ tool: 'Read', path: '.claude/commands/dns-troubleshoot.md', error: false }];
+  assert.equal(claimsWithoutCalls('I checked our runbook and looked up your MX records.', calls).length, 1, 'the DNS half has no call');
+  assert.deepEqual(claimsWithoutCalls('I checked our runbook and looked up your MX records.', [...calls, { tool: 'mcp__aegis-tools__net_dns', target: 'example.com', error: false }]), []);
+});

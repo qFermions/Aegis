@@ -12,7 +12,7 @@
 // shortcut: every reading here is a word list or a shape, so a ticket or an answer worded otherwise reads as "does
 // not apply" or passes; upgrade to a model-judged row when the owner's unseen cases show a miss the lists cannot hold.
 
-const { fixCard, deskBlock, words, userMessageProblems, stepChange, deskOnlyIn } = require('./answer.js');
+const { fixCard, deskBlock, words, sentences, userMessageProblems, stepChange, deskOnlyIn } = require('./answer.js');
 const { namedGates, asks } = require('./catalog.js');
 const checks = require('../eval/judged/checks.js');
 
@@ -100,12 +100,12 @@ function bareTicket(ticket) {
 
 const NUMBERED = /^[ \t>]*(?:[-*+][ \t]+)?(?:\*\*)?\(?\d+[.)]/;
 const BULLET = /^[ \t>]*[-*+•][ \t]+\S/;
-// A sentence that advises: a change verb by the desk's own reader, or a way into an admin console (code review 1,
-// finding 1: "In the admin center, require ..." holds no verb the reader knows, but it walks into a console).
-const ADMIN_PLACE = /\badmin (?:cent(?:er|re)|console|portal)\b|\bportal\b|→|->/i;
-const advises = (sentence) => Boolean(stepChange(sentence)) || ADMIN_PLACE.test(sentence) || FAMILIES.some((f) => f.path.test(sentence));
-// The sentences of a text that are not questions.
-const statements = (text) => String(text).split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter((s) => s && !s.endsWith('?'));
+// A sentence that advises: a change verb by the desk's own reader, or a way into an admin console, read with the same
+// PORTAL_PATH the reply check uses (code review 1, finding 1: "In the admin center, require ..." holds no verb the
+// reader knows, but it walks into a console; code review 2, finding 15: the shared readers, and no bare "portal").
+const advises = (sentence) => Boolean(stepChange(sentence)) || PORTAL_PATH.test(sentence) || FAMILIES.some((f) => f.path.test(sentence));
+// The sentences of a text that are not questions, by the desk's own sentence reader.
+const statements = (text) => sentences(text).filter((s) => !s.trim().endsWith('?'));
 const ASK_FIRST_MAX_WORDS = 60;
 // An answer that asks and holds no Fix card and no gate: a question of its own (not the ticket's question repeated,
 // not a quoted or fenced line: the desk's own question reader).
@@ -128,6 +128,11 @@ function askFirstProblems(answer) {
   if (marks !== 1) out.push(`${marks} question marks, not one`);
   const steps = lines.filter((l) => NUMBERED.test(l)).length;
   if (steps) out.push(`it has ${steps} numbered step${steps === 1 ? '' : 's'}`);
+  // read as isAskFirst reads them (code review 2, finding 4): bulleted lines and sentences that advise are not a question
+  const bullets = lines.filter((l) => BULLET.test(l)).length;
+  if (bullets) out.push(`it has ${bullets} bulleted line${bullets === 1 ? '' : 's'}`);
+  const advice = statements(body).filter(advises);
+  if (advice.length) out.push(`it advises before it asks ("${advice[0].slice(0, 60)}")`);
   if (lines.some((l) => /^[ \t]*#{1,6}[ \t]+\S/.test(l))) out.push('it has a heading');
   const n = words(body);
   if (n > ASK_FIRST_MAX_WORDS) out.push(`${n} words, more than ${ASK_FIRST_MAX_WORDS}`);

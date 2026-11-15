@@ -140,3 +140,19 @@ test('code review 1: advice as bullets or prose with a question is not an ask-fi
     assert.equal(isAskFirst(question, 'The printer is broken.'), true, question);
   }
 });
+
+// Code review round 2, findings 4 and 15 (one class: the ask-first form and isAskFirst read advice the same way). Wrong
+// implementations they catch: a form check that counts only numbered lines (bulleted or prose advice before the
+// question would pass "one question and nothing else" while the desk reads it as advice), and a lead-in that names
+// the portal in passing read as advice.
+test('code review 2: the ask-first form fails bullets and advice the way isAskFirst does; a plain mention of the portal is not advice', () => {
+  const { isAskFirst, askFirst } = require('./senior-rules.js');
+  const ticket = 'The printer is broken.';
+  for (const advice of ['- Restart the printer.\n- Check the cable.\n\nWhat happens exactly?', 'Restart the printer and check the cable. What happens exactly?']) {
+    assert.equal(isAskFirst(advice, ticket), false, advice);
+    assert.equal(askFirst(advice, { ticket }).verdict, 'fail', advice);
+  }
+  const lead = 'I need one detail before we look in the portal. What exactly happens, for whom, and since when?';
+  assert.equal(isAskFirst(lead, ticket), true);
+  assert.equal(askFirst(lead, { ticket }).verdict, 'pass');
+});

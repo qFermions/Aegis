@@ -6,7 +6,7 @@ Eleven steps. Small tickets use few of them; none is skipped on purpose. The ste
 
 - Copy the exact error text, the exception type and the exit code. Paraphrase loses the clue.
 - Ask what changed, and look before you guess: a new commit, a dependency bump, a lockfile change, a runner or base image change, a config or secret change, new input data, a new runtime version. Stale state comes first: a cache, a lockfile out of step with its manifest, an old build artifact.
-- No evidence given: say so ("No evidence given; this is reasoning.") and ask for the one piece that would show the cause (step 4 of `decision-trees.md`, tree 6).
+- No evidence given: say so ("No evidence given; this is reasoning.") and ask for the one piece that would show the cause (`decision-trees.md`, tree 6, question 1).
 
 ## 2. Find where it failed
 

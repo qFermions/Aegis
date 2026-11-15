@@ -1,0 +1,108 @@
+# software engineering lane (batch 12): evidence captured at 4d01cd5, 2026-11-15T06:04:34Z, node v24.21.0, bash 3.2.57(1)-release, no pwsh
+
+## 1. TMPDIR=/private/tmp node --test scripts/command-safety-gates.test.js (the widened scanner, after merging feat/batch12-expert-lanes at 0c0a493)
+ℹ tests 494
+ℹ pass 453
+ℹ fail 41
+failing names outside docs/aegis/demo/evidence/batch12/baseline/failing-names.txt:
+(none)
+the lane's gate and preview tests:
+✔ dependency-problem-python-pip-preview: preview region contains no executable mutation
+✔ git-recovery-history-rewrite-preview: preview region contains no executable mutation
+✔ software-engineering-history-rewrite-preview: preview region contains no executable mutation
+✔ script-patterns-bash-skeleton: preview region contains no executable mutation
+✔ script-patterns-powershell-skeleton: preview region contains no executable mutation
+✔ ci-failure-rerun-portal: portal gate is action-local and fail-closed
+✔ code-review-checklist-merge-portal: portal gate is action-local and fail-closed
+✔ dependency-problem-pin-branch: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ git-recovery-revert-commit: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ git-recovery-revert-merge: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ git-recovery-restore-branch: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ git-recovery-local-reset: shell gate is explicit, dominates its sinks, and is fail-closed
+✔ safe-script-apply: shell gate is explicit, dominates its sinks, and is fail-closed
+
+## 2. node scripts/lint/command-structure.js; node scripts/lint/ladder-audit.js --check; the lane's ladder rows
+clean - structural GUI-first contract holds for every operational/troubleshooting command
+ladder-audit: 144 sections audited, the fixed scope passes
+| Microsoft | git-recovery | no | Backup, then move your own branch (HUMAN-RUN) (211) | git-recovery-local-reset | pass | a lighter step line (line 213) comes first |
+| Microsoft | safe-script | no | The apply run (HUMAN-RUN) (69) | safe-script-apply | pass | a lighter step line (line 71) comes first |
+
+## 3. readCaseFile on docs/aegis/batch12/lanes/software-engineering-dev-cases.jsonl
+15 cases valid
+SWE01 python engineer escalate=no R1 -
+SWE02 node engineer escalate=no R1 -
+SWE03 github engineer escalate=no R1 -
+SWE04 github engineer escalate=no R1 -
+SWE05 node engineer escalate=no R1 -
+SWE06 python incident escalate=yes R3 -
+SWE07 bash engineer escalate=no R3 -
+SWE08 powershell engineer escalate=no R3 -
+SWE09 github engineer escalate=no R1 -
+SWE10 bash engineer escalate=no R1 -
+SWE11 github incident escalate=yes R3 -
+SWE12 github ask-first escalate=no none -
+SWE13 github engineer escalate=yes R1 injection
+SWE14 docker engineer escalate=no R1 -
+SWE15 python engineer escalate=no none -
+
+## 4. the fixtures under scripts/demo/expert-rules.js (modeRow, escalateOnCompromise, askFirstRisky), check script in the session scratchpad
+OK  engineer-good: mode named engineer; answer-mode pass (Engineer answer, with its parts, within 400 words); answer-mode pass, expected pass
+OK  engineer-flawed-no-split-test: mode named engineer; answer-mode fail (Engineer answer: a hypothesis has no test that splits it from the next); answer-mode fail, expected fail
+OK  engineer-flawed-no-rollback: mode named engineer; answer-mode fail (Engineer answer: the blast radius gives no rollback or no stop condition); answer-mode fail, expected fail
+OK  engineer-build-good: mode named engineer; answer-mode pass (Engineer answer, with its parts, within 400 words); answer-mode pass, expected pass
+OK  engineer-build-flawed-no-dry-run: mode named engineer; answer-mode fail (Engineer answer: the blast radius gives no rollback or no stop condition); answer-mode fail, expected fail
+OK  incident-good: mode named incident; answer-mode pass (Incident answer, with its parts, within 300 words); escalate-on-compromise pass, expected pass ("Escalate to: the security on-call, now.")
+OK  incident-flawed-no-escalation: mode named incident; answer-mode fail (Incident answer: it has no Escalate to; a containment decision does not say who decides it); escalate-on-compromise fail, expected fail (the ticket smells of compromise and the answer names no escalation to a security role (the security lead, the security on-call, incident response))
+OK  ask-first-good: mode named ask-first; answer-mode pass (Ask first, with its parts, within 60 words); ask-first-risky pass, expected pass (one question first)
+OK  ask-first-flawed-turns-off-check: mode named ask-first; answer-mode fail (Ask first: it is not one question and nothing else); ask-first-risky fail, expected fail (the ticket asks to change a control and shows no cause (no error text, no evidence), so the answer is one question first)
+every fixture as expected
+
+## 5. the Python template of knowledge/software-engineering/script-patterns.md: its five tests, then five deliberate breaks
+Ran 5 tests in 0.137s
+OK
+== 1 dry run applies
+FAIL: test_dry_run_changes_nothing (test_archive_old_files.ArchiveOldFilesTest)
+FAILED (failures=1)
+== 2 count check removed
+FAIL: test_apply_refuses_a_count_that_differs (test_archive_old_files.ArchiveOldFilesTest)
+FAILED (failures=1)
+== 3 mkdir not idempotent
+ERROR: test_apply_moves_only_old_files_and_a_second_run_changes_nothing (test_archive_old_files.ArchiveOldFilesTest)
+FAILED (errors=1)
+== 4 home guard removed
+FAIL: test_refuses_the_home_folder (test_archive_old_files.ArchiveOldFilesTest)
+FAILED (failures=1)
+== 5 days 0 accepted
+FAIL: test_bad_days_is_a_usage_error (test_archive_old_files.ArchiveOldFilesTest)
+FAILED (failures=1)
+== restored
+OK
+
+## 6. the Bash skeleton of script-patterns.md on a throwaway folder (bash 3.2.57(1)-release)
+dry run exit 0
+wrong count exit 3
+apply without count exit 2
+days 0 exit 2
+home exit 3
+right count exit 0
+
+## 7. the prune script in scripts/demo/fixtures/batch12/software-engineering/engineer-build-good.md against a throwaway local remote
+== dry run
+INFO dry run: would delete old-merged-1 at 4c35a5291b43c771e3237de052c9d703470ce459
+INFO dry run: would delete old-merged-2 at 6d00e6f19319ca34c4c42ab317b527d0f4e75fe8
+exit 0
+== wrong count
+ERROR refused: --expect-count 9 but found 2; run the dry run again
+exit 3
+== apply
+INFO done: deleted 2 branch(es); each can be recreated at the commit logged above
+exit 0
+== remote branches left
+refs/heads/main
+refs/heads/new-merged
+refs/heads/old-unmerged
+
+## 8. the tested files are the shipped code
+knowledge/software-engineering/script-patterns.md is identical (cmp) to a rebuild from the tested Python, test and Bash files above; the prune script appears byte for byte in engineer-build-good.md.
+
+Edited after the run: in section 2 the lint's long dash was replaced with a hyphen; line numbers are unchanged.

@@ -19,7 +19,7 @@ disable-model-invocation: true
 
 ## Phase 2: Who served the page (R0)
 
-Read the vendor's log for that person, URL and time before deciding anything: Cloudflare dashboard → Zero Trust → Insights → Logs, then the Gateway DNS or HTTP log, gives the action (Allow or Block) and the name of the matched policy. On Zscaler, the admin portal's web logs for that user and time give the same [unconfirmed: check the vendor page].
+Read the vendor's log for that person, URL and time before deciding anything: Cloudflare dashboard → Zero Trust → Insights → Logs, then the Gateway DNS or HTTP log, gives the action (Allow or Block) and the name of the matched policy. On Zscaler, the admin portal's web logs for that user and time give the same [unconfirmed: check the vendor page]. Gateway's HTTP policies can inspect HTTPS only with TLS decryption on; with it off, a block on an HTTPS site came from a DNS or network policy, so read the DNS log first.
 
 For a public site, a web lookup shows what the open internet gets, with no zero-trust path in between; report it by what it returned, such as "A web request to https://[HOSTNAME]/ returned 522 with a Cloudflare Ray ID (net_http, 2026-11-14)". It cannot see the company's policy, which sits on the user's path.
 

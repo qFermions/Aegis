@@ -24,7 +24,9 @@ function textFiles() {
 test('all command files have valid description frontmatter', () => {
   const directory = path.join(ROOT, '.claude', 'commands');
   const files = fs.readdirSync(directory).filter(file => file.endsWith('.md')).sort();
-  assert.strictEqual(files.length, 108);
+  // batch 12, software engineering lane: 108 to 114 (debug-stack-trace, ci-failure, dependency-problem,
+  // code-review-checklist, safe-script, git-recovery)
+  assert.strictEqual(files.length, 114);
 
   const failures = [];
   for (const file of files) {

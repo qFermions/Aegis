@@ -85,7 +85,10 @@ test('every SAFETY GATE in every runbook carries an R class on its Reversibility
   // batch 11 (Google, Okta and Jamf lane): 349 to 350, okta-mfa-reset-tac-portal (R1), the Temporary Access Code
   // a lost-phone ticket issues before any reset (answer-format section 2, "A new way in before the old way out");
   // batch 11, task 5 (Microsoft lane): 350 to 351, mfa-temporary-access-pass-portal (R3), the new way in of /mfa-issue
-  assert.equal(all.length, 351, 'the SAFETY GATE count is unchanged');
+  // batch 12, software engineering lane: 351 to 359, ci-failure-rerun-portal, code-review-checklist-merge-portal,
+  // dependency-problem-pin-branch, git-recovery-revert-commit, git-recovery-revert-merge, git-recovery-restore-branch
+  // (R1 each), git-recovery-local-reset (R2) and safe-script-apply (R1 to R3, read as R3)
+  assert.equal(all.length, 359, 'the SAFETY GATE count is unchanged');
   assert.deepEqual(unclassed(DIR), [], 'gates with no R class');
 });
 

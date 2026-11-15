@@ -490,10 +490,56 @@
       ]
     },
     {
+      "id": "ci-failure-cache-delete-preview",
+      "file": ".claude/commands/ci-failure.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "ci-failure-rerun-portal",
+      "file": ".claude/commands/ci-failure.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "ci-failure-token-default-preview",
+      "file": ".claude/commands/ci-failure.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "cicd-command-file-create",
       "file": "modules/automation/cicd.md",
       "kind": "portal",
       "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "code-review-checklist-merge-portal",
+      "file": ".claude/commands/code-review-checklist.md",
+      "kind": "portal",
+      "mode": "gated",
       "sinks": [],
       "impactCategories": [
         "external-system mutation"
@@ -554,6 +600,42 @@
         "external-system mutation",
         "identity-related",
         "permission-related"
+      ]
+    },
+    {
+      "id": "dependency-problem-pin-branch",
+      "file": ".claude/commands/dependency-problem.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "git-write",
+          "count": 2
+        },
+        {
+          "sink": "package-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "dependency-problem-python-pip-preview",
+      "file": ".claude/commands/dependency-problem.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "package-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
       ]
     },
     {
@@ -1499,6 +1581,86 @@
       "sinks": [],
       "impactCategories": [
         "external-system mutation"
+      ]
+    },
+    {
+      "id": "git-recovery-history-rewrite-preview",
+      "file": ".claude/commands/git-recovery.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "git-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "git-recovery-local-reset",
+      "file": ".claude/commands/git-recovery.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "git-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "git-recovery-restore-branch",
+      "file": ".claude/commands/git-recovery.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "git-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "git-recovery-revert-commit",
+      "file": ".claude/commands/git-recovery.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "git-write",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "git-recovery-revert-merge",
+      "file": ".claude/commands/git-recovery.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "git-write",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "reversible state change"
       ]
     },
     {
@@ -8784,6 +8946,22 @@
       "impactCategories": [
         "external-system mutation",
         "local filesystem write",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "safe-script-apply",
+      "file": ".claude/commands/safe-script.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "file-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
         "reversible state change"
       ]
     },

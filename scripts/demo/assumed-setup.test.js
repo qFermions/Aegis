@@ -180,3 +180,20 @@ test('code review 2: a negation takes out only the systems it governs, in the se
     assert.match(r.detail, /Microsoft admin path/);
   }
 });
+
+// Code review round 3, findings 1, 2 and 12 (one class: what a negation takes out). Round 2 ran a negation past commas
+// and stripped any "X is not used" clause, so a cloud-only Microsoft shop ("We don't have Active Directory, just Entra
+// ID and Intune") lost Microsoft; and a curly apostrophe hid "don't". A negation now goes past a comma only while the
+// list goes on with bare system names; "is not used" takes out its clause only when a system is its subject; curly
+// apostrophes read as straight. Wrong implementations they catch: each of those three.
+test('code review 3: a negation stops at a comma unless its list goes on; "is not used" needs a system as its subject; curly apostrophes count', () => {
+  const outlook = 'Outlook will not open for the new starter.';
+  for (const setup of ["We don't have Active Directory, just Entra ID and Intune.", 'No VPN, Microsoft 365 for mail and Teams.', 'Google Workspace, no Okta, Microsoft 365 for Teams calls.', 'Intune manages laptops and personal phones are not used for work.']) {
+    const r = assumedSetup(answer({ steps: MICROSOFT_STEPS }), { setup, ticket: outlook });
+    assert.equal(r.verdict, 'pass', `${setup}: ${r.detail}`);
+  }
+  const ticket = 'A new starter cannot sign in on her first day.';
+  for (const setup of ['Google Workspace only; we don’t use Microsoft 365.', 'Google Workspace. No Microsoft 365, Intune or Entra.']) {
+    assert.equal(assumedSetup(answer({ steps: MICROSOFT_STEPS }), { setup, ticket }).verdict, 'fail', setup);
+  }
+});

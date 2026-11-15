@@ -41,14 +41,27 @@ const NO_PROFILE = /\bno (?:company |customer )?(?:profile|setup)(?: was)? given
 // and 8). A negation word ("no", "not" but not "not-for-profit", "without", "never", "neither", "nor", "lacks",
 // "don't use", "no longer use", "dropped") takes out the rest of its clause up to "but" or a full stop, only when a
 // system is named in its first few words: "No Microsoft 365 or Active Directory" goes, "not local admins on
-// Intune-managed laptops" stays. A clause such as "Microsoft 365 is not used" goes whole.
+// Intune-managed laptops" stays. A clause such as "Microsoft 365 is not used" goes whole when a system is its subject.
+// A negation goes past a comma only while the list goes on with bare system names ("No Microsoft 365, Intune or
+// Entra"), not into "just Entra ID and Intune" or "Microsoft 365 for Teams calls"; a curly apostrophe reads as a
+// straight one (code review 3, findings 1, 2 and 12).
 const NEG_LEAD = /\b(?:no|not(?!-)|without|never|neither|nor|lacks|lacking|(?:do|does|did)(?:n't| not)(?: (?:use|run|have))?|no longer (?:use|run|have)|dropped|got rid of)\b([^.;:!?\n]*?)(?=\sbut\b|[.;:!?\n]|$)/gi;
 const POST_NEG = /[^.;:!?\n,]*\b(?:is|are|was|were)(?: not|n't)(?: \w+)? (?:used|in use|run|deployed|licensed)\b[^.;:!?\n]*/gi;
 const FILLER = /^(?:use|uses|using|run|runs|have|the|any|a|an)$/i;
-const affirmed = (text) => String(text).replace(POST_NEG, ' ').replace(NEG_LEAD, (whole, rest) => {
-  const head = rest.trim().split(/\s+/).filter((w) => !FILLER.test(w)).slice(0, 3).join(' ');
-  return FAMILIES.some((fam) => fam.names(head)) ? ' ' : whole;
-});
+const namesAny = (text) => FAMILIES.some((fam) => fam.names(text));
+const headOf = (text) => text.trim().split(/\s+/).filter((w) => !FILLER.test(w)).slice(0, 3).join(' ');
+const affirmed = (text) => String(text).replace(/[‘’]/g, "'")
+  .replace(POST_NEG, (clause) => (namesAny(clause.split(/\b(?:is|are|was|were)(?: not|n't)\b/i)[0].trim().split(/\s+/).slice(-4).join(' ')) ? ' ' : clause))
+  .replace(NEG_LEAD, (whole, rest) => {
+    const items = rest.split(',');
+    if (!namesAny(headOf(items[0]))) return whole;
+    let n = 1;
+    for (; n < items.length; n += 1) {
+      const item = items[n].trim().replace(/^(?:and|or|nor)\s+/i, '');
+      if (/^(?:just|only|but|instead|we|our|use|uses|using)\b/i.test(item) || item.split(/\s+/).length > 3 || !namesAny(item)) break;
+    }
+    return n < items.length ? ` ,${items.slice(n).join(',')}` : ' ';
+  });
 const NOT_LISTED = /\b(?:does not|doesn't|did not) (?:list|name|include|have)\b|\bnot (?:listed|in the setup|in the profile)\b|\blacks\b|\bmissing\b/i;
 
 // The row "the answer says which setup it assumed". setup: the profile or setup text given with the ticket, or

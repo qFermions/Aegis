@@ -416,3 +416,16 @@ test('code review 3: "nobody at [@Aegion_SITE_2] can", "nobody here can", "nobod
   }
   assert.equal(howWideBeforeWhy(plain, { ticket: "Nobody else is affected but I can't log in to the VPN." }).applies, false);
 });
+
+// Code review round 3, finding 9: after "should not / never have been", round 2 took only able, given, granted and the
+// like, so group membership and roles ("in the Finance group", "a member of the payroll site") were no longer read as
+// access. Wrong implementation it catches: an access-word list without membership and role words.
+test('code review 3: "should never have been in the Finance group" and "a member of" are unwanted access; "pushed" and "closed" are not', () => {
+  const plain = '## Fix\n**What\'s wrong:** x\n**Do this:**\n1. Ask what happens.\n**Done when:** y\n';
+  for (const yes of ['The temp should never have been in the Finance group.', 'He should not have been a member of the payroll site.', 'She should not have been an owner of the board channel.']) {
+    assert.equal(whoElseWhatLeft(plain, { ticket: yes }).applies, true, yes);
+  }
+  for (const not of ['That update should never have been pushed to every laptop.', 'This ticket should not have been closed.']) {
+    assert.equal(whoElseWhatLeft(plain, { ticket: not }).applies, false, not);
+  }
+});

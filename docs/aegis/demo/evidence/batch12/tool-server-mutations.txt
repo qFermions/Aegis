@@ -1,0 +1,15 @@
+# mutation check: a scratch script copies scripts/mcp/aegis-tools, applies one wrong implementation at a time, runs guard.test.js and server.test.js and lists the tests that failed. CAUGHT means at least one test failed; 13 of 13 caught.
+CAUGHT no trailing dot on the query: 1 failing: the connection uses the pinned address even if a second resolution would return a different one (rebinding)
+CAUGHT connect by name, not the pinned address: 5 failing: a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title | a redirect from a public URL to a private one is refused, with no request sent to the private hop | a docs redirect to an off-list host is refused, before that host is resolved | the connection uses the pinned address even if a second resolution would return a different one (rebinding) | net_http follows public redirects, re-resolving each hop, and returns only the selected headers
+CAUGHT check only the first address: 1 failing: a name returning one public and one private address is refused
+CAUGHT re-resolve before the GET: 1 failing: the connection uses the pinned address even if a second resolution would return a different one (rebinding)
+CAUGHT refusals do not count to the cap: 1 failing: the call cap holds: after 30 calls every call returns call_cap_reached
+CAUGHT no GET cap: 1 failing: GET reads at most 4 KB and then stops reading
+CAUGHT allowlist after resolving: 6 failing: a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted | port 22 and 8080 are refused | ftp: and file: are refused | user info is refused | every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content | over real stdio the server writes protocol lines only to stdout and audits to the --audit file
+CAUGHT redirect hops not re-checked: 2 failing: a redirect from a public URL to a private one is refused, with no request sent to the private hop | net_http follows public redirects, re-resolving each hop, and returns only the selected headers
+CAUGHT tls rejectUnauthorized true: 1 failing: a TLS check on a fake expired certificate reports expired true and the verification error
+CAUGHT no marker neutralize: 1 failing: a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title
+CAUGHT no zone-index refusal: 1 failing: every private and special address is refused, every public one passes
+CAUGHT 168.63.129.16 not listed: 2 failing: every private and special address is refused, every public one passes | net_http refuses http://168.63.129.16/ before any query or request
+CAUGHT no embedded IPv4 check for NAT64: 1 failing: every private and special address is refused, every public one passes
+exit 0

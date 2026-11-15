@@ -23,11 +23,14 @@ const test = require('node:test');
 const backends = require('./eval/judged/backends.js');
 const { REPO_ROOT } = require('./eval/judged/paths.js');
 const chat = require('./aegis-chat.js');
+const { TOOL_NAMES, mcpConfig } = require('./mcp/aegis-tools/session.js');
 
 // What every chat session gets, written out from backends.js's exports rather than from the command. The
 // whole ~/aegis-asks folder is denied (review round 1, finding 2), so a chat never reads saved answers. Since batch 11
-// (resumed) it ends with the pinned model, so a chat never runs on the settings file's default model.
-const ISOLATED = (home, model = backends.PINNED_MODEL) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks') }), '--model', model];
+// (resumed) it ends with the pinned model, so a chat never runs on the settings file's default model. Since batch 12
+// backends.sutArgs loads the read-only aegis-tools server by default: its four tool names are allowed and its
+// --mcp-config follows --strict-mcp-config, so the chat, which takes its flags from sutArgs, has them too.
+const ISOLATED = (home, model = backends.PINNED_MODEL) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, ...TOOL_NAMES, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks'), mcpConfig: mcpConfig() }), '--model', model];
 
 function tempDir(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-chat-test-'));

@@ -32,6 +32,7 @@ const test = require('node:test');
 
 const backends = require('./backends.js');
 const { REPO_ROOT } = require('./paths.js');
+const { TOOL_NAMES, mcpConfig } = require('../../mcp/aegis-tools/session.js');
 
 const FAKE = path.join(__dirname, 'fixtures', 'fake-claude.js');
 
@@ -47,11 +48,18 @@ function fake(t, config) {
 
 const kase = (over = {}) => ({ id: 'B1', ticket: 'Ticket text for [UPN].', evidence: '', follow_up: '', ...over });
 
+// Batch 12 changed this test on purpose: the aegis-tools server is on by default, so the default argv gains the four
+// tool names in --allowedTools (never in --tools, which lists built-in tools only) and --mcp-config right after
+// --strict-mcp-config. tools: false is the argv this test pinned before batch 12, byte for byte.
 test('the SUT and judge command lines match the spec; --web moves the web tools to the allowed set', () => {
-  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', ...backends.isolationArgs(), '--model', 'claude-opus-5-5']);
+  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', ...TOOL_NAMES, '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', ...backends.isolationArgs({ mcpConfig: mcpConfig() }), '--model', 'claude-opus-5-5']);
+  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24, tools: false }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', ...backends.isolationArgs(), '--model', 'claude-opus-5-5']);
   const web = backends.sutArgs({ prompt: 'P', maxTurns: 5, web: true });
-  assert.deepEqual(web.slice(web.indexOf('--allowedTools'), web.indexOf('--disallowedTools')), ['--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', 'WebFetch', 'WebSearch']);
-  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', ...backends.isolationArgs(), '--model', 'claude-opus-5-5']);
+  assert.deepEqual(web.slice(web.indexOf('--allowedTools'), web.indexOf('--disallowedTools')), ['--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', 'WebFetch', 'WebSearch', ...TOOL_NAMES]);
+  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', ...backends.isolationArgs({ mcpConfig: mcpConfig() }), '--model', 'claude-opus-5-5']);
+  const webOff = backends.sutArgs({ prompt: 'P', maxTurns: 5, web: true, tools: false });
+  assert.deepEqual(webOff.slice(webOff.indexOf('--allowedTools'), webOff.indexOf('--disallowedTools')), ['--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', 'WebFetch', 'WebSearch']);
+  assert.deepEqual(webOff.slice(webOff.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', ...backends.isolationArgs(), '--model', 'claude-opus-5-5']);
   assert.deepEqual(backends.sutArgs({ prompt: 'F', resume: 'sess-1' }).slice(0, 4), ['-p', 'F', '--resume', 'sess-1']);
   // batch 11 resumed: both end with the pinned model (model-pin.test.js)
   assert.deepEqual(backends.judgeArgs({ prompt: 'J' }), ['-p', 'J', '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...backends.isolationArgs({ judge: true }), '--model', 'claude-opus-5-5']);
@@ -60,12 +68,19 @@ test('the SUT and judge command lines match the spec; --web moves the web tools 
 });
 
 test('both sessions load only the repository\'s own settings, also when resumed, on the web, or with a judge model (batch 6, task 9)', () => {
-  const isolated = (args, label, { judge = false } = {}) => {
+  // batch 12: the system under test gets one MCP server, aegis-tools, unless tools is false; the judge never does
+  const isolated = (args, label, { judge = false, tools = !judge } = {}) => {
     const at = args.indexOf('--setting-sources');
     assert.ok(at > 0, `${label}: --setting-sources`);
     assert.equal(args[at + 1], 'project', `${label}: project settings only, so no user-level CLAUDE.md, plugin, skill or hook`);
-    assert.ok(args.includes('--strict-mcp-config'), `${label}: --strict-mcp-config, so no MCP server`);
-    assert.ok(!args.includes('--mcp-config'), `${label}: no MCP file is given`);
+    assert.ok(args.includes('--strict-mcp-config'), `${label}: --strict-mcp-config, so no MCP server but the one given here`);
+    const mcpAt = args.indexOf('--mcp-config');
+    if (!tools) assert.equal(mcpAt, -1, `${label}: no MCP file is given`);
+    else {
+      assert.equal(mcpAt, args.indexOf('--strict-mcp-config') + 1, `${label}: the one MCP file comes right after --strict-mcp-config`);
+      assert.equal(args.filter((a) => a === '--mcp-config').length, 1, `${label}: one MCP file`);
+      assert.deepEqual(Object.keys(JSON.parse(args[mcpAt + 1]).mcpServers), ['aegis-tools'], `${label}: the aegis-tools server and no other`);
+    }
     assert.ok(!args.includes('--bare'), `${label}: --bare never reads the stored login`);
     const settings = JSON.parse(args[args.indexOf('--settings') + 1]);
     assert.equal(settings.autoMemoryEnabled, false, `${label}: no auto memory`);
@@ -81,8 +96,40 @@ test('both sessions load only the repository\'s own settings, also when resumed,
   isolated(backends.sutArgs({ prompt: 'P' }), 'system under test');
   isolated(backends.sutArgs({ prompt: 'P', resume: 'sess-1' }), 'follow-up turn');
   isolated(backends.sutArgs({ prompt: 'P', web: true }), 'system under test with the web tools');
+  isolated(backends.sutArgs({ prompt: 'P', tools: false }), 'system under test with the tool server off', { tools: false });
   isolated(backends.judgeArgs({ prompt: 'J' }), 'judge', { judge: true });
   isolated(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }), 'judge with a model', { judge: true });
+});
+
+// Batch 12: the aegis-tools server. Wrong implementations it catches: the judge given the tool server (it would grade
+// with network access) or isolationArgs that lets a caller hand it one; the tool names put in --tools, which lists
+// built-in tools only; WebFetch or WebSearch allowed because the tools are on; an off switch that leaves a trace in the
+// argv; an audit file that never reaches the server's arguments; runSut dropping the switch or the file.
+test('the tool server is on by default for the system under test, never for the judge, and off leaves the old argv (batch 12)', async (t) => {
+  const values = (args, flag) => { const out = []; for (let i = args.indexOf(flag) + 1; i > 0 && i < args.length && !args[i].startsWith('--'); i += 1) out.push(args[i]); return out; };
+  const serverOf = (args) => JSON.parse(args[args.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'];
+  const on = backends.sutArgs({ prompt: 'P' });
+  assert.deepEqual(values(on, '--tools'), [...backends.SUT_TOOLS], 'built-in tools only');
+  assert.deepEqual(values(on, '--allowedTools'), [...backends.SUT_TOOLS, ...TOOL_NAMES]);
+  assert.deepEqual(values(on, '--disallowedTools'), ['Bash', ...backends.WEB_TOOLS], 'the web tools stay off');
+  assert.deepEqual(serverOf(on).args, [path.join(REPO_ROOT, 'scripts', 'mcp', 'aegis-tools', 'server.js')], 'no audit file named: the server audits to stderr');
+  const file = path.join(os.tmpdir(), 'aegis-tools-audit.jsonl');
+  assert.deepEqual(serverOf(backends.sutArgs({ prompt: 'P', auditFile: file })).args.slice(1), ['--audit', file]);
+  const off = backends.sutArgs({ prompt: 'P', tools: false, auditFile: file });
+  assert.ok(!off.includes('--mcp-config') && !off.some((a) => a.startsWith('mcp__')), 'off: no server, no tool name, and the audit file is ignored');
+  const web = backends.sutArgs({ prompt: 'P', web: true, resume: 'sess-1' });
+  assert.deepEqual(values(web, '--allowedTools'), [...backends.SUT_TOOLS, ...backends.WEB_TOOLS, ...TOOL_NAMES], 'a follow-up turn with the web tools keeps the server');
+  assert.deepEqual(values(web, '--disallowedTools'), ['Bash']);
+  const judge = backends.judgeArgs({ prompt: 'J' });
+  assert.ok(!judge.includes('--mcp-config') && !judge.some((a) => a.startsWith('mcp__')), 'the judge has no tool server');
+  assert.throws(() => backends.isolationArgs({ judge: true, mcpConfig: mcpConfig() }), /judge/);
+  // runSut passes the switch and the audit file to every turn
+  const f = fake(t, { sut: { answer: 'a', follow_up_answer: 'b' } });
+  await backends.runSut(kase({ follow_up: 'again' }), { ...f.opts, env: { PATH: process.env.PATH }, auditFile: file });
+  await backends.runSut(kase(), { ...f.opts, env: { PATH: process.env.PATH }, tools: false });
+  const [first, second, third] = f.calls();
+  assert.deepEqual([serverOf(first.args).args.slice(1), serverOf(second.args).args.slice(1)], [['--audit', file], ['--audit', file]]);
+  assert.ok(!third.args.includes('--mcp-config'));
 });
 
 test('the exclusions cover the judge\'s temporary folder too, and never the repository\'s own CLAUDE.md (batch 6, code review 1 finding 7)', () => {

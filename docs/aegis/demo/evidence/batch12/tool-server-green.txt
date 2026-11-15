@@ -1,0 +1,98 @@
+# green run after the implementation: node --test scripts/mcp/aegis-tools/*.test.js (node v24.21.0), then the same under the socket tripwire
+# one assertion was added to guard.test.js after the red run: 2606:4700::1111%en0 is refused (the mutation check showed fe80::1%en0 alone did not prove the zone check)
+✔ every private and special address is refused, every public one passes (4.670292ms)
+✔ a name is refused before any query when it is single-label, IP-looking or under a private suffix (3.117167ms)
+✔ a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title (9.357709ms)
+✔ a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted (1.257375ms)
+✔ net_http refuses http://169.254.169.254/ before any query or request (0.275292ms)
+✔ net_http refuses http://169.254.169.254/latest/meta-data/ before any query or request (0.131542ms)
+✔ net_http refuses http://localhost before any query or request (0.142334ms)
+✔ net_http refuses http://10.0.0.1 before any query or request (0.095625ms)
+✔ net_http refuses http://[::1]/ before any query or request (0.107625ms)
+✔ net_http refuses http://2130706433/ before any query or request (0.084125ms)
+✔ net_http refuses http://[::ffff:127.0.0.1]/ before any query or request (0.0985ms)
+✔ net_http refuses http://0x7f.1/ before any query or request (0.102708ms)
+✔ net_http refuses http://127.1/ before any query or request (0.075166ms)
+✔ net_http refuses http://[fd00:ec2::254]/ before any query or request (0.071541ms)
+✔ net_http refuses http://168.63.129.16/ before any query or request (0.062833ms)
+✔ net_http refuses http://[64:ff9b::a9fe:a9fe]/ before any query or request (0.372125ms)
+✔ a name whose resolution returns a private address is refused, with nothing sent (0.273541ms)
+✔ a name returning one public and one private address is refused (0.135167ms)
+✔ a redirect from a public URL to a private one is refused, with no request sent to the private hop (1.428458ms)
+✔ a docs redirect to an off-list host is refused, before that host is resolved (1.118792ms)
+✔ the connection uses the pinned address even if a second resolution would return a different one (rebinding) (1.003958ms)
+✔ port 22 and 8080 are refused (0.600542ms)
+✔ ftp: and file: are refused (0.371666ms)
+✔ user info is refused (0.141125ms)
+✔ GET reads at most 4 KB and then stops reading (0.635375ms)
+✔ the call cap holds: after 30 calls every call returns call_cap_reached (0.687417ms)
+✔ a TLS check on a fake expired certificate reports expired true and the verification error (0.351625ms)
+✔ tools/list lists exactly four tools, each with a strict input schema and no method, body, header or credential argument (0.165292ms)
+✔ an unknown method returns -32601 (0.060958ms)
+✔ malformed JSON returns -32700 (0.11475ms)
+✔ initialize echoes the client protocol version, notifications get no reply, a bad tools/call shape is -32602 (0.123416ms)
+✔ net_dns validates the name, refuses private A and AAAA answers and maps the record types (0.398875ms)
+✔ net_http follows public redirects, re-resolving each hop, and returns only the selected headers (2.169375ms)
+✔ docs_fetch caps bytes and text, says when it cut, and caches by URL (2.77475ms)
+✔ a server that never answers ends in timeout (202.254166ms)
+✔ every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content (0.862375ms)
+✔ the audit file is created with mode 0600 and only appended (1.076083ms)
+✔ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (40.915667ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 319.104292
+exit 0 (plain run)
+
+# the same files under the socket tripwire: NODE_OPTIONS="--require <repo>/scripts/adapters/socket-tripwire.js" node --test scripts/mcp/aegis-tools/*.test.js
+✔ every private and special address is refused, every public one passes (6.052666ms)
+✔ a name is refused before any query when it is single-label, IP-looking or under a private suffix (3.550542ms)
+✔ a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title (10.738542ms)
+✔ a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted (1.195583ms)
+✔ net_http refuses http://169.254.169.254/ before any query or request (0.295791ms)
+✔ net_http refuses http://169.254.169.254/latest/meta-data/ before any query or request (0.14375ms)
+✔ net_http refuses http://localhost before any query or request (0.159ms)
+✔ net_http refuses http://10.0.0.1 before any query or request (0.1165ms)
+✔ net_http refuses http://[::1]/ before any query or request (0.144916ms)
+✔ net_http refuses http://2130706433/ before any query or request (0.125375ms)
+✔ net_http refuses http://[::ffff:127.0.0.1]/ before any query or request (0.129ms)
+✔ net_http refuses http://0x7f.1/ before any query or request (0.114167ms)
+✔ net_http refuses http://127.1/ before any query or request (0.078167ms)
+✔ net_http refuses http://[fd00:ec2::254]/ before any query or request (0.077ms)
+✔ net_http refuses http://168.63.129.16/ before any query or request (0.070416ms)
+✔ net_http refuses http://[64:ff9b::a9fe:a9fe]/ before any query or request (0.083084ms)
+✔ a name whose resolution returns a private address is refused, with nothing sent (0.453792ms)
+✔ a name returning one public and one private address is refused (0.235375ms)
+✔ a redirect from a public URL to a private one is refused, with no request sent to the private hop (2.172667ms)
+✔ a docs redirect to an off-list host is refused, before that host is resolved (1.202791ms)
+✔ the connection uses the pinned address even if a second resolution would return a different one (rebinding) (0.726292ms)
+✔ port 22 and 8080 are refused (0.320292ms)
+✔ ftp: and file: are refused (0.204167ms)
+✔ user info is refused (0.111917ms)
+✔ GET reads at most 4 KB and then stops reading (0.534084ms)
+✔ the call cap holds: after 30 calls every call returns call_cap_reached (0.771792ms)
+✔ a TLS check on a fake expired certificate reports expired true and the verification error (0.389875ms)
+✔ tools/list lists exactly four tools, each with a strict input schema and no method, body, header or credential argument (0.191292ms)
+✔ an unknown method returns -32601 (0.080458ms)
+✔ malformed JSON returns -32700 (0.071042ms)
+✔ initialize echoes the client protocol version, notifications get no reply, a bad tools/call shape is -32602 (0.121292ms)
+✔ net_dns validates the name, refuses private A and AAAA answers and maps the record types (0.392125ms)
+✔ net_http follows public redirects, re-resolving each hop, and returns only the selected headers (1.605834ms)
+✔ docs_fetch caps bytes and text, says when it cut, and caches by URL (2.246166ms)
+✔ a server that never answers ends in timeout (202.2835ms)
+✔ every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content (1.12775ms)
+✔ the audit file is created with mode 0600 and only appended (1.118792ms)
+✔ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (44.996542ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 324.910542
+exit 0

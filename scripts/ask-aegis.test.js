@@ -26,6 +26,7 @@ const test = require('node:test');
 const backends = require('./eval/judged/backends.js');
 const { REPO_ROOT } = require('./eval/judged/paths.js');
 const ask = require('./ask-aegis.js');
+const { TOOL_NAMES, mcpConfig } = require('./mcp/aegis-tools/session.js');
 
 const FAKE = path.join(__dirname, 'eval', 'judged', 'fixtures', 'fake-claude.js');
 const SCRIPT = path.join(__dirname, 'ask-aegis.js');
@@ -102,13 +103,14 @@ test('the session argv is backends.sutArgs plus the budget, and nothing else', a
   const call = calls[0];
   const expected = [...backends.sutArgs({ prompt: call.prompt, runRoot: path.join(s.home, 'aegis-asks'), maxTurns: 40, persist: false }), '--max-budget-usd', '3.00'];
   assert.deepEqual(call.args, expected.filter((a) => a !== call.prompt));
-  // the isolation backends.js builds sits in the argv whole
-  const iso = backends.isolationArgs({ runRoot: path.join(s.home, 'aegis-asks') });
+  // the isolation backends.js builds sits in the argv whole; since batch 12 it carries the read-only aegis-tools
+  // server (sutArgs loads it by default), whose four tool names are allowed and never listed in --tools
+  const iso = backends.isolationArgs({ runRoot: path.join(s.home, 'aegis-asks'), mcpConfig: mcpConfig() });
   const at = call.args.indexOf('--setting-sources');
   assert.deepEqual(call.args.slice(at, at + iso.length), iso);
   for (const flag of ['--tools', '--allowedTools']) {
     const tools = flagValues(call.args, flag);
-    assert.deepEqual(tools, [...backends.SUT_TOOLS], `${flag}: the read-only tools`);
+    assert.deepEqual(tools, flag === '--tools' ? [...backends.SUT_TOOLS] : [...backends.SUT_TOOLS, ...TOOL_NAMES], `${flag}: the read-only tools`);
     for (const bad of ['Bash', 'Edit', 'Write', 'WebFetch', 'WebSearch', 'NotebookEdit']) assert.ok(!tools.includes(bad), `${flag} has no ${bad}`);
   }
   assert.ok(flagValues(call.args, '--disallowedTools').includes('Bash'));

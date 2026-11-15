@@ -73,7 +73,8 @@ test('a dry run prints the plan and the estimate, exits 4, and starts no process
   assert.match(text, /system-under-test sessions: 8, turns: 9 \(1 follow-up turn/);
   assert.match(text, /judge sessions: 8/);
   assert.match(text, /about 22\.50 US dollars .*docs\/evidence\/runtime-smoke\.md\); judge cost is not in the estimate until measured/);
-  assert.match(text, /claude -p <ticket> --output-format stream-json --verbose --max-turns 24 --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent --disallowedTools Bash WebFetch WebSearch/);
+  // batch 12: the system under test loads the read-only aegis-tools server by default, so its four tools are allowed
+  assert.match(text, /claude -p <ticket> --output-format stream-json --verbose --max-turns 24 --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent mcp__aegis-tools__docs_fetch mcp__aegis-tools__net_dns mcp__aegis-tools__net_http mcp__aegis-tools__net_tls --disallowedTools Bash WebFetch WebSearch/);
   assert.match(text, /--tools "" --no-session-persistence/);
   assertNoCaseText(s.out);
 });

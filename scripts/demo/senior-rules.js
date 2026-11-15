@@ -36,11 +36,19 @@ const FAMILIES = Object.freeze([
 const OTHER_SYSTEMS = /\b(?:Slack|GitHub|Linear|Fleet|Zoom|Jira|Meraki|Salesforce|Dropbox|1Password|Duo|Kandji|Zendesk|Notion|Asana|Workday|QuickBooks|Xero|HubSpot|Adobe|AWS|Citrix|Cisco|RingCentral|Webex)\b/i;
 const namesSystem = (ticket) => FAMILIES.some((f) => f.names(String(ticket))) || OTHER_SYSTEMS.test(String(ticket));
 const NO_PROFILE = /\bno (?:company |customer )?(?:profile|setup)(?: was)? given\b/i;
-// What a setup says the company runs: its text with each negated clause taken out ("No Microsoft 365 and no Active
-// Directory", "not Microsoft", "without Intune"), so a system named only to say it is absent is not listed (code
-// review 1, finding 4). A clause runs to the next "and", "but", "or" or punctuation.
-const NEGATED = /\b(?:no|not|without|never|nor)\b[^.,;:!?\n]*?(?=\s(?:and|but|or)\b|[.,;:!?\n]|$)/gi;
-const affirmed = (setup) => String(setup).replace(NEGATED, ' ');
+// What a setup (or an Assumed setup line) says the company runs: its text with each negated list of systems taken out,
+// so a system named only to say it is absent is not listed (code review 1, finding 4; code review 2, findings 1, 2, 3
+// and 8). A negation word ("no", "not" but not "not-for-profit", "without", "never", "neither", "nor", "lacks",
+// "don't use", "no longer use", "dropped") takes out the rest of its clause up to "but" or a full stop, only when a
+// system is named in its first few words: "No Microsoft 365 or Active Directory" goes, "not local admins on
+// Intune-managed laptops" stays. A clause such as "Microsoft 365 is not used" goes whole.
+const NEG_LEAD = /\b(?:no|not(?!-)|without|never|neither|nor|lacks|lacking|(?:do|does|did)(?:n't| not)(?: (?:use|run|have))?|no longer (?:use|run|have)|dropped|got rid of)\b([^.;:!?\n]*?)(?=\sbut\b|[.;:!?\n]|$)/gi;
+const POST_NEG = /[^.;:!?\n,]*\b(?:is|are|was|were)(?: not|n't)(?: \w+)? (?:used|in use|run|deployed|licensed)\b[^.;:!?\n]*/gi;
+const FILLER = /^(?:use|uses|using|run|runs|have|the|any|a|an)$/i;
+const affirmed = (text) => String(text).replace(POST_NEG, ' ').replace(NEG_LEAD, (whole, rest) => {
+  const head = rest.trim().split(/\s+/).filter((w) => !FILLER.test(w)).slice(0, 3).join(' ');
+  return FAMILIES.some((fam) => fam.names(head)) ? ' ' : whole;
+});
 const NOT_LISTED = /\b(?:does not|doesn't|did not) (?:list|name|include|have)\b|\bnot (?:listed|in the setup|in the profile)\b|\blacks\b|\bmissing\b/i;
 
 // The row "the answer says which setup it assumed". setup: the profile or setup text given with the ticket, or
@@ -65,7 +73,8 @@ function assumedSetup(answer, { setup = null, ticket = '' } = {}) {
   const unsaid = lacking.filter((f) => !(line && f.names(line) && NOT_LISTED.test(line)));
   if (unsaid.length) return row('assumed-setup', plain, false, `the ticket is about ${unsaid.map((f) => f.name).join(' and ')}, which the setup given does not list; the Assumed setup line must say which system is missing`);
   const body = deskBlock(answer).body;
-  const foreign = FAMILIES.filter((f) => !listed(f) && f.path.test(body) && !(line && f.names(line)));
+  // a line that names the system to say it is absent does not excuse its path (code review 2, finding 3)
+  const foreign = FAMILIES.filter((f) => !listed(f) && f.path.test(body) && !(line && f.names(affirmed(line))));
   if (foreign.length) return row('assumed-setup', plain, false, `gives ${foreign.map((f) => `a ${f.name} admin path`).join(' and ')}, a system the setup given does not list`);
   return row('assumed-setup', plain, true, line ? `"${line}"` : 'it uses the setup that was given');
 }

@@ -159,3 +159,24 @@ test('code review 1: a system the setup says the company does not run is not lis
   assert.match(msTicket.detail, /Microsoft, which the setup given does not list/);
   assert.equal(assumedSetup(answer({ steps: MICROSOFT_STEPS }), { setup: 'Microsoft 365, but no Intune.', ticket }).verdict, 'pass', 'a negation of another product leaves Microsoft listed');
 });
+
+// Code review round 2, findings 1, 2, 3 and 8 (one class: how the row reads a negation). Wrong implementations they
+// catch: a negation that stops at "or" or does not know "neither", "don't use" or "is not used" (Microsoft would read
+// as listed); one that strips any clause after "not" (a not-for-profit on Microsoft 365, or "not local admins on
+// Intune-managed laptops", would lose Microsoft); and an Assumed setup line that says the system is absent but still
+// excuses its admin path.
+test('code review 2: a negation takes out only the systems it governs, in the setup and in the Assumed setup line', () => {
+  const ticket = 'A new starter cannot sign in on her first day.';
+  for (const setup of ['Google Workspace. No Microsoft 365 or Active Directory.', 'Google Workspace; neither Microsoft 365 nor Entra.', 'Google Workspace, not Microsoft 365 or Intune.', "Google Workspace only; we don't use Microsoft 365.", 'Google Workspace. Microsoft 365 is not used here.', 'Google Workspace. We dropped Microsoft 365 last year.']) {
+    assert.equal(assumedSetup(answer({ steps: MICROSOFT_STEPS }), { setup, ticket }).verdict, 'fail', setup);
+  }
+  for (const setup of ['A not-for-profit on Microsoft 365 Business Premium.', 'Hybrid AD. Staff are not local admins on Intune-managed laptops.', 'Microsoft 365, but no Intune.']) {
+    assert.equal(assumedSetup(answer({ steps: MICROSOFT_STEPS }), { setup, ticket }).verdict, 'pass', setup);
+  }
+  const setup = 'Google Workspace for mail and files. No Microsoft 365.';
+  for (const line of ['Assumed setup: Google Workspace, not Microsoft.', 'Assumed setup: Google Workspace; the setup lacks Microsoft 365.']) {
+    const r = assumedSetup(answer({ first: [line], steps: MICROSOFT_STEPS }), { setup, ticket });
+    assert.equal(r.verdict, 'fail', line);
+    assert.match(r.detail, /Microsoft admin path/);
+  }
+});

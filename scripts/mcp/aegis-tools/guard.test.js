@@ -24,6 +24,9 @@ const PRIVATE = [
   '::', '::1', 'fe80::1', 'febf::1', 'fc00::1', 'fd00:ec2::254', 'ff02::1', '2001:db8::1', '100::1', 'fec0::1',
   '::ffff:127.0.0.1', '::ffff:7f00:1', '::ffff:a9fe:a9fe', '::ffff:10.0.0.1', '64:ff9b::a9fe:a9fe', '64:ff9b::10.0.0.1',
   '64:ff9b:1::1', '::127.0.0.1', '::8.8.8.8', '2002:7f00:1::1', '2002:a9fe:a9fe::1', '2001::1', 'FD00::1', 'fe80::1%en0',
+  // added after the mutation check: a zone index on a global address is refused too (fe80::1%en0 alone did not
+  // show that the zone check exists, since fe80::/10 is refused anyway)
+  '2606:4700::1111%en0',
 ];
 const PUBLIC = [
   '8.8.8.8', '1.1.1.1', '93.184.215.14', '172.15.255.255', '172.32.0.1', '100.63.255.255', '100.128.0.1',

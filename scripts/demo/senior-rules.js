@@ -12,7 +12,7 @@
 // shortcut: every reading here is a word list or a shape, so a ticket or an answer worded otherwise reads as "does
 // not apply" or passes; upgrade to a model-judged row when the owner's unseen cases show a miss the lists cannot hold.
 
-const { fixCard, deskBlock, words, sentences, userMessageProblems, stepChange, deskOnlyIn, MODE_LINE } = require('./answer.js');
+const { fixCard, deskBlock, words, sentences, userMessageProblems, stepChange, deskOnlyIn, MODE_LINE, ASSUMED_LINE } = require('./answer.js');
 const { claimsWithoutCalls } = require('./reading-claims.js');
 const { namedGates, asks } = require('./catalog.js');
 const checks = require('../eval/judged/checks.js');
@@ -67,17 +67,30 @@ const NOT_LISTED = /\b(?:does not|doesn't|did not) (?:list|name|include|have)\b|
 
 // The row "the answer says which setup it assumed". setup: the profile or setup text given with the ticket, or
 // null or '' when none was; ticket: the ticket's text.
+// The Assumed setup line: on a card, the first line under "## Fix" (batch 11); in an Engineer or Incident answer, the
+// line right after the mode line (batch 12, task 4).
+function assumedLineOf(answer) {
+  const card = fixCard(answer);
+  if (card.present) return card.assumed;
+  const lines = deskBlock(answer).body.split(/\r?\n/).filter((l) => l.trim() !== '');
+  const at = lines.length && MODE_LINE.test(lines[0]) ? 1 : 0;
+  const m = lines[at] ? ASSUMED_LINE.exec(lines[at]) : null;
+  return m ? `Assumed setup: ${m[1].replace(/\*\*/g, '').trim()}` : null;
+}
+// The invitation that makes the default never silent (batch 12, task 4).
+const INVITE = /\btell me what your company runs\b/i;
+
 function assumedSetup(answer, { setup = null, ticket = '' } = {}) {
   const plain = 'The answer says which company setup it assumed, and stays inside a setup that was given';
-  const card = fixCard(answer);
-  const line = card.assumed;
+  const line = assumedLineOf(answer);
   const given = typeof setup === 'string' && setup.trim() !== '';
   if (!given) {
     if (namesSystem(ticket)) return row('assumed-setup', plain, true, 'no setup was given, and the ticket names its system');
-    if (!line) return row('assumed-setup', plain, false, 'no setup was given and the ticket names no system, so the first line under "## Fix" must be "Assumed setup: <systems> (no company profile given)."');
+    if (!line) return row('assumed-setup', plain, false, 'no setup was given and the ticket names no system, so the line after the mode line (on a card, the first under "## Fix") must be "Assumed setup: <systems> (no company profile given). Tell me what your company runs for a better answer."');
     const systems = line.replace(/^Assumed setup:/i, '').replace(/\(.*$/, '').trim();
     if (!/[A-Za-z]{2,}/.test(systems)) return row('assumed-setup', plain, false, 'the Assumed setup line names no system');
     if (!NO_PROFILE.test(line)) return row('assumed-setup', plain, false, 'the Assumed setup line does not say "(no company profile given)"');
+    if (!INVITE.test(line)) return row('assumed-setup', plain, false, 'the Assumed setup line does not invite the setup: "Tell me what your company runs for a better answer."');
     return row('assumed-setup', plain, true, `"${line}"`);
   }
   if (line && NO_PROFILE.test(line)) return row('assumed-setup', plain, false, 'the Assumed setup line says no company profile was given, but a setup was given with this ticket');

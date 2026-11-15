@@ -266,7 +266,7 @@ node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start 
 
 Automatic forwarding is a path for mail to leave the organization: the ticket names the approver, the business reason and the narrowest unit that needs it. Read the current value as in E1 and write down `[NOT_BEFORE]` now.
 
-**Ask first** (answer-format section 2, rule d): a request to allow forwarding with no business reason in the ticket gets one question first: "Which mail needs to reach which outside address, and why can a delegate or a shared inbox not do it?" The gate below waits for that answer.
+**Ask first** (answer-format section 2, rule d): a request to allow forwarding with no business reason in the ticket gets one question first: "Which mail needs to reach which outside organization, and why can a delegate or a shared inbox not do it?" The gate below waits for that answer.
 
 <!-- SAFETY GATE [gws-security-posture-forwarding-allow-portal] -->
 - **Target:** [OU_PATH]

@@ -12,6 +12,7 @@ disable-model-invocation: true
 ## What to check first
 - Both MX appliances online with healthy uplinks (Security & SD-WAN → Appliance status) at `[SITE_A]` and `[SITE_B]`.
 - Plan subnets so they **don't overlap** (e.g., Site A 10.1.0.0/24, Site B 10.2.0.0/24).
+- **Least privilege across the tunnel** (answer-format section 2, rule b): advertise only the subnets that need each other, and plan the inter-site firewall as the named flows the sites use (which hosts, which ports) rather than leaving the default allow. The network owner approves that list, named in the ticket; a temporary flow for a migration gets an end date there.
 
 ## Step-by-step (dashboard first)
 

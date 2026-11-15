@@ -18,6 +18,7 @@ disable-model-invocation: true
 - Is a physical desk phone being provisioned, or softphone only?
 - Which site is this user at? If [@Aegion_SITE_2], [@Aegion_SITE_3], or [@Aegion_SITE_4] — confirm that site's migration is live before provisioning. Check `/unite-migration-status`.
 - Does the extension number [EXTENSION] conflict with an existing extension? Verify in the portal before proceeding.
+- **Least privilege** (answer-format section 2, rule b): the call or hunt groups of the role, not a copy of a colleague's; forwarding to an outside number and calling rights beyond the default only when the job needs them. The manager (or the owner of the group's line) approves, named in the ticket, and a temporary or contractor extension has an end date there.
 
 ---
 

@@ -34,6 +34,9 @@ Draft a professional Jira ticket reply for [@Aegion] IT. Ask what the ticket is 
 **Waiting on vendor:**
 > I've escalated this to [vendor] and I'm waiting on their response. Case #: [#]. I'll update you as soon as I hear back.
 
+**A reported security worry (a suspicious message, a sign-in they did not make, a lost device; answer-format section 2, rule a, and section 8):**
+> Thank you for reporting this so quickly. Please don't delete the message, reply to it, or turn the device off for now. Our security team has it and will tell you the next step.
+
 **Closing without resolution (no response):**
 > I'm going to close this ticket as I haven't heard back. If you're still experiencing this issue, please reopen or submit a new ticket and I'll take another look.
 

@@ -18,6 +18,8 @@ disable-model-invocation: true
 - **Which service** (answer-format section 2, "How wide before why"): connected to Wi-Fi but one service will not load, or nothing loads? Does the same device work on a cable or a phone hotspot? One cloud service down on Wi-Fi and on a cable alike is not Wi-Fi: read that vendor's own status page first; with no incident there, name resolution comes next.
 - **Vendor status, read together with the scope:** https://status.meraki.net for the Meraki cloud, and for a site-wide loss the provider's own status page or outage line for `[@Aegion_ISP]` (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-33).
 - **No vendor incident:** the network path and name resolution come before any account-level cause. Association, address (DHCP) and gateway first, then `nslookup` on the name that fails; only then the user's account or certificate for 802.1X.
+- **Ask first** (answer-format section 2, rule d): a request to let one device past the network's security (a MAC allow entry, a splash-page bypass, a weaker security mode, the staff network for a personal device), with no error from the device in the ticket, gets one question first: "What exactly does the device show when it fails to join, and which network is it trying?"
+- **A smell of compromise** (rule a): a network broadcasting the staff network's name from an access point that is not ours (a rogue alert in the dashboard), or an unknown client on the staff network. Name the escalation to the security lead or the security on-call (they need the site, the network name, the access point or client, and when it was seen); nobody calls it harmless before they have looked.
 
 ### 2. "Can't connect" (won't associate)
 

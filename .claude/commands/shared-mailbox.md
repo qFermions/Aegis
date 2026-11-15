@@ -12,6 +12,7 @@ disable-model-invocation: true
 ## What to check first
 - Does the mailbox exist? EAC → Recipients → Mailboxes → filter Shared.
 - What does the user actually need: read, Send As, or Send on Behalf?
+- **Least privilege** (answer-format section 2, rule b): the lowest right that does the job, Send on Behalf before Send As, and Full Access only for someone who must read the mailbox. The mailbox's owner (the team lead it belongs to) approves, named in the ticket. For a whole team, a mail-enabled security group is the better holder of Full Access, though the mailbox then does not auto-map in Outlook (`docs/aegis/batch12/vendor-facts-runbook-rules.md` RR-01); the gates below grant to one person, so a group grant is its own reviewed change. Temporary access gets an end date in the ticket and is removed on that date under `/mailbox-permissions` (RR-02).
 
 ## Step-by-step fix (portal first — EAC: admin.exchange.microsoft.com)
 
@@ -93,6 +94,7 @@ Connect-ExchangeOnline                                            # connect to E
 - [ ] Mailbox shows under Recipients → Shared
 - [ ] Delegate sees it in Outlook (auto-mapped) and can read
 - [ ] Test Send As / Send on Behalf produces the expected From line
+- [ ] Lowest right granted, the mailbox owner's approval named, and any end date in the ticket (rule b)
 - [ ] (Converted) license removed only after confirming <50 GB
 
 ## 📝 Jira-ready note

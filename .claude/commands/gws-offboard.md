@@ -18,6 +18,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Destructive multi-system plan** (Okta → Google Workspace → devices). Route it through an independent, out-of-session review before Phase D runs.
 - Every state change below has its own exact-phrase gate. A phrase never carries into a later phase; "yes" is never a confirmation.
 - Not done until every read-back in the final checklist passes.
+- **Left on bad terms, or a smell of compromise** (answer-format section 2, rule a): a leaver dismissed for cause or who left on bad terms, or an account showing downloads, shares, forwarding or deletions nobody expected, is a security matter as well. Name the escalation to the security lead or the security on-call before Phase A (they need who it is, the last day, what was seen and when, the accounts and devices, and the Okta System Log and Google log events). Phase C preserves before Phase D deletes, so the evidence is kept.
+- **Check the copy before anything is deleted** (rule c): Phase C's Drive transfer lands in a transfer folder in `[MANAGER_UPN]`'s My Drive (`docs/aegis/batch12/vendor-facts-runbook-rules.md` RR-12). `[MANAGER_UPN]` or the data owner checks it against the Phase C file count before Phase D, and the 20-day restore window is the last way back. Who receives the data and the mail is approved by HR or the leaver's manager, named in the ticket (rule b).
 
 ## Inputs needed
 

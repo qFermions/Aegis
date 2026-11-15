@@ -11,6 +11,7 @@ description: Check overall Meraki network health across all sites — dashboard 
 - Organization → Summary report: any red/amber alerts at a glance across all sites
 - Organization → Overview → Network health: devices alerting, offline APs, offline MXes
 - Note which sites are affected before drilling deeper — site-wide vs single-device determines your next move
+- **A smell of compromise** (answer-format section 2, rule a): an intrusion or malware event on an MX, an access point outside ours broadcasting the staff network's name, or a client count or traffic pattern nobody can explain. Name the escalation to the security lead or the security on-call (they need the site, the device, what the dashboard shows and when, and the event entries); nobody calls it harmless before they have looked.
 
 ## Step-by-step fix
 

@@ -18,6 +18,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Five commands, five undo stories, five separate gates: **Lock Computer** is reversible with `[LOCK_PIN]`; **Wipe Computer** (that is Jamf's name for the command — never the older erase wording) is permanent and immediate; **Remove MDM Profile** leaves a partially managed Mac unless the framework goes too; **removeFramework then Remove MDM Profile** is the unmanage; **Lost Mode** is for supervised iPhone and iPad only.
 - Wipe, Remove MDM Profile and unmanage are R3 and, for a stolen or sold Mac, part of a multi-system plan (Apple Business, Okta, Google) — independent out-of-session review before the wipe or unmanage gates run.
 - Every command runs at the Mac's next check-in; a queued command can still be cancelled under the computer's History tab (Pending Commands) until then. Not done until the History read-back shows the command completed.
+- **Lost or stolen, holding company data or a sign-in method** (answer-format section 2, rule a): name the escalation to the security lead or the security on-call with Phase B's lock (they need the Mac's `[SERIAL_NUMBER]`, its user, when it went missing, its last check-in, its FileVault state, and the user's sign-ins since). The wipe in Phase C follows their call; nobody calls the loss harmless before they have looked.
 
 ## Inputs needed
 

@@ -38,4 +38,12 @@ Draft a vendor or Microsoft escalation note for [@Aegion] IT. Ask me what vendor
 > Where I'm stuck: [specific question]
 > Do you want me to handle this or should I loop you in?
 
+**Security escalation (to the security lead, the security on-call or the incident response team; answer-format section 2, rule a):**
+> Possible compromise: [what was seen]
+> First seen: [date/time] · Reported: [date/time]
+> Account or device: [UPN] / [DEVICE_NAME]
+> Evidence: [sign-in log entries / the message with its headers / the alert ID], kept at [location]
+> Done so far: [steps, or none]. Nothing deleted, wiped or reset beyond what is listed.
+> Please confirm who owns this and the next step.
+
 Tell me the vendor and situation and I'll write the full escalation.

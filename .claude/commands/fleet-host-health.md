@@ -28,6 +28,10 @@ Fleet reports what a host last told it, so most "Fleet says this host is wrong" 
 3. **The adapter (R0):** `host --identifier [SERIAL_NUMBER]`, then `host --id [HOST_ID]` for `status`, `seen_time`, `detail_updated_at`, `disk_encryption_enabled`, `mdm.os_settings.disk_encryption.status`, `mdm.enrollment_status`, `mdm.connected_to_fleet` and `issues.failing_policies_count` (commands in the collapsed block below).
 4. **One host or many (R0):** `hosts --status offline` lists every offline host; many hosts offline at once points at the Fleet server or the network, not at this laptop.
 
+**A smell of compromise** (answer-format section 2, rule a): MDM removed or disk encryption turned off on a company host that IT did not touch, or a host record nobody recognises. Name the escalation to the security lead or the security on-call (they need the host, its user, what changed and when from Activity, and its last seen time); nobody calls it harmless before they have looked.
+
+**Re-enrolment with data at stake** (rule c): when Branch C's only way back to MDM is to erase the device and enrol it again, the user's data is copied to a safe place first (a backup the user or IT has opened and checked), and the erase runs under `/fleet-device-actions` or the platform's own runbook, never from here.
+
 ## Step-by-step fix
 
 ### Branch A: Offline, but the laptop is on

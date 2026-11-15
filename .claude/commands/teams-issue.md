@@ -14,6 +14,7 @@ disable-model-invocation: true
 - With no Microsoft incident, the network and name-resolution path come before any account-level cause: the same sign-in on another network (a phone hotspot), then `nslookup` on the address the error names from the affected machine. Works elsewhere, or the name does not resolve: it is `/lan-wan` or DNS, not the account. Only after that read the sign-in logs and the licence.
 - New Teams or classic Teams? New Teams shows a toggle in the top-right. New Teams uses different cache paths and has no `/reset` flag.
 - Is the device compliant in Intune? A non-compliant device can silently break Teams features if a Conditional Access policy is enforcing device compliance.
+- **Ask first** (answer-format section 2, rule d): a request to change a meeting, messaging or external access policy (open external chat, let people bypass the lobby, allow recording), with no message text and no assigned policy read in the ticket, gets one question first: "What exactly does the user see when it fails, and in which meeting or chat?" A policy change touches everyone assigned that policy.
 
 ## Step-by-step fix
 

@@ -16,6 +16,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Creating an account is a billable, identity-creating change: on the Flexible Plan every added user raises the monthly payment automatically. The creation and every group add has its own exact-phrase gate; "yes" is never a confirmation.
 - Two creation paths exist and only one is right for `[@Aegion]` (Phase A). Okta's own guidance is to enable account creation in Okta only when Google accounts are not already created by another process — so never run both paths for one person.
 - Not done until the read-backs in the final checklist pass — and that has to happen before `[START_DATE]`, because Google services can take up to 24 hours to become available to a new user.
+- **Least privilege** (answer-format section 2, rule b): the hire gets the team groups of the role at the Member role, not a copy of a colleague's access and no admin role at creation; the hiring manager (or the owner of what a group opens) approves each group, named in the ticket. A contractor or temporary hire has an end date in the ticket, and `/gws-offboard` runs on it.
 
 ## Inputs needed
 

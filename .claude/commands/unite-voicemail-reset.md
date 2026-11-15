@@ -15,6 +15,7 @@ disable-model-invocation: true
 
 - Is the user locked out of voicemail (forgotten PIN), or is the mailbox full / greeting corrupted?
 - Is voicemail-to-email currently enabled? If yes, confirm the destination email [UPN] is still correct — especially relevant after a name change or role change.
+- **A smell of compromise** (answer-format section 2, rule a): a greeting changed or messages deleted that the user did not do, voicemail-to-email pointing at an address nobody set, calls forwarded out by the voicemail box, or a PIN reset asked for by someone other than the user. Name the escalation to the security lead or the security on-call (they need the extension, what was seen, when, and the call and admin logs), and reset nothing before the requester is verified.
 - Is the user at a site where [@Aegion_VOIP] migration is complete? (Main office = yes. [@Aegion_SITE_2], [@Aegion_SITE_3], [@Aegion_SITE_4] — check `/unite-migration-status` first.)
 
 ---

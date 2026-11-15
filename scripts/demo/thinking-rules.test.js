@@ -405,3 +405,14 @@ test('code review 2: "should not have had to wait" is not unwanted access; "shou
     assert.equal(whoElseWhatLeft(plain, { ticket: yes }).applies, true, yes);
   }
 });
+
+// Code review round 3, finding 3: round 2 allowed one short place of plain words between "nobody" and "can", so a
+// placeholder site, "here", "else" or a three-word place no longer read as an outage. Wrong implementation it catches:
+// a place pattern of plain words only.
+test('code review 3: "nobody at [@Aegion_SITE_2] can", "nobody here can", "nobody else can" and a three-word place read as an outage', () => {
+  const plain = '## Fix\n**What\'s wrong:** x\n**Do this:**\n1. Ask what happens.\n**Done when:** y\n';
+  for (const yes of ['Nobody at [@Aegion_SITE_2] can get into Outlook since 10am.', 'Nobody here can log in to Salesforce this morning.', 'Nobody else can reach the intranet either.', 'No one at the Main Street office can reach the file server.']) {
+    assert.equal(howWideBeforeWhy(plain, { ticket: yes }).applies, true, yes);
+  }
+  assert.equal(howWideBeforeWhy(plain, { ticket: "Nobody else is affected but I can't log in to the VPN." }).applies, false);
+});

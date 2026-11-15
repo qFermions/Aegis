@@ -259,7 +259,7 @@ function whoElseWhatLeft(answer, { ticket = '' } = {}) {
 }
 
 // ── c. How wide before why (task 5c) ────────────────────────────────────────────────────────────
-const OUTAGE = /\b(?:is|are|went|goes|been|gone) down\b|\bdown for\b|\bunreachable\b|\boutage\b|\boffline\b|\bnot loading\b|\b(?:will not|won't|doesn't|does not|cannot|can't|can not) (?:load|connect|reach|be reached|come up)\b|\b(?:no one|nobody|none of us)(?: (?:at|in|on|from) (?:the )?[\w-]+(?: [\w-]+)?)? can (?:reach|open|load|get (?:to|on|onto|into)|connect|sign in|log in)\b|\bunable to (?:reach|connect to|get (?:to|on|onto))\b|\btim(?:e|es|ed|ing) out\b|\bno (?:internet|connection|service|signal|dial tone)\b|\bkeeps? disconnecting\b/i;
+const OUTAGE = /\b(?:is|are|went|goes|been|gone) down\b|\bdown for\b|\bunreachable\b|\boutage\b|\boffline\b|\bnot loading\b|\b(?:will not|won't|doesn't|does not|cannot|can't|can not) (?:load|connect|reach|be reached|come up)\b|\b(?:no one|nobody|none of us)(?: (?:here|else|(?:at|in|on|from) (?:the )?(?:\[[^\]\n]{1,40}\]|[\w-]+(?: [\w-]+){0,2})))? can (?:reach|open|load|get (?:to|on|onto|into)|connect|sign in|log in)\b|\bunable to (?:reach|connect to|get (?:to|on|onto))\b|\btim(?:e|es|ed|ing) out\b|\bno (?:internet|connection|service|signal|dial tone)\b|\bkeeps? disconnecting\b/i;
 const SCOPE = Object.freeze([
   /\bone (?:person|user)\b|\bjust (?:you|one|them|her|him)\b|\beveryone\b|\beverybody\b|\ball (?:users|staff)\b|\bother (?:people|users|staff|colleagues)\b|\banyone else\b/i,
   /\bone site\b|\ball sites\b|\bone (?:office|location|floor)\b|\bother (?:offices|locations)\b|\bevery (?:site|office)\b|\banother (?:site|office)\b|\bat one site or all\b/i,

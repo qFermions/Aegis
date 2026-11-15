@@ -153,7 +153,7 @@ node scripts/eval/judged-eval.js calibrate --sheet <filled sheet.csv> --run <res
   `claude-opus-5-5` unless given (a full model id, not an alias such as `opus`), so no session takes the default
   model in the settings file. Each case keeps
   the model its sessions reported; a case whose session reports another model, or none, is INCONCLUSIVE, the run
-  stops there (no later case would count), and report.md counts those cases (batch 11, resumed).
+  stops there, either way (no later case would count), and report.md counts those cases (batch 11, resumed).
 - Options (to run a subset, put only those cases in the file): `--max-turns N` (default 24); `--timeout-ms N` (default 600000 per process);
   `--web` (adds WebFetch and WebSearch to the system under test); `--baseline
   <results.json>` (lists the cases that passed there and do not now); `--calibration-sheet N`;

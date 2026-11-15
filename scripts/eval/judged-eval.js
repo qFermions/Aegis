@@ -231,7 +231,7 @@ async function runCommand(opts, io, deps) {
   let offModel = null;
   for (const c of list) {
     if (offModel) {
-      const r = notRunRecord(c, `not run: ${offModel} ran on another model than the pinned one, so no later case would count`);
+      const r = notRunRecord(c, `not run: ${offModel} was not measured on the pinned model (its session ran on another model or did not say which), so no later case would count`);
       results.push(r);
       notRun += 1;
       io.out(report.terminalLine(r));
@@ -270,7 +270,7 @@ async function runCommand(opts, io, deps) {
     dearest = Math.max(dearest, caseCost);
   }
   const limitText = config.budget_usd === null ? '' : `the run's limit of ${config.budget_usd.toFixed(2)} US dollars`;
-  const notRunWhy = offModel ? `${offModel} ran on another model than the pinned one, so no later case would count` : (costUnknown ? `a session stopped with no cost reported, so ${limitText} cannot be held` : `${limitText} would have been passed`);
+  const notRunWhy = offModel ? `${offModel} was not measured on the pinned model (its session ran on another model or did not say which), so no later case would count` : (costUnknown ? `a session stopped with no cost reported, so ${limitText} cannot be held` : `${limitText} would have been passed`);
   if (notRun) io.out(`${notRun} case(s) did not run: ${notRunWhy}; each is INCONCLUSIVE in the results`);
   const summary = report.summarize(results, { baseline });
   const uniq = (xs) => [...new Set(xs.filter(Boolean))];

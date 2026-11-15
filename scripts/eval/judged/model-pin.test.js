@@ -159,7 +159,7 @@ test('judged-eval: a session that reports another model than the one asked for m
   assert.match(json.cases[0].reasons[0], /system under test ran on claude-fable-5-2, not the pinned claude-sonnet-5-5/);
   assert.equal(json.cases[1].sut.state, 'NOT_RUN');
   assert.equal(json.cases[1].verdict, 'INCONCLUSIVE');
-  assert.match(json.cases[1].reasons[0], /not run: DEV01 ran on another model than the pinned one, so no later case would count/);
+  assert.match(json.cases[1].reasons[0], /not run: DEV01 was not measured on the pinned model \(its session ran on another model or did not say which\), so no later case would count/);
   assert.deepEqual(json.summary.off_model, { count: 1, ids: ['DEV01'] });
   assert.match(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8'), /\| Cases that ran on another model than the pinned one \(each is INCONCLUSIVE\) \| 1 \(DEV01\) \|/);
 });
@@ -190,5 +190,5 @@ test('code review 2: a run stops after its first case on another model; an alias
   const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
   assert.match(json.cases[0].reasons[0], /ran on claude-opus-5-5, not the pinned opus\[1m\]/);
   assert.deepEqual(json.cases.slice(1).map((c) => c.sut.state), ['NOT_RUN']);
-  assert.ok(s.out.some((l) => /did not run: DEV01 ran on another model than the pinned one/.test(l)), s.out.join('\n'));
+  assert.ok(s.out.some((l) => /did not run: DEV01 was not measured on the pinned model \(its session ran on another model or did not say which\)/.test(l)), s.out.join('\n'));
 });

@@ -59,8 +59,13 @@ function labeledParts(section, labels) {
   const order = [];
   const parts = {};
   let current = null;
+  let fence = null;
   for (const line of String(section).split(/\r?\n/)) {
-    const found = labels.find((l) => l.re.test(line));
+    // a fenced code block is code a person applies: a key in it ("options:") is never a part label (found by the
+    // infrastructure lane builder)
+    const mark = /^[ \t]*(`{3,}|~{3,})/.exec(line);
+    if (mark && (fence === null || mark[1][0] === fence[0] && mark[1].length >= fence.length)) fence = fence === null ? mark[1] : null;
+    const found = fence === null && !mark ? labels.find((l) => l.re.test(line)) : null;
     if (found) {
       current = found.key;
       if (!order.includes(current)) order.push(current);

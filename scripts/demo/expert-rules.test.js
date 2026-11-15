@@ -198,3 +198,11 @@ test('rule a: network smells of compromise apply; claims: each claimed check in 
   assert.equal(claimsWithoutCalls('I checked our runbook and looked up your MX records.', calls).length, 1, 'the DNS half has no call');
   assert.deepEqual(claimsWithoutCalls('I checked our runbook and looked up your MX records.', [...calls, { tool: 'mcp__aegis-tools__net_dns', target: 'example.com', error: false }]), []);
 });
+
+// Found by the infrastructure lane builder: the mode row read a label inside a code block (a YAML "options:" key) as
+// the Options part and failed a good answer. Wrong implementation: a part reader that does not skip fenced code.
+test('the mode row reads no part label inside a fenced code block', () => {
+  const yaml = ['```yaml', 'options:', '  - name: ndots', '    value: "2"', 'recommendation: none', '```'].join('\n');
+  const answer = answerOf('a-aws-fail').replace('**Blast radius:**', `${yaml}\n**Blast radius:**`);
+  assert.equal(expert.modeRow(answer, { ticket: 'x' }).verdict, 'pass', expert.modeRow(answer, { ticket: 'x' }).detail);
+});

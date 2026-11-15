@@ -20,6 +20,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Every state change below has its own exact-phrase gate. A phrase never carries into a later phase; "yes" is never a confirmation.
 - Every change phase ends with a read-only connector read-back (`scripts/adapters/okta-client.js`: GET only, it cannot change anything in Okta). A read-back proves a change only against the pre-state Phase A recorded: a user who already read SUSPENDED passes `verify-status --status SUSPENDED` with nothing changed.
 - Not done until every read-back in the final checklist passes.
+- **A smell of compromise, or a leaver on bad terms** (answer-format section 2, rule a): sign-ins or pushes the user did not make, a password reset nobody asked for, or a leaver dismissed for cause. Suspend (Phase D) is the containment, and the escalation goes to the security lead or the security on-call with it (they need who it is, what was seen and when, the apps the user holds, and the System Log entries). Nothing is deactivated or deleted before they have looked, so the evidence and the app data are kept.
 
 ## Inputs needed
 

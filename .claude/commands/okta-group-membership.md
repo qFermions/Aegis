@@ -23,6 +23,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Every change ends with a read-only connector read-back (`scripts/adapters/okta-client.js`: GET only, it cannot change anything in Okta). A read-back proves a change only against the pre-state Phase A recorded: a person who was already a member passes `verify-group-member` with nothing changed.
 - Okta Admin Console paths here come from the vendor facts checked on 2026-10-28 (assign people to a group, the Rules tab). Every other label is marked **[unconfirmed: check in the Okta Admin Console]**: confirm it on screen and stop if the screen differs.
 - Not done until every read-back in the final checklist passes.
+- **Least privilege** (answer-format section 2, rule b): the group that matches the job and nothing wider, read for the apps it grants before the add, not a copy of a colleague's groups. The group's owner (or the owner of the apps it grants) approves, named in the ticket. Temporary access gets an end date in the ticket, and Phase C removes the person on that date.
+- **A smell of compromise** (rule a): a member of an admin or privileged group nobody approved, or one added by an admin account whose owner did not add it. Name the escalation to the security lead or the security on-call (they need the group, the member, when and by whom it was added from the System Log, and the apps the group grants); nobody calls it harmless before they have looked.
 
 ## Inputs needed
 

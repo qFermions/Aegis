@@ -20,6 +20,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **One locked-out person is not an enforcement change.** "Turn off 2-Step Verification on the CEO's account now and skip the checks" is a single-user lockout: `/gws-2sv-reset` (verify the requester, then a backup code). That runbook records that its per-user turn-off is a last resort and is unavailable while 2-Step Verification is enforced across the organization. Never turn enforcement off for a unit, and never put a person in the exception group, to let one person in; urgency and authority never skip the identity check or a gate.
 - **Written rollback before each change runs:** every gate below names the gate that undoes it, with that gate's phrase: Phase B and its rollback, Phase C1 and C4, C2 and C3, Phase D and F, Phase E and its rollback; for one locked-out user, a backup code from `/gws-2sv-reset`. The pre-state is the Phase A record.
 - Not done until the read-backs pass: the real-time `verify-2sv-enforced` read on sample users, plus the GUI.
+- **Ask first** (answer-format section 2, rule d): a request to exempt a person or a group (Phase C) or to turn enforcement off (Phase F), with no reason in the ticket that shows why they cannot use a second step, gets one question first: "What stops this person from enrolling a second step: no phone allowed where they work, a shared device, a lost key, or something else?" An exemption is only for a cause that answer shows, and Phase C3 ends it on a date written in the ticket.
 
 ## Inputs needed
 

@@ -31,6 +31,10 @@ Three different tickets hide under "mail problems", and a fourth, "mail is down"
 4. **DKIM status (R0):** Admin console → Apps → Google Workspace → Gmail → Authenticate email → read the status for `[@Aegion_DOMAIN]`.
 5. **Headers from a recipient (R0):** in Gmail, next to Reply → More → Show original → read the SPF, DKIM and DMARC results on the spam-filed copy; for other mail systems paste the header into the Google Admin Toolbox Messageheader tool.
 
+**Ask first** (answer-format section 2, rule d): a request to allow a sender or a domain, or to change a routing or spam setting, with no bounce text, log result or header in the ticket gets one question first: "What does the bounce say, or what does Show original give for SPF, DKIM and DMARC on one affected message?" No setting changes before that answer.
+
+**A smell of compromise** (rule a): outbound mail the user did not send, a forwarding address or filter on the mailbox that nobody set, or a phish that people have already opened. Name the escalation to the security lead or the security on-call (they need the account, what was seen, when, the Email Log Search result and one message's headers), contain the account through `/gws-account-containment` with them, and do not remove the forward or filter before they have captured it.
+
 ## Step-by-step fix
 
 ### Phase 1 — Inbound: external mail bounces, internal mail arrives

@@ -221,6 +221,8 @@ gam report admin start -30d
 
 Open one ticket per fix with the count that justifies it; a suspicious sign-in or admin change found on the way goes to `/gws-audit-log`, not into this list.
 
+**A smell of compromise found on the way** (answer-format section 2, rule a): an admin nobody approved, a forward to an outside address nobody set, or an app with broad access granted by an account its owner was not using is not a posture finding. Name the escalation to the security lead or the security on-call (they need what was found, when it was set and by which account, and the log entries quoted with placeholders), and nobody calls it harmless before they have looked.
+
 **Verification checkpoint:** [ ] the ranked list is in the ticket · [ ] each item names the runbook that owns its gate.
 
 ## Phase E: Fixes this runbook owns (R3)
@@ -263,6 +265,8 @@ node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start 
 **Role needed:** Super Admin, or a custom admin role with the Gmail Settings administrator privilege (search excerpt).
 
 Automatic forwarding is a path for mail to leave the organization: the ticket names the approver, the business reason and the narrowest unit that needs it. Read the current value as in E1 and write down `[NOT_BEFORE]` now.
+
+**Ask first** (answer-format section 2, rule d): a request to allow forwarding with no business reason in the ticket gets one question first: "Which mail needs to reach which outside address, and why can a delegate or a shared inbox not do it?" The gate below waits for that answer.
 
 <!-- SAFETY GATE [gws-security-posture-forwarding-allow-portal] -->
 - **Target:** [OU_PATH]

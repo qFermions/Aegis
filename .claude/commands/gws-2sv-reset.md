@@ -18,6 +18,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Verify the requester first — a "lost my phone, need codes" request is a textbook account-takeover attempt — using the agreed identity check **[org gap — confirm the identity-verification rule]**. Backup codes, like passwords, never go into the ticket.
 - Every state change below has its own exact phrase; "yes" is never a confirmation.
 - **A lost or replaced phone or key follows one order** (answer-format section 2, "A new way in before the old way out"): identity first, then a backup code handed over on a verified channel, then the user registers the new second step, and only then is the old one removed. The section "Lost or replaced phone or key" below fixes that order. Phase E is not that path: it takes the old way out before a new way in exists.
+- **A smell of compromise** (answer-format section 2, rule a): sign-ins or 2SV prompts the user did not make, a request the real user did not send, or a lost or stolen phone or key that holds the second step. Name the escalation to the security lead or the security on-call (they need what was seen, when, `[USER@DOMAIN.COM]`, the device, and the User log events); containment goes through `/gws-account-containment` with them, and nobody calls it harmless before they have looked.
 
 ## Inputs needed
 

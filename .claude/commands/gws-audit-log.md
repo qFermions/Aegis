@@ -17,6 +17,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Needs the Audit & Investigation administrator privilege for Reporting → Audit and investigation; the Security center administrator privilege for the investigation tool (edition-dependent).
 - Administrators cannot delete log event data or change how long it is kept. Admin, User and Drive log events are retained for 6 months.
 - Log exports contain real names, addresses and IPs: quote findings in the ticket with placeholders, never paste raw rows.
+- **A read can show a smell of compromise** (answer-format section 2, rule a): a sign-in the user did not make, a role grant or password reset nobody approved, a file shared outside by an account its owner was not using. Name the escalation to the security lead or the security on-call (they need what the log shows, when, which account, and the entries quoted with placeholders); the reads here become their evidence, and nobody calls it harmless before they have looked.
 
 ## Inputs needed
 

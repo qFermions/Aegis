@@ -173,3 +173,13 @@ test('the asker reply: no stock opening, claims need calls, and a reply to a rep
   const reporter = 'Her starting password is the likely cause, not her typing.\n\nYou can tell her a technician will call her on the number on file and give her a new temporary password; she will choose her own at that first sign-in.';
   assert.deepEqual(replyProblems(reporter, { ticket: 'A new starter cannot sign in on her first day. She says the password is wrong.' }), []);
 });
+
+// Found by replaying the check over batch 11's saved real answers before any batch 12 run used it: a checklist item, a
+// "Done when" condition and the noun "read-back" are not claims that a check ran. Wrong implementations: a check that
+// fails these three; a fix that skips every line naming Aegis (the plain claim below must still fail).
+test('claims: a checklist item, a "Done when" condition and the noun read-back are not claims; a plain claim still is', () => {
+  for (const line of ['- [ ] Aegis has confirmed the reset event in the Admin log', '**Done when:** all 6 invoices are in [SHARED_MAILBOX] and Aegis has confirmed each release.', '- Checklist: pre-state copied to ticket · approval recorded · Aegis read-back passed.', 'Once Aegis has verified the new method, tell the user.']) {
+    assert.deepEqual(claimsWithoutCalls(line, []), [], line);
+  }
+  assert.equal(claimsWithoutCalls('Aegis has confirmed the reset event in the Admin log.', []).length, 1, 'a plain claim with no call');
+});

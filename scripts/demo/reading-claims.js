@@ -22,6 +22,12 @@
 const CLAIM = /\b(?:I|I've|I have|we|we've|we have|Aegis|Aegis has)\s+(?:(?:also|just|already|now|first|then|quickly|briefly)\s+){0,2}(checked|looked (?:at|up|into|over)|read|re-?read|reviewed|tested|probed|fetched|confirmed|verified|resolved|queried|inspected|traced|pinged|scanned|went through|pulled up|opened)\b/i;
 // "I read this as a DNS problem" is a reading of the problem, not a check.
 const READ_AS = /\bread (?:it|this|that|these|those|the \w+(?: \w+)?) as\b/i;
+// What is not a claim that a check ran (found by replaying the check over batch 11's saved real answers): a checklist
+// item, a "Done when" or "Stop if" line (a future state), a sentence whose claim sits under a condition ("once", "when",
+// "after", "until", "if", "before"), and the noun "read-back".
+const CHECKLIST = /^\s*(?:[-*+]\s*)?\[[ xX]?\]/;
+const FUTURE_PART = /^\s*(?:Done when|Stop if)\s*:/i;
+const CONDITIONED = /\b(?:once|when|after|until|if|before|as soon as)\b[^.!?]{0,80}$/i;
 const ASKER_SENT = /\b(?:what you (?:wrote|sent|pasted|shared|attached|described|said|included)|(?:you|that you) (?:sent|pasted|shared|attached|included|gave|forwarded|wrote)|your (?:message|ticket|note|paste|screenshot|logs?|error(?: text| message)?|output|email|report|description|plan|trace|stack trace|headers?|bounce(?: message)?|attachment)|(?:in|from) (?:the|your) (?:ticket|message|paste|screenshot)|the (?:error|message|text|screenshot|log|output|headers?|bounce|trace|stack trace|plan|paste|attachment) (?:in|from) (?:the|your) (?:ticket|message|request))\b/i;
 const KINDS = [
   { kind: 'docs', re: /\b(?:documentation|docs|guide|guidance|article|help (?:page|pages|article|center|centre)|support (?:page|pages|article)|knowledge base|advisory|advisories|release notes|NVD|KEV|catalog(?:ue)?|RFC|reference page|vendor(?:'s)? page)\b/i, tool: /(?:^|__)docs_fetch$/ },
@@ -33,7 +39,9 @@ const KINDS = [
 
 // Sentences of a text, line by line (a list line never runs into the next one).
 const sentencesOf = (text) => String(text).replace(/[‘’]/g, "'").split(/\r?\n/)
-  .flatMap((line) => line.replace(/[*_`]/g, '').split(/(?<=[.!?])\s+(?=\S)/)).map((s) => s.trim()).filter(Boolean);
+  .map((line) => line.replace(/[*_`]/g, ''))
+  .filter((line) => !CHECKLIST.test(line) && !FUTURE_PART.test(line))
+  .flatMap((line) => line.split(/(?<=[.!?])\s+(?=\S)/)).map((s) => s.trim()).filter(Boolean);
 
 const ok = (call) => Boolean(call) && typeof call.tool === 'string' && call.error !== true;
 
@@ -41,7 +49,11 @@ function claimsWithoutCalls(text, toolCalls = []) {
   const calls = Array.isArray(toolCalls) ? toolCalls.filter(ok) : [];
   const out = [];
   for (const sentence of sentencesOf(text)) {
-    if (!CLAIM.test(sentence) || READ_AS.test(sentence) || ASKER_SENT.test(sentence)) continue;
+    const claim = CLAIM.exec(sentence);
+    if (!claim || READ_AS.test(sentence) || ASKER_SENT.test(sentence)) continue;
+    // the noun read-back ("Aegis read-back passed"), and a claim under a condition, say nothing ran
+    if (/^read$/i.test(claim[1]) && /^-?back\b/i.test(sentence.slice(claim.index + claim[0].length))) continue;
+    if (CONDITIONED.test(sentence.slice(0, claim.index))) continue;
     const kinds = KINDS.filter((k) => k.re.test(sentence));
     if (kinds.some((k) => calls.some((c) => k.tool.test(c.tool)))) continue;
     out.push({ sentence: sentence.slice(0, 160), kinds: kinds.map((k) => k.kind) });

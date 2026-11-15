@@ -24,7 +24,9 @@ function textFiles() {
 test('all command files have valid description frontmatter', () => {
   const directory = path.join(ROOT, '.claude', 'commands');
   const files = fs.readdirSync(directory).filter(file => file.endsWith('.md')).sort();
-  assert.strictEqual(files.length, 108);
+  // batch 12 (security lane): 108 to 115, incident-triage, identity-compromise, leaked-key, phishing-bec,
+  // ransomware-first-hour, oauth-app-review, vuln-triage
+  assert.strictEqual(files.length, 115);
 
   const failures = [];
   for (const file of files) {

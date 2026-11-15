@@ -44,6 +44,8 @@ const MIXED_STATE_COMMANDS = [
   // G3: GitHub and Okta (batch G3)
   'github-repo-access', 'github-branch-protection', 'github-org-security', 'github-offboard-member', 'github-security-alerts',
   'okta-group-membership',
+  // batch 12: security lane
+  'incident-triage', 'identity-compromise', 'leaked-key', 'phishing-bec', 'ransomware-first-hour', 'oauth-app-review', 'vuln-triage',
 ];
 
 const REFERENCE_BOUNDARIES = [

@@ -1,0 +1,20 @@
+(Pre-commit run of batch 12 task 11, on the staged tree; em dashes in tool output written as hyphens, as the baseline does.)
+$ node --test scripts/start-aegis.test.js scripts/aegis-chat.test.js scripts/markdown-links.test.js scripts/command-safety-gates.test.js scripts/ask-aegis.test.js scripts/repository-structure.test.js scripts/command-policy.test.js scripts/pre-commit-check.test.js
+exit 1
+ℹ tests 602
+ℹ pass 561
+ℹ fail 41
+ℹ skipped 0
+✔ public claims distinguish behavioral policy from deterministic controls (0.673292ms)
+✔ visitor setup lines are exact, README-only, unmarked and counted (0.067458ms)
+✔ relative Markdown file links resolve inside the repository (91.512459ms)
+$ node <scratchpad>/names.js <the run above> docs/aegis/demo/evidence/batch12/baseline/failing-names.txt
+41 failing names; 41 in the baseline's 41; 0 new
+pwsh on this Mac: none (the 41 baseline failures are the PowerShell-only tests)
+$ node scripts/pre-commit-check.js   (staged files)
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0
+$ node scripts/harness/release-boundary-check.js
+RELEASE BOUNDARY: PASS - 0 boundary paths clean, private stores ignored, workflows secret-free
+exit 0

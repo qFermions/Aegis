@@ -73,7 +73,8 @@ test('a dry run prints the plan and the estimate, exits 4, and starts no process
   assert.match(text, /system-under-test sessions: 8, turns: 9 \(1 follow-up turn/);
   assert.match(text, /judge sessions: 8/);
   assert.match(text, /about 22\.50 US dollars .*docs\/evidence\/runtime-smoke\.md\); judge cost is not in the estimate until measured/);
-  assert.match(text, /claude -p <ticket> --output-format stream-json --verbose --max-turns 24 --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent --disallowedTools Bash WebFetch WebSearch/);
+  // batch 12: the system under test loads the read-only aegis-tools server by default, so its four tools are allowed
+  assert.match(text, /claude -p <ticket> --output-format stream-json --verbose --max-turns 24 --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent mcp__aegis-tools__docs_fetch mcp__aegis-tools__net_dns mcp__aegis-tools__net_http mcp__aegis-tools__net_tls --disallowedTools Bash WebFetch WebSearch/);
   assert.match(text, /--tools "" --no-session-persistence/);
   assertNoCaseText(s.out);
 });
@@ -236,4 +237,62 @@ test('code review 1: the whole DEV file runs through the runner; the two setup c
     const call = sut.find((x) => x.prompt.includes(c.ticket.slice(0, 40)));
     assert.ok(call && call.prompt.includes('--- What the company runs ---') && call.prompt.includes(c.setup.slice(0, 30)), `${c.id} reached the session with its setup`);
   }
+});
+
+// Batch 12, tasks 2, 3, 6 and 13: each case records its lane, the mode its answer named against the one the case
+// expects, its tool calls by tool, the batch 12 rows, and the three new checks, which fail the case like any check.
+// Wrong implementations: a runner that records the expected mode as the named one; one that leaves the new checks out
+// of the verdict (the unbacked "I checked" below must fail the case); lanes taken from the platform.
+test('batch 12: a case records its lane, its mode against the expected one, its tool calls and the new checks', async (t) => {
+  const answer = ['Mode: Engineer answer', '## Engineer answer', '**Evidence read:** no evidence given; this is reasoning.', '**Hypotheses:**', '1. The record is stale. Test: read its TTL.', '2. The resolver caches it. Test: ask another resolver.', '**Recommendation:** lower the TTL before the change; the administrator applies it.', '**Blast radius:** one record; rollback is the old value; stop if the lookup fails.', '**Verify:** a lookup returns the new value.', '**Ask next:** which resolver do your users use?', '', "I checked Microsoft's documentation for this.", '', '```aegis-desk', 'Gate: none', '```'].join('\n');
+  const s = setup(t, { sut: { answer, tool_calls: [{ name: 'Read', input: { file_path: 'CLAUDE.md' } }] } });
+  const one = JSON.parse(G4_TEXT.split('\n')[0]);
+  one.expected.mode = 'engineer';
+  one.capability = 'networking';
+  fs.writeFileSync(s.copy, `${JSON.stringify(one)}\n`);
+  await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  const r = json.cases[0];
+  assert.equal(r.lane, 'networking');
+  assert.deepEqual(r.mode, { named: 'engineer', shown: 'engineer', expected: 'engineer', match: true });
+  assert.deepEqual(r.tool_call_counts, { Read: 1 });
+  const names = r.checks.map((c) => c.check);
+  for (const n of ['fix-card-fits', 'claims-match-calls', 'fetched-citations']) assert.ok(names.includes(n), n);
+  assert.equal(r.checks.find((c) => c.check === 'claims-match-calls').verdict, 'fail');
+  assert.equal(r.verdict, 'FAIL');
+  assert.ok(r.reasons.includes('check claims-match-calls fail'));
+  assert.ok(r.expert_rows.some((x) => x.check === 'answer-mode' && x.verdict === 'pass'));
+  assert.deepEqual([json.summary.measures.mode_match.numerator, json.summary.measures.mode_match.denominator], [1, 1]);
+  assert.match(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8'), /## Per lane/);
+});
+
+// Batch 12, task 5: the judged runner loads the tool server by default, --no-tools turns it off, each case gets its own
+// audit file in the results folder, and the run records which tools each session had. Wrong implementations: a flag
+// that only changes the preview (the session's own arguments must lose the server too); a record of the tools asked
+// for instead of the ones the session's init event listed; one audit file shared across cases.
+test('batch 12, task 5: the tool server is on by default with an audit file per case, --no-tools turns it off, and the run records the tools each session had', async (t) => {
+  const listed = ['Read', 'Grep', 'Glob', 'Agent', 'mcp__aegis-tools__docs_fetch', 'mcp__aegis-tools__net_dns', 'mcp__aegis-tools__net_http', 'mcp__aegis-tools__net_tls'];
+  const on = setup(t, { sut: { init_tools: listed } });
+  fs.writeFileSync(on.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', on.copy, '--execute', '--results-dir', on.results], on.io, on.deps);
+  const json = JSON.parse(fs.readFileSync(path.join(on.results, 'results.json'), 'utf8'));
+  assert.equal(json.config.tools, true);
+  assert.deepEqual(json.cases[0].sut.tools_available, listed);
+  assert.deepEqual(json.cases[0].sut.mcp_servers, [{ name: 'aegis-tools', status: 'connected' }]);
+  const sutCall = on.calls().find((c) => c.role === 'sut');
+  const cfg = JSON.parse(sutCall.args[sutCall.args.indexOf('--mcp-config') + 1]);
+  const audit = cfg.mcpServers['aegis-tools'].args[cfg.mcpServers['aegis-tools'].args.indexOf('--audit') + 1];
+  assert.equal(audit, path.join(on.results, `${JSON.parse(G4_TEXT.split('\n')[0]).id}-tool-audit.jsonl`));
+  assert.match(fs.readFileSync(path.join(on.results, 'report.md'), 'utf8'), /tool server on/);
+
+  const off = setup(t, { sut: { init_tools: ['Read', 'Grep', 'Glob', 'Agent'] } });
+  fs.writeFileSync(off.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', off.copy, '--execute', '--results-dir', off.results, '--no-tools'], off.io, off.deps);
+  const offJson = JSON.parse(fs.readFileSync(path.join(off.results, 'results.json'), 'utf8'));
+  assert.equal(offJson.config.tools, false);
+  assert.ok(off.calls().filter((c) => c.role === 'sut').every((c) => !c.args.includes('--mcp-config') && !c.args.some((a) => /mcp__aegis-tools__/.test(a))));
+  assert.match(fs.readFileSync(path.join(off.results, 'report.md'), 'utf8'), /tool server off/);
+  const dry = setup(t);
+  await cli.main(['run', '--cases', dry.copy, '--no-tools'], dry.io, dry.deps);
+  assert.doesNotMatch(dry.out.join('\n'), /mcp__aegis-tools__|--mcp-config/);
 });

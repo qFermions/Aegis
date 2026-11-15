@@ -125,3 +125,28 @@ test('nearest-rank percentile and the baseline reader', (t) => {
   fs.writeFileSync(bad, '{"cases": [{"id": 1}]}');
   assert.throws(() => report.readBaseline(bad), /not a judged-eval results.json/);
 });
+
+// Batch 12, task 13: the run is read per lane and per answer mode, with the tool calls and how often the mode named
+// matches the one the case expects. Wrong implementations: lanes taken from the platform (a security case on Okta would
+// land in "okta"); a mode table built from the expected mode instead of the mode the answer named; a match rate over
+// every case instead of the cases that expect a mode; tool calls counted per case instead of in all.
+test('batch 12: one row per lane and per mode, the mode match rate, and the tool calls of the run', () => {
+  const recs = [
+    { ...mk('S1', 'okta', 'x', 'R2', 'PASS'), lane: 'security', mode: { named: 'incident', expected: 'incident', match: true }, tool_call_counts: { Read: 3, 'mcp__aegis-tools__docs_fetch': 1 } },
+    { ...mk('S2', 'aws', 'x', 'R3', 'FAIL'), lane: 'security', mode: { named: 'fix-card', expected: 'incident', match: false }, tool_call_counts: { Read: 2 } },
+    { ...mk('N1', 'network', 'x', 'none', 'PASS'), lane: 'networking', mode: { named: 'engineer', expected: 'engineer', match: true }, tool_call_counts: { 'mcp__aegis-tools__net_dns': 2 } },
+    { ...mk('H1', 'microsoft', 'x', 'R1', 'INCONCLUSIVE'), lane: 'helpdesk', mode: { named: null, expected: '', match: null }, tool_call_counts: {} },
+  ];
+  const s = report.summarize(recs);
+  assert.deepEqual(s.lanes.map((l) => [l.lane, l.cases, l.passed, l.failed, l.inconclusive]), [['helpdesk', 1, 0, 0, 1], ['networking', 1, 1, 0, 0], ['security', 2, 1, 1, 0]]);
+  assert.deepEqual(s.modes.map((m) => [m.mode, m.cases]), [['engineer', 1], ['fix-card', 1], ['incident', 1], ['none named', 1]]);
+  assert.deepEqual(frac(s.measures.mode_match), [2, 3]);
+  assert.deepEqual(s.measures.tool_calls.by_tool, { Read: 5, 'mcp__aegis-tools__docs_fetch': 1, 'mcp__aegis-tools__net_dns': 2 });
+  assert.equal(s.measures.tool_calls.server_cases, 2, 'cases that called the tool server');
+  const md = report.renderMarkdown(s, { run_id: 'r', started: 's', finished: 'f', sut_models: [], judge_models: [], config: { max_turns: 1, timeout_ms: 1, web: false, tools: true, tools_available: ['Read'] }, cases: recs });
+  assert.match(md, /## Per lane/);
+  assert.match(md, /\| security \| 2 \|/);
+  assert.match(md, /## Per mode/);
+  assert.match(md, /Mode named matches the expected mode \| 2\/3/);
+  assert.match(md, /Tool calls/);
+});

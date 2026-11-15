@@ -49,6 +49,8 @@ const POINTER_LINE = /\b(?:see|in|under)\s+(?:the\s+)?Details\b(?!\s+(?:field|ta
 // not. It counts only as the first line under the heading; fixCard leaves it out of the card's word count.
 const ASSUMED_LINE = /^[\s>*_-]*(?:\*\*)?Assumed setup(?:\*\*)?[ \t]*:[ \t]*(?:\*\*)?[ \t]*(.*)$/i;
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
+// The line that opens every answer since batch 12 (docs/aegis/answer-format.md, section 9): "Mode: <name>", bold allowed.
+const MODE_LINE = /^[\s>]*(?:\*\*)?Mode(?:\*\*)?[ \t]*:[ \t]*(?:\*\*)?[ \t]*(Fix card|Engineer answer|Incident answer|Ask first)[ \t]*(?:\*\*)?[ \t]*\.?[ \t]*$/i;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
 
 // Words a reader reads: markdown marks, list numbers and arrows are not words. An underscore stays, so
@@ -77,7 +79,8 @@ function fixCard(answer) {
   const lines = deskBlock(answer).body.split(/\r?\n/);
   const at = lines.findIndex((l) => CARD_HEADING.test(l));
   if (at < 0) return { present: false, first: false, text: '', parts: {}, order: [], steps: [], words: 0, lines: [], pointer: null, assumed: null };
-  const firstLine = lines.findIndex((l) => l.trim() !== '');
+  // the mode line names the card and comes before it, so the card is still the first thing in the answer (batch 12)
+  const firstLine = lines.findIndex((l) => l.trim() !== '' && !MODE_LINE.test(l));
   let end = lines.length;
   for (let i = at + 1; i < lines.length; i += 1) if (NEXT_SECTION.test(lines[i])) { end = i; break; }
   const own = lines.slice(at + 1, end);
@@ -498,4 +501,4 @@ function onlyLooks(raw) {
   return { steps, looks: steps.length > 0 && change === null, change, where };
 }
 
-module.exports = { defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };
+module.exports = { MODE_LINE, ASSUMED_LINE, defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };

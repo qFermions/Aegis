@@ -86,7 +86,8 @@ function answer() {
     process.stdout.write('this is not stream-json\n{"broken": \n');
     return;
   }
-  emit({ type: 'system', subtype: 'init', session_id: sessionId, model, cwd: process.cwd(), tools: [] });
+  // init_tools: the tool names the init event lists (batch 12); an --mcp-config makes the server show as connected
+  emit({ type: 'system', subtype: 'init', session_id: sessionId, model, cwd: process.cwd(), tools: settings.init_tools || [], mcp_servers: args.includes('--mcp-config') ? [{ name: 'aegis-tools', status: 'connected' }] : [] });
   (role === 'sut' ? settings.tool_calls || [] : []).filter((c) => !c.match || prompt.includes(c.match)).forEach((c, i) => {
     const id = `toolu_fake_${i + 1}`;
     const parent = c.parent ? 'toolu_fake_parent' : null;

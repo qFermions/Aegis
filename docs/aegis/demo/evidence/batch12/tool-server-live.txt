@@ -1,0 +1,59 @@
+# live probe, run once by hand: node scripts/mcp/aegis-tools/live-probe.js (at b6b7dc3 plus the probe file)
+# aegis-tools live probe, 2026-11-15T05:31:23.267Z, node v24.21.0
+# hosts this probe sends traffic to, and no other:
+#   1.1.1.1 and 8.8.8.8 (DNS queries)
+#   learn.microsoft.com (HTTPS)
+#   example.com (HTTPS, TLS)
+#   expired.badssl.com (TLS handshake only)
+#   localtest.me (DNS query only; refused before any connection)
+initialize: protocol 2025-06-18, server aegis-tools 0.1.0; tools: docs_fetch, net_dns, net_http, net_tls
+
+ 1. docs_fetch {"url":"https://learn.microsoft.com/en-us/entra/identity/authentication/howto-authentication-temporary-access-pass"}
+    expected ok; got ok: AS EXPECTED
+    url https://learn.microsoft.com/en-us/entra/identity/authentication/howto-authentication-temporary-access-pass; title "Configure a Temporary Access Pass in Microsoft Entra ID to register passwordless authentication methods - Microsoft Entra ID | Microsoft Learn"; 16688 characters; text begins: "Skip to main content\n\nSkip to Ask Learn chat experience\n\nThis browser is no longer supported.\n\nUpgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.\n\nDownload Microsoft Edge\n\nMore info "
+ 2. docs_fetch {"url":"https://example.com/"}
+    expected refused_not_allowlisted; got refused_not_allowlisted: AS EXPECTED
+    refused_not_allowlisted: example.com is not on the docs allowlist (config/docs-allowlist.json)
+ 3. net_dns {"name":"example.com","type":"A"}
+    expected ok; got ok: AS EXPECTED
+    answers ["104.20.23.154","172.66.147.243"] via 1.1.1.1, 8.8.8.8
+ 4. net_dns {"name":"example.com","type":"MX"}
+    expected ok; got ok: AS EXPECTED
+    answers [{"exchange":"","priority":0}] via 1.1.1.1, 8.8.8.8
+ 5. net_http {"url":"https://example.com/"}
+    expected ok; got ok: AS EXPECTED
+    status 200 (HEAD 200); address 104.20.23.154; 0 redirects; read 577 bytes; headers {"server":"cloudflare","content-type":"text/html; charset=utf-8","date":"Sun, 15 Nov 2026 05:31:23 GMT","age":"12704","cf-ray":"a5abde916af2ce4c-SJC","alt-svc":"h3=\":443\"; ma=86400"}; timing_ms {"dns":21,"connect":24,"tls":53,"first_byte":77,"total":173}
+ 6. net_http {"url":"http://169.254.169.254/latest/meta-data/"}
+    expected refused_private_address; got refused_private_address: AS EXPECTED
+    refused_private_address: 169.254.169.254 is in private space: link-local, cloud metadata (169.254.0.0/16)
+ 7. net_http {"url":"http://localhost/"}
+    expected refused_name; got refused_name: AS EXPECTED
+    refused_name: a single-label name is an internal name
+ 8. net_http {"url":"http://10.0.0.1/"}
+    expected refused_private_address; got refused_private_address: AS EXPECTED
+    refused_private_address: 10.0.0.1 is in private space: private (10.0.0.0/8)
+ 9. net_http {"url":"http://localtest.me/"}
+    expected refused_private_address; got refused_private_address: AS EXPECTED
+    refused_private_address: localtest.me resolves into private space: 127.0.0.1 is loopback (127.0.0.0/8)
+10. net_tls {"host":"expired.badssl.com"}
+    expected ok; got ok: AS EXPECTED
+    address 104.154.89.105; TLSv1.2 ECDHE-RSA-AES128-GCM-SHA256; verified false (CERT_HAS_EXPIRED); expired true; days_remaining -4235; chain *.badssl.com [to Apr 12 23:59:59 2015 GMT] <- COMODO RSA Domain Validation Secure Server CA [to Feb 11 23:59:59 2029 GMT] <- COMODO RSA Certification Authority [to May 30 10:48:38 2020 GMT]
+11. net_tls {"host":"example.com"}
+    expected ok; got ok: AS EXPECTED
+    address 172.66.147.243; TLSv1.3 TLS_AES_256_GCM_SHA384; verified true; expired false; days_remaining 40; chain example.com [to Dec 25 22:56:35 2026 GMT] <- Cloudflare TLS Issuing ECC CA 3 [to May 27 19:49:44 2035 GMT] <- SSL.com TLS Transit ECC CA R2 [to Oct 17 17:02:22 2037 GMT] <- SSL.com TLS ECC Root CA 2022 [to Dec 31 23:59:59 2028 GMT]
+
+# audit file (mode 600), one line per call:
+{"time":"2026-11-15T05:31:23.559Z","tool":"docs_fetch","input":{"url":"https://learn.microsoft.com/en-us/entra/identity/authentication/howto-authentication-temporary-access-pass"},"decision":"ok","addresses":["23.45.137.202"],"bytes":71831,"duration_ms":266}
+{"time":"2026-11-15T05:31:23.560Z","tool":"docs_fetch","input":{"url":"https://example.com/"},"decision":"refused_not_allowlisted","reason":"example.com is not on the docs allowlist (config/docs-allowlist.json)","addresses":[],"bytes":0,"duration_ms":0}
+{"time":"2026-11-15T05:31:23.578Z","tool":"net_dns","input":{"name":"example.com","type":"A"},"decision":"ok","addresses":[],"bytes":0,"duration_ms":18}
+{"time":"2026-11-15T05:31:23.599Z","tool":"net_dns","input":{"name":"example.com","type":"MX"},"decision":"ok","addresses":[],"bytes":0,"duration_ms":21}
+{"time":"2026-11-15T05:31:23.772Z","tool":"net_http","input":{"url":"https://example.com/"},"decision":"ok","addresses":["104.20.23.154"],"bytes":577,"duration_ms":173}
+{"time":"2026-11-15T05:31:23.772Z","tool":"net_http","input":{"url":"http://169.254.169.254/latest/meta-data/"},"decision":"refused_private_address","reason":"169.254.169.254 is in private space: link-local, cloud metadata (169.254.0.0/16)","addresses":[],"bytes":0,"duration_ms":0}
+{"time":"2026-11-15T05:31:23.773Z","tool":"net_http","input":{"url":"http://localhost/"},"decision":"refused_name","reason":"a single-label name is an internal name","addresses":[],"bytes":0,"duration_ms":0}
+{"time":"2026-11-15T05:31:23.773Z","tool":"net_http","input":{"url":"http://10.0.0.1/"},"decision":"refused_private_address","reason":"10.0.0.1 is in private space: private (10.0.0.0/8)","addresses":[],"bytes":0,"duration_ms":0}
+{"time":"2026-11-15T05:31:23.861Z","tool":"net_http","input":{"url":"http://localtest.me/"},"decision":"refused_private_address","reason":"localtest.me resolves into private space: 127.0.0.1 is loopback (127.0.0.0/8)","addresses":[],"bytes":0,"duration_ms":88}
+{"time":"2026-11-15T05:31:25.228Z","tool":"net_tls","input":{"host":"expired.badssl.com"},"decision":"ok","addresses":["104.154.89.105"],"bytes":0,"duration_ms":1365}
+{"time":"2026-11-15T05:31:25.290Z","tool":"net_tls","input":{"host":"example.com"},"decision":"ok","addresses":["172.66.147.243"],"bytes":0,"duration_ms":62}
+
+# 11 of 11 calls as expected
+exit 0

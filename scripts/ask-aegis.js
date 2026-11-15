@@ -3,7 +3,7 @@
 // ask-aegis.js: one IT ticket, one read-only Aegis session, for a person trying Aegis (batch 9, task 11).
 //
 // Usage: node scripts/ask-aegis.js "ticket text" [--setup "what the company runs"] [--results-dir DIR]
-//        [--max-budget-usd N] [--reply-to asker] [--model <model>]
+//        [--max-budget-usd N] [--reply-to asker] [--model <model>] [--no-tools]
 //
 // AEGIS ADVISES; HUMANS EXECUTE. The session is the Customer Desk's: backends.sutArgs, so read-only tools
 // (no Bash, no Edit or Write, no web), this repository's settings and CLAUDE.md only, no user plugin, hook
@@ -29,7 +29,7 @@ const backends = require('./eval/judged/backends.js');
 const paths = require('./eval/judged/paths.js');
 const sanitize = require('./graph/sanitize.js');
 const { PHONE_LITERAL, replaceEmails, isCanonicalPlaceholder } = require('./tier/tier-guard.js');
-const { fixCard, PARTS, deskBlock } = require('./demo/answer.js');
+const { fixCard, PARTS, deskBlock, MODE_LINE } = require('./demo/answer.js');
 const { askerReply, replyProblems, isAskFirst } = require('./demo/senior-rules.js');
 const { catalog } = require('./demo/catalog.js');
 
@@ -42,9 +42,10 @@ const TIMEOUT_MS = 1500000;
 const DEFAULT_MAX_USD = '3.00';
 const ASKS_DIR = 'aegis-asks';
 const USAGE = [
-  'Usage: node scripts/ask-aegis.js "ticket text" [--setup "what the company runs"] [--results-dir DIR] [--max-budget-usd N] [--reply-to asker] [--model <model>]',
+  'Usage: node scripts/ask-aegis.js "ticket text" [--setup "what the company runs"] [--results-dir DIR] [--max-budget-usd N] [--reply-to asker] [--model <model>] [--no-tools]',
   'Aegis reads the ticket and answers with steps for a person to do. It reads only and changes nothing.',
   'With --reply-to asker it prints only a short reply for the person who asked, for you to send; Aegis sends nothing.',
+  'Aegis may look up public vendor documentation and public DNS, web and certificate records; --no-tools turns that off.',
   `The whole answer is saved in your home folder under ${ASKS_DIR}. Aegis runs on ${backends.PINNED_MODEL} unless --model names another.`,
   '',
 ].join('\n');
@@ -167,8 +168,9 @@ function buildPrompt(ticket, setup, replyTo = null) {
   });
 }
 
-function askArgs(prompt, runRoot, maxUsd, model = null) {
-  return [...backends.sutArgs({ prompt, runRoot, maxTurns: MAX_TURNS, persist: false, model }), '--max-budget-usd', maxUsd];
+// tools and auditFile: the read-only tool server (batch 12, task 5), on by default, its calls audited beside the answer
+function askArgs(prompt, runRoot, maxUsd, model = null, { tools = true, auditFile = null } = {}) {
+  return [...backends.sutArgs({ prompt, runRoot, maxTurns: MAX_TURNS, persist: false, model, tools, auditFile }), '--max-budget-usd', maxUsd];
 }
 
 // The desk's session environment (scripts/demo/customer-desk.js sessionEnv, not exported there).
@@ -192,7 +194,7 @@ function insideRepo(dir) {
 }
 
 function parseArgs(argv) {
-  const args = { ticket: '', setup: null, resultsDir: null, maxUsd: DEFAULT_MAX_USD, replyTo: null, model: backends.PINNED_MODEL, help: false };
+  const args = { ticket: '', setup: null, resultsDir: null, maxUsd: DEFAULT_MAX_USD, replyTo: null, model: backends.PINNED_MODEL, tools: true, help: false };
   const words = [];
   for (let i = 0; i < argv.length; i += 1) {
     const t = argv[i];
@@ -218,7 +220,8 @@ function parseArgs(argv) {
       // claude gets two decimals, so a value that rounds to 0.00 is refused (code review round 1, finding 15)
       if (!/^\d+(?:\.\d+)?$/.test(v) || !(Number(Number(v).toFixed(2)) >= 0.01)) throw new InputError('--max-budget-usd needs a number of US dollars of at least 0.01, such as 2.50');
       args.maxUsd = Number(v).toFixed(2);
-    } else if (t === '--help' || t === '-h') args.help = true;
+    } else if (t === '--no-tools') args.tools = false;
+    else if (t === '--help' || t === '-h') args.help = true;
     // a word such as -2147 in an unquoted ticket is ticket text (review round 1, nit 2)
     else if (t.startsWith('--')) throw new InputError(`unknown option ${JSON.stringify(t).slice(0, 40)}`);
     else words.push(t);
@@ -278,7 +281,7 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   const backend = deps.backend || { command: 'claude', prefixArgs: [] };
   // Every saved ask is denied to the session, so one ask never reads another's answer (review round 1,
   // finding 2). A --results-dir elsewhere is empty when the session starts.
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: askArgs(prompt, path.join(homeOf(env), ASKS_DIR), args.maxUsd, args.model), cwd: REPO_ROOT, env: sessionEnv(env), spawn: deps.spawn, timeoutMs: deps.timeoutMs || TIMEOUT_MS, graceMs: deps.graceMs });
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: askArgs(prompt, path.join(homeOf(env), ASKS_DIR), args.maxUsd, args.model, { tools: args.tools, auditFile: path.join(dir, 'tool-audit.jsonl') }), cwd: REPO_ROOT, env: sessionEnv(env), spawn: deps.spawn, timeoutMs: deps.timeoutMs || TIMEOUT_MS, graceMs: deps.graceMs });
   const stream = backends.parseStream(run.stdout);
   const turn = backends.summarizeTurn(stream, run);
   if (turn.state !== 'OK') {
@@ -302,7 +305,8 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   }
 
   const cost = `Cost: ${turn.cost_usd === null ? 'not reported' : `${turn.cost_usd.toFixed(2)} US dollars`}\n`;
-  if (args.replyTo) return printReply({ answer: turn.answer, ticket: ticket.text, setup: setupText.text || '', dir, answerFile, cost }, io);
+  // the session's own tool calls are its reading record: a reply that says Aegis checked something must match one (batch 12)
+  if (args.replyTo) return printReply({ answer: turn.answer, ticket: ticket.text, setup: setupText.text || '', dir, answerFile, cost, toolCalls: stream.toolCalls }, io);
 
   const card = fixCard(turn.answer);
   if (card.present) {
@@ -313,6 +317,11 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
     // a ticket with nothing to go on gets one question and nothing else (answer-format section 7)
     // the aegis-desk block the format closes it with is the desk's, not part of the question (code review 1, finding 13)
     io.out(`\nAegis asks one thing first:\n\n${deskBlock(turn.answer).body.trim()}\n`);
+  } else if (/^\s*(?:\*\*)?Mode(?:\*\*)?\s*:\s*(?:\*\*)?\s*(?:Engineer answer|Incident answer)\b/i.test(turn.answer)) {
+    // an Engineer or Incident answer (batch 12, task 2): printed under its mode, without the mode line and the desk's block
+    const mode = /Engineer answer/i.test(turn.answer.split(/\r?\n/).find((l) => l.trim() !== '')) ? 'an Engineer answer' : 'an Incident answer';
+    const body = deskBlock(turn.answer).body.split(/\r?\n/).filter((l, i, all) => !(MODE_LINE.test(l) && all.slice(0, i).every((x) => x.trim() === ''))).join('\n').trim();
+    io.out(`\nAegis answered as ${mode}:\n\n${body}\n`);
   } else {
     io.out(`\nThe answer has no Fix card, so here it is in full:\n\n${turn.answer}\n`);
   }
@@ -322,7 +331,7 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
 
 // --reply-to asker: stdout gets the reply and nothing else. The reply is checked before it is called ready: one
 // that fails is still printed (the session is paid for), with the reasons on stderr and exit 3.
-function printReply({ answer, ticket, setup, dir, answerFile, cost }, io) {
+function printReply({ answer, ticket, setup, dir, answerFile, cost, toolCalls = [] }, io) {
   const reply = askerReply(answer, ticket);
   if (!reply.present) {
     io.err(`ask-aegis: the answer holds no reply to the asker (no asker-reply block). The full tech answer is saved: ${answerFile}\n${cost}`);
@@ -334,7 +343,7 @@ function printReply({ answer, ticket, setup, dir, answerFile, cost }, io) {
   io.out(`${reply.text}\n`);
   let ids = null;
   try { ids = catalog(); } catch { /* without the runbooks' ids the check still reads Gate lines and risk classes */ }
-  const problems = replyProblems(reply.text, { ticket, setup, ids });
+  const problems = replyProblems(reply.text, { ticket, setup, ids, toolCalls });
   io.err(`\n${saved}Full tech answer saved: ${answerFile}\n${cost}`);
   if (problems.length) {
     io.err(`ask-aegis: this reply did not pass its check, so read it before you send it: ${problems.join('; ')}.\n`);
@@ -351,4 +360,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, protect, parseArgs, buildPrompt, askArgs, setupBlock, sessionEnv, userLines, homeOf, printReply, REPO_ROOT, ASKS_DIR, DEFAULT_MAX_USD, REPLY_REQUEST };
+module.exports = { main, protect, parseArgs, buildPrompt, askArgs, setupBlock, sessionEnv, userLines, homeOf, insideRepo, printReply, REPO_ROOT, ASKS_DIR, DEFAULT_MAX_USD, REPLY_REQUEST };

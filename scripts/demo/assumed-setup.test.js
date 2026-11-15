@@ -223,5 +223,5 @@ test('an ask-first answer to a bare ticket is not held to the Assumed setup line
   const ask = ['Mode: Ask first', 'What exactly happens when you print, who is affected, and since when?', '', '```aegis-desk', 'Gate: none', '```'].join('\n');
   assert.equal(assumedSetup(ask, { setup: null, ticket: 'The printer is broken.' }).applies, false, 'an ask-first answer assumes nothing');
   const bare = ask.replace('Mode: Ask first\n', '');
-  assert.equal(assumedSetup(bare, { setup: null, ticket: 'Teams not working' }).applies, false, 'with or without the mode line');
+  assert.equal(assumedSetup(bare, { setup: null, ticket: 'The scanner is broken.' }).applies, false, 'with or without the mode line');
 });

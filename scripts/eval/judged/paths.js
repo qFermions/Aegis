@@ -5,7 +5,9 @@
 //   resolution, is inside the repository working tree, or when its real path (symlinks
 //   followed with fs.realpathSync) is. Case files hold the expected decisions a judge
 //   grades against, so they live outside the repository; the DEV set in this directory
-//   is copied to a temporary file before a run.
+//   is copied to a temporary file before a run. The folder a case file is read from is
+//   denied to the system under test (caseFolders), so it must not be a folder that holds
+//   the repository: the case file goes in a folder of its own.
 // - A results directory outside the repository is allowed. One inside it is allowed only
 //   when `git check-ignore -q` says it is ignored and `git ls-files` lists nothing under
 //   it, so a run never writes into a tracked path. Symlinks on the way are followed.
@@ -53,6 +55,28 @@ function refuseInsideRepo(file, label, { repoRoot = REPO_ROOT } = {}) {
   try { real = fs.realpathSync(abs); } catch { throw new PathRefused(`${label} cannot be read (no such file)`); }
   if (insideRepo(real, roots)) throw new PathRefused(`${label} resolves (through a symlink) to a file inside the repository working tree: copy the file outside the repository and pass that path`);
   return real;
+}
+
+// The default macOS and Windows file systems ignore case, so there a path spelled in another case is the
+// same folder. shortcut: a case-sensitive volume on those systems is folded too, which can only refuse or
+// flag more, never less; upgrade if a run on such a volume is refused wrongly.
+const foldCase = (p) => (process.platform === 'darwin' || process.platform === 'win32' ? p.toLowerCase() : p);
+
+// The folders a case file is read from, which the system under test is denied (batch 11, task 7): the folder
+// of the path as given and the folder the file really sits in (they differ when the file is a link). Throws
+// PathRefused when one of them, as given or resolved, is the repository or holds it (the home folder, the
+// root): denying such a folder would deny the runbooks too. `real` is the file's real path.
+function caseFolders(file, real, { repoRoot = REPO_ROOT } = {}) {
+  const roots = repoRoots(repoRoot);
+  const folders = [...new Set([path.dirname(path.resolve(file)), path.dirname(real)])];
+  for (const dir of folders) {
+    for (const form of [dir, effectivePath(dir)]) {
+      if ([roots.given, roots.real].some((root) => isInside(foldCase(root), foldCase(form)))) {
+        throw new PathRefused('the case file sits in a folder that holds the repository (for example the home folder), and the system under test is denied the case file\'s folder, which would deny it the repository too: put the case file in a folder of its own and pass that path');
+      }
+    }
+  }
+  return folders;
 }
 
 // The path a directory will really have: the nearest existing ancestor resolved, plus the rest.
@@ -110,4 +134,4 @@ function defaultResultsDir(runId, repoRoot = REPO_ROOT) {
   return path.join(repoRoot, '.aegis-state', 'evals', runId);
 }
 
-module.exports = { REPO_ROOT, PathRefused, isInside, refuseInsideRepo, checkResultsDir, effectivePath, newRunId, defaultResultsDir };
+module.exports = { REPO_ROOT, PathRefused, isInside, repoRoots, foldCase, refuseInsideRepo, caseFolders, checkResultsDir, effectivePath, newRunId, defaultResultsDir };

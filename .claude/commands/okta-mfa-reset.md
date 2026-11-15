@@ -18,6 +18,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Stop first if the ticket smells like a compromise:** sign-ins the user did not make, a phishing click, Okta Verify pushes they did not send, or a "reset my MFA" request that arrived by email or chat instead of from the person. Route it through `/security-alert-triage` before any reset: resetting MFA on a compromised account hands the attacker a fresh enrollment.
 - **Okta MFA is not Google 2-Step Verification.** They are two separate controls on two separate systems. Resetting Okta authenticators does nothing to the user's Google 2-Step Verification, and the reverse is also true. Google 2-Step Verification (backup codes, security keys, passkeys) is managed in the Google Admin console by `/gws-2sv-reset`, not here.
 - **A reset cannot be undone.** Okta cancels the selected enrollments and the user must enroll again. Resetting *selected* authenticators (Phase B) and resetting *all* authenticators (Phase C) are separate gates with separate phrases.
+- **A lost or replaced phone follows one order** (answer-format section 2, "A new way in before the old way out"): identity first, then a Temporary Access Code handed over on a verified channel where the org has that authenticator, then the reset of the old enrollment, then Okta Verify on the new phone, then both read-backs. Phase B holds that order. Phase C clears every authenticator first and is not that path.
 - Verify the person's identity out of band before any reset: **[org gap: confirm the identity-proofing step]**. Never accept the request on the strength of the message it arrived in.
 - Each reset ends with a read-only connector read-back (`scripts/adapters/okta-client.js`: GET only, it cannot change anything in Okta), run before the user re-enrolls. It proves the reset only against the factor list Phase A recorded: a factor type that was never enrolled passes with nothing changed.
 - Not done until the user has re-enrolled and completed a sign-in.
@@ -34,7 +35,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 1. Phase A: read status, recent sign-ins and enrolled authenticators (R0); rule out a compromise.
 2. An Okta Verify sign-in loop after a macOS update: follow "Okta Verify sign-in loop after a macOS update" below first (the user checks, then the session clear gate); Phase B, or Phase C when every enrollment must go, is its last resort.
-3. Phase B (a new phone, or the loop's last resort when the session clear did not stop it): reset only the affected authenticator (gate). **WAIT UNTIL** the user re-enrolls on the new phone and completes a sign-in.
+3. Phase B (a new phone, or the loop's last resort when the session clear did not stop it): for a lost or replaced phone, identity first, then a Temporary Access Code on a verified channel when the user has no way in (gate); then reset only the affected authenticator (gate). **WAIT UNTIL** the user re-enrolls on the new phone and completes a sign-in.
 4. Phase C: reset all authenticators only when every enrollment must go (separate gate).
 5. Verify in the System Log and by the completed sign-in.
 
@@ -101,9 +102,42 @@ node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_I
 
 ## Phase B: Reset the affected authenticator (the new-phone fix)
 
-**Purpose:** cancel the Okta Verify enrollment that is bound to the old phone so the user can enroll Okta Verify on the new one. Authenticators you do not tick stay enrolled.
+**Purpose:** cancel the Okta Verify enrollment that is bound to the old phone so the user can enroll Okta Verify on the new one. Authenticators you do not tick stay enrolled. For a lost or replaced phone the steps below follow answer-format section 2, "A new way in before the old way out", with one stated departure (the new phone is enrolled right after the reset, not before it: step 3 says why); the loop's last resort starts at step 3.
 
-**User check:** ask whether the old phone still opens Okta Verify and whether another authenticator Phase A recorded still works: a user who can still sign in is not locked out, so the reset waits until the new phone is in hand.
+**Step 1, identity (no gate, nothing changes):** prove who is asking before anything else, by the check the org names: **[org gap: confirm the identity-proofing step]**. Until that is written down, the check this step names is a call the tech places to a number on file that is not the lost or replaced phone (a desk line, a second number on record), or the user's manager confirming on a call the tech places or in person. A call to the lost phone reaches whoever holds it, and the request's own channel and any number it supplies prove nothing.
+
+**User check:** ask whether the old phone still opens Okta Verify and whether another authenticator Phase A recorded still works: a user who can still sign in is not locked out, so the reset waits until the new phone is in hand. Two cases follow. Another authenticator that is not on the old phone still works: that is a way in the reset below does not touch, so skip step 2. Only Okta Verify on the old phone works (a replaced phone still in hand): the reset below would take that last way in, so either the user puts Okta Verify on the new phone first ("When the new phone is already enrolled" below) or step 2 issues a code before the reset.
+
+**Step 2, a way in that runs out: a Temporary Access Code (gate below), only when no enrolled authenticator works.** Okta's Temporary Access Code authenticator (Identity Engine) lets an admin create a code on the user's profile: the dialog sets how long it is valid and whether it works once or more than once (the multi-use choice shows only when the org's authenticator allows it). Okta's page asks for the two things this step asks for: verify the user's identity before giving the code, and give it over a secure, out-of-band channel, like a phone call. **Role needed:** an admin whose role holds Okta's permission "Manage user's temporary access code" for this user (Okta's page builds a custom role and a resource set for it and names no standard role). **[org gap: whether the Temporary Access Code authenticator is set up for [@Aegion], which role holds the permission, and which users may receive a code]**. Where no code can be issued, read "No Temporary Access Code" below before any reset.
+
+**Verified channel:** read the code to the user on a call the tech places to a number on file that is not the lost or replaced phone (a desk line, a second number on record), or hand it over in person, or through the user's manager in person. Never the lost phone's own number. Never send it by email, chat or text to an address or number the request supplied. Write the channel in the ticket, never the code.
+
+<!-- SAFETY GATE [okta-mfa-reset-tac-portal] -->
+- **Target:** [UPN]
+- **Effect:** create one Temporary Access Code for one user; the user can sign in with it, once or until it expires as the dialog sets, and any earlier code for the user is revoked
+- **Scope:** one user and one code, valid for the time set in the dialog; no enrolled authenticator is changed
+- **Reversibility:** R1: one user, and the undo is one click, Expire code under View active Temporary Access Code details, which ends the code at once; it also lapses by itself at the time set. A sign-in already made with the code is not taken back, which is why the identity check and the verified channel come first
+- **Required confirmation:** Type exactly `CREATE TEMPORARY ACCESS CODE FOR [UPN]`.
+- **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
+- **Read-back:** none (R1: no change record)
+**PORTAL ACTION [okta-mfa-reset-tac-portal]:** Only after step 1 verified the identity, with the user on the verified channel, and the exact match:
+1. Okta Admin Console → Directory → People → `[UPN]` → **More Actions** → **Create Temporary Access Code**.
+2. In the dialog, set how long the code is valid, the shortest time that covers this call, and read whether it is one-time or multi-use (the WAIT UNTIL below depends on it), then click **Create code**. The code is shown once and does not reappear after the dialog closes.
+3. Read the code to the user on the verified channel. Do not copy it into the ticket, a chat or an email.
+4. Read back: the user's More Actions menu now lists **View active Temporary Access Code details**.
+5. When the new phone is enrolled (step 4 of this phase), end the code from that same entry with **Expire code**, or write in the ticket the time it lapses. This is the gate's own undo and takes no second phrase.
+
+No connector read proves a code exists, and an R1 change takes no change record. Proof a person can see: the **View active Temporary Access Code details** entry in the user's More Actions menu after the click. After the expiry, open the same menu again and read what it shows [unconfirmed: check the vendor page: Okta's page does not say what the menu shows once a code is expired]; a code still shown as active means the expiry did not take.
+
+**WAIT UNTIL** the new way in is proven, on the verified call, before anything is removed. A multi-use code: the user signs in once with it now. A one-time code (the only kind unless the org's authenticator allows multi-use): do not spend it on a test, because the user needs it for the sign-in after the reset; its proof before the reset is the menu entry above and the user reading the code back. Okta can still ask for another method when the sign-in policy requires one: its page says the code is a single knowledge factor and does not meet a policy that asks for any two factor types. If a multi-use code does not get the user in, stop, reset nothing, expire the code, and take the policy question to the Okta administrator.
+
+**Step 3, the old way out: reset the old phone's Okta Verify (gate below).** For a lost or replaced phone, only after the WAIT UNTIL above, or for a user whose other authenticator still works.
+
+**Why the new phone comes after the reset on Okta:** the read-back of this gate passes only while no push factor is listed, and Okta's support article on removing a single enrollment gives only an API call for it, no control in the Admin Console; whether the reset clears Okta Verify on every device is not on Okta's page [unconfirmed: check the vendor page]. So the new phone is enrolled right after the reset, on the same call, and the code is meant to be the way in that bridges the two: the verified person holds it from before the reset until the new phone is enrolled (step 4 says what is not confirmed about enrolling with it).
+
+**No Temporary Access Code:** where the authenticator is not set up or the user may not receive a code, this runbook has one path left, the reset first and the re-enrollment at the next sign-in. That takes the old way out before a new way in exists (until the user re-enrolls, the second factor is whatever is set up next), so it is not the lost-or-replaced-phone order; it is the right tool only when there is no code to issue. Keep the gap as short as it can be: run the identity check and the reset with the user on the verified call, stay on the call until the new phone is enrolled and the `factors` read lists it, and write in the ticket that no code was available.
+
+**When the new phone is already enrolled** (the user added it from their Okta dashboard while the old phone still worked: Settings, Security Methods, Okta Verify, Set Up Another, on Identity Engine): the Phase A `factors` read lists two push factors. The reset below is then the wrong tool until you know what it removes, because its read-back passes only while no push factor is listed. The user removes the old phone's entry under Security Methods themselves [unconfirmed: check the vendor page: whether Remove there takes one phone or every phone]. No gate: the user's own action. Proof a person can see: the `factors` read lists one push factor, and its `created` time is the new phone's. If it still lists two, stop and ask the Okta administrator before any reset.
 
 <!-- SAFETY GATE [okta-mfa-reset-selected-portal] -->
 - **Target:** [UPN]
@@ -129,6 +163,10 @@ If Phase A also listed `signed_nonce` (FastPass), also run the same read with `-
 
 **WAIT UNTIL** the user signs in on the new phone, sets up Okta Verify again when Okta prompts for it (the old enrollment is gone), and completes one full sign-in.
 
+**Step 4, the new method, on the same call:** the WAIT UNTIL above is the user registering the new method. Where a Temporary Access Code was issued, the user signs in with it to reach the enrollment prompt [unconfirmed: check the vendor page: whether a sign-in with the code alone is enough to enroll Okta Verify depends on this org's sign-in and enrollment policies, and Okta's page does not say]; if Okta refuses the enrollment, stop and take it to the Okta administrator, with the code still valid. Stay on the verified call until Okta Verify on the new phone has completed one full sign-in.
+
+**Step 5, read back both halves, then close the code:** old one gone: the `verify-factor-reset` read above passed before the re-enrollment. New one present: the connector `factors` read from Phase A, run again, lists a push factor whose `created` time is after the reset. Then end the Temporary Access Code (step 5 of its gate). The ticket is not done on one half.
+
 **Gotcha:** Okta Verify is one enrollment set: Okta's API notes that unenrolling the push or FastPass (signed_nonce) factor also unenrolls the user's other Okta Verify factors (TOTP code, push, FastPass), so expect every Okta Verify method on the old phone to go together.
 
 ## Phase C: Reset ALL authenticators (separate gate)
@@ -136,6 +174,8 @@ If Phase A also listed `signed_nonce` (FastPass), also run the same read with `-
 **Purpose:** only when every enrollment must go (every device lost, or a clean re-enrollment is required after triage). The account stays Active; the user re-enrolls everything.
 
 **Try first:** Phase B, which resets only the affected authenticator; reset all only when every enrollment must go.
+
+**Not the lost-or-replaced-phone path:** resetting every authenticator takes every old way out at once, before any new way in exists. A lost or replaced phone is Phase B. This phase is the right tool only when every enrollment must go: every device is lost or stolen, or the triage of a compromise decided on a clean re-enrollment. Where a Temporary Access Code can be issued (Phase B, step 2, its own gate), issue it first and hand it over on the verified channel, so the verified person holds a way in while they enroll again (Phase B, step 4, says what is not confirmed about enrolling with a code).
 
 <!-- SAFETY GATE [okta-mfa-reset-all-portal] -->
 - **Target:** [UPN]
@@ -232,12 +272,14 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 - **The reset cannot be undone.** Until the user re-enrolls, their MFA is whatever they set up next, which is why identity proofing comes before the phrase, not after.
 - **Compromise first, reset second.** If the System Log shows anything the user cannot explain, `/security-alert-triage` runs first (contain, revoke sessions, reset the password) and the MFA reset follows as part of that plan.
 - **An admin password reset bypasses other factors:** Okta's admin-initiated reset lets the user in with the temporary password or emailed link without other factors. If you also reset the password, hand the temporary password over out of band and never in the same channel the request came from.
+- **A Temporary Access Code is a sign-in credential.** Whoever holds it can use it until it expires: create it only after the identity check, read it out only on the verified channel, keep its life short, and expire it once the new phone is enrolled.
 - **Do not touch Google 2-Step Verification to fix an Okta problem** (or the reverse); they are separate enrollments on separate systems.
 
 ## ✅ Verification checklist
 
 - [ ] Okta Admin Console → Directory → People → `[UPN]` reads **Active**.
-- [ ] Okta Verify sign-in loop: after the session clear, the connector `verify-sessions-cleared` passed (exit 0) against the `[NOT_BEFORE]` written before the click. When it fixed the loop and the user completed one full sign-in, with no reset done, the four reset and re-enrollment items below do not apply; if the reset followed, they apply too. The compromise item applies either way.
+- [ ] Okta Verify sign-in loop: after the session clear, the connector `verify-sessions-cleared` passed (exit 0) against the `[NOT_BEFORE]` written before the click. When it fixed the loop and the user completed one full sign-in, with no reset done, the five reset and re-enrollment items below do not apply; if the reset followed, they apply too. The compromise item applies either way.
+- [ ] Lost or replaced phone: the ticket names the identity check and the verified channel the Temporary Access Code went over (never the code); the code was proven before the reset (a sign-in for a multi-use code, the menu entry and a read-back for a one-time code); once the new phone was enrolled the code was expired, or the time it lapses is in the ticket. Where no code could be issued, the ticket says so.
 - [ ] The user enrolled Okta Verify on the new phone and completed one sign-in: the user confirms it, and Okta Admin Console → Reports → System Log shows that sign-in for `[UPN]`.
 - [ ] Reports → System Log shows the authenticator reset for `[UPN]` with the expected admin and time.
 - [ ] Right after the reset and before the re-enrollment, the connector read-back passed (exit 0, `"verified": true`) against the factor types Phase A recorded: `verify-factor-reset --factor-type push` (and `signed_nonce` when it was listed) for one authenticator, or `verify-factors-reset-all` for all.
@@ -248,7 +290,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]/factors" -H "Aut
 
 Use a completed form only when every read-back above that the path taken requires passed (the session clear's `verify-sessions-cleared`; the reset's `verify-factor-reset` or `verify-factors-reset-all`; both when both changes were made); otherwise write a partial-state note naming what is verified, what is pending, and the next owner.
 
-> [Only if all checks passed] Okta MFA reset for `[UPN]`: [if the session clear ran first] sessions cleared after [NOT_BEFORE] for an Okta Verify loop, connector read-back verify-sessions-cleared passed at [timestamp], the loop continued; identity verified out of band [how]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push (and signed_nonce when Phase A listed it) / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify [on the new phone / on the Mac] and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.
+> [Only if all checks passed] Okta MFA reset for `[UPN]`: [if the session clear ran first] sessions cleared after [NOT_BEFORE] for an Okta Verify loop, connector read-back verify-sessions-cleared passed at [timestamp], the loop continued; identity verified out of band [how]; [lost or replaced phone: Temporary Access Code created at [timestamp] under its exact phrase, handed over by [a call placed to a number on file that is not the lost phone / in person / the manager], proven before the reset, expired at [timestamp] / no code could be issued in this org]; [Okta Verify / all authenticators] reset at [timestamp], confirmed by the exact phrase; connector read-back [verify-factor-reset push (and signed_nonce when Phase A listed it) / verify-factors-reset-all] passed at [timestamp] before re-enrollment. User re-enrolled Okta Verify [on the new phone / on the Mac] and completed a sign-in at [timestamp]; System Log shows the reset and the sign-in. Google 2-Step Verification untouched (separate control). Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.
 
 > [Okta Verify loop fixed by the session clear, only if its checks passed] Okta Verify sign-in loop for `[UPN]` after a macOS update: user checks [results]; macOS [version], Okta Verify [version]; sessions cleared after [NOT_BEFORE], confirmed by the exact phrase; connector read-back verify-sessions-cleared passed at [timestamp]; the user completed a sign-in at [timestamp]. No authenticator was reset. Compromise indicators: [none found / triage ticket [JIRA-###] linked]. Time spent: [X] min.
 
@@ -265,3 +307,5 @@ Keeping IdP MFA (Okta) and application MFA (Google 2-Step Verification) separate
 Run Phase A; if anything in the System Log looks like a compromise, switch to `/security-alert-triage` before any reset.
 
 **Sources (checked 2026-10-15):** help.okta.com/oie/en-us/content/topics/security/mfa/mfa-reset-users.htm · help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-end-user-states.htm · help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-reset-individual.htm (admin-initiated reset bypasses other factors) · developer.okta.com/docs/api/openapi/okta-management/management/tags/userfactor.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/userlifecycle.md · developer.okta.com/docs/guides/create-an-api-token/main/ · knowledge.workspace.google.com/admin/security/deploy-2-step-verification (Google 2-Step Verification is a separate control managed in the Google Admin console).
+
+**Sources (checked 2026-11-13, vendor facts GB-04 to GB-13 and GB-54 in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/configure-temporary-access-code.htm (the Temporary Access Code authenticator: the menu path, the permission, the out-of-band channel, Expire code) · support.okta.com/help/s/article/enroll-multiple-devices-in-okta-verify (Set Up Another, Identity Engine) · support.okta.com/help/s/article/remove-a-single-user-from-a-device-with-multiple-users-using-the-okta-api (one enrollment is removed by API only).

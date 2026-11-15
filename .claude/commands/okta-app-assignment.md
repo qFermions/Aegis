@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver the FULL procedure IMMEDIATELY using only placeholders.
 
-**Placeholders:** `[APP_NAME]` (the app integration's display name in Okta) · `[APP_ID]` (its Okta app ID, starts `0oa`; the value the API section exports as `APP_ID`) · `[UPN]` (the person's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[GROUP_EMAIL]` (the Okta group's name; in this shop Okta groups are pushed to Google Groups, so a group is named by its Google address, written without the at sign) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
+**Placeholders:** `[APP_NAME]` (the app integration's display name in Okta) · `[APP_ID]` (its Okta app ID, starts `0oa`; the value the API section exports as `APP_ID`) · `[UPN]` (the person's Okta username) · `[USER_ID]` (their Okta user ID, starts `00u`; the connector read-backs write the same value as `[OKTA_USER_ID]`) · `[NOT_BEFORE]` (in the Phase D review read: the UTC time in ISO 8601, such as `2026-10-28T09:00:00Z`, from which the System Log is read, the time the access began or as far back as the log goes) · `[GROUP_EMAIL]` (the Okta group's name; in this shop Okta groups are pushed to Google Groups, so a group is named by its Google address, written without the at sign) · org values from the `[@Aegion_*]` dictionary (`modules/security/placeholder-dictionary.md`).
 
 **Change record (R2 gates):** before a gate whose reversibility is R2 and that has a read-back named for it below, open its change record with `node scripts/audit/change-record.js open` (this runbook as `--command`, the gate's id as `--gate`, and the read-back that proves it as `--read-back`, such as `okta:verify-app-assigned`), then record the ticket's approval with `approve`. The id it prints is `[CHANGE_ID]`. That gate's read-back below passes `--change [CHANGE_ID]`: it refuses to read until the change is open for that read-back and approved, and only a read-back run that way can be linked to the change with `change-record.js link` (`scripts/audit/README.md`). Name the read-back with the flags on its line below that change what its pass means, such as `okta:verify-app-assigned --absent` for an unassignment, and run the line with the same flags: a read with other flags is refused under the change and never counts for it. A gate with no read-back named for it below takes no change record (`open` refuses it): its proof is the read its own step names.
 
@@ -148,6 +148,23 @@ An HTTP 404 also comes from a wrong app ID, so check `[APP_ID]` against the app 
 
 **WAIT UNTIL** the external app reflects the change when Deactivate User is on (the account there reads deactivated), and record it in the ticket.
 
+### When the access should never have been there: who else, and what left (R0)
+
+**Purpose:** when the unassign closed access a person should not have had, the next step is a read, before anyone says how serious it is (answer-format section 2, "Who else, and what left"). Nothing here changes anything.
+
+- **Who else has it:** Okta Admin Console → Applications and Resources → Applications → `[APP_NAME]` → **Assignments** tab → read every person and group listed against the list of people who should have the app. The mistake that gave one person the app (a wrong group, a copied assignment) may have given it to others.
+- **Whether it was used:** Okta Admin Console → Reports → System Log → search `eventType eq "user.authentication.sso"` with the app as the target → read each sign-on to `[APP_NAME]` since the access began, and by whom. Okta keeps System Log events for 90 days; an assignment older than that cannot be read back in full, and the ticket says so.
+- **What left:** Okta records that a person opened the app, not what they did inside it. Whether anything was downloaded or shared onward is read in the app's own audit log, by the app's owner (for Google Workspace: `/gws-audit-log`, Drive log events).
+
+```bash
+# HUMAN-RUN read-only. The sign-on events to the app since NOT_BEFORE, one page; each event names the person in its targets. A full page means more may follow
+node scripts/adapters/okta-client.js logs --since [NOT_BEFORE] --event user.authentication.sso --target [APP_ID] --execute
+```
+
+Until these reads are in the ticket, the answer and the ticket note say "access removed, use not yet reviewed". They do not say it was harmless, and they do not say it was a breach.
+
+**Verification checkpoint:** [ ] the Assignments tab read against the expected list · [ ] the sign-on events since the access began recorded, or the 90-day limit noted · [ ] the app owner asked for the app's own audit log.
+
 ## Phase E: Group-assigned people (preview only)
 
 > **PREVIEW ONLY [okta-app-assignment-group-unassign-preview]:** A person who has the app through a group keeps it until they are removed from the group or the app is unassigned from the whole group. Both are separate reviewed changes with their own gates: removing a member changes every app that group grants, and unassigning the app from the group removes it from every member (and deactivates every member's external account when Deactivate User is on). Nothing in this command removes a person from a group or unassigns an app from a group; this region is planning only and authorizes nothing.
@@ -265,6 +282,7 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/apps/${APP_ID}/users/[USER_ID]" 
 - [ ] API read-back `GET /api/v1/apps/${APP_ID}/users/[USER_ID]` returns scope USER / GROUP as intended, or 404 after an unassign.
 - [ ] The connector read-back passed (exit 0, `"verified": true`) against the Phase A pre-state: `verify-app-assigned` after an assign (for a group, on the one member picked first), `verify-app-assigned --absent` after an unassign, with `[APP_ID]` checked against the app.
 - [ ] With Deactivate User on: the external app shows the account active (assign) or deactivated (unassign), recorded in the ticket.
+- [ ] If the access should never have been there: the Assignments tab and the app's sign-on events were read after the unassign, the app owner was asked for the app's own audit log, and the ticket states no severity before those reads.
 
 ## 📝 Jira-ready note
 
@@ -285,3 +303,5 @@ Reasoning about Individual vs Group scope and what deprovisioning does downstrea
 Run Phase A and record the assignment Type and the Deactivate User setting before choosing Phase B, C or D.
 
 **Sources (checked 2026-10-15):** help.okta.com/oie/en-us/content/topics/provisioning/lcm/lcm-assign-app-user.htm · help.okta.com/oie/en-us/content/topics/provisioning/lcm/lcm-assign-app-groups.htm · help.okta.com/oie/en-us/content/topics/provisioning/lcm/lcm-automatic-deactivate.htm · help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-unassign-apps.htm · help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-view-group-members.htm · developer.okta.com/docs/api/openapi/okta-management/management/tags/applicationusers.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/applicationusers/other/assignusertoapplication.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/applicationgroups.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/applicationgroups/other/assigngrouptoapplication.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/application/other/listapplications.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/group.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/group/other/listgroups.md · developer.okta.com/docs/guides/create-an-api-token/main/
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** help.okta.com/en-us/content/topics/reports/syslog-filters.htm (the Application Access query `eventType eq "user.authentication.sso"`; events kept 90 days).

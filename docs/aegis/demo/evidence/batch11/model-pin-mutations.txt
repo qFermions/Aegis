@@ -1,0 +1,9 @@
+$ node mutate.js <file> <from> <to> <test file> <name>   (each mutation applied, the test file run, the file put back byte for byte)
+mutation M1 an unreported model passes: scripts/eval/judged/judge.js: "if (models.some((m) => typeof m !== 'string' || m === '')) why.push" -> "if (false) why.push"
+  scripts/eval/judged/model-pin.test.js: exit 1; caught by: ✖ caseVerdict: a case on another model, or on a model not reported, is INCONCLUSIVE whatever its grade, and names both (0.601292ms)
+mutation M2 the runner pins the default, not --model: scripts/eval/judged-eval.js: "caseDirs: config.case_dirs, model: config.model });" -> "caseDirs: config.case_dirs });"
+  scripts/eval/judged/model-pin.test.js: exit 1; caught by: ✖ judged-eval: a session that reports another model than the one asked for makes its case INCONCLUSIVE, and the report counts it (88.016917ms)
+mutation M3 the desk drops --model: scripts/demo/customer-desk.js: "args: sessionArgs(prompt, ctx.runDir, debugFile, maxUsd, ctx.model)," -> "args: sessionArgs(prompt, ctx.runDir, debugFile, maxUsd),"
+  scripts/demo/customer-desk.test.js: exit 1; caught by: ✖ batch 11 resumed: every desk session runs on claude-opus-5-5 or the --model given, and the summary lists the models the sessions reported (398.441417ms)
+mutation M4 no --model in the session argv: scripts/eval/judged/backends.js: "...isolationArgs({ runRoot, caseDirs }), ...modelArgs(model));" -> "...isolationArgs({ runRoot, caseDirs }));"
+  scripts/aegis-chat.test.js: exit 1; caught by: ✖ the chat starts once under a fake claude with the desk's isolation and the setup as appended data (22.712167ms) | ✖ with no --setup the argv is the isolation alone (0.303667ms) | ✖ batch 11, task 6: --reply-to asker starts the chat with the voice; another value is refused before claude starts (18.484584ms) | ✖ batch 11 resumed: the chat runs on claude-opus-5-5 unless --model names another; a bad value starts nothing (17.376167ms)

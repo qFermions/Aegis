@@ -2,6 +2,39 @@
 
 Moved out of `CLAUDE.md` in batch 1 (2026-10-27, base `d5fc8c0`) so the instruction file stays under 20,000 bytes; `CLAUDE.md` points here with one line. The text below is the `CLAUDE.md` wording unchanged except that each long dash became " - " and later fixes are named in the git log. Where a passage says "this file", read `CLAUDE.md` and the documents it points to.
 
+## Default sites, device names, servers and vendors
+
+Moved out of `CLAUDE.md` in batch 11 (2026-11-13, base `3ca7a12`) to keep the instruction file under 20,000 bytes with the new answer rules in it; the text is the `CLAUDE.md` wording unchanged except that each long dash became " - ". It belongs to the default environment: a customer profile, when given, replaces it.
+
+### Office Sites
+| Site | Notes |
+|------|-------|
+| Main office | Primary hub, AD Connect server, Meraki MX + MR |
+| [@Aegion_SITE_2] | Connected via [@Aegion_WAN] (migrating to VPN), VoIP migration in progress |
+| [@Aegion_SITE_3] | VoIP migration in progress |
+| [@Aegion_SITE_4] | [STATUS] |
+
+### Device Naming Convention
+- Desktops: `DT-FirstName,LastName`
+- Laptops: `LT-FirstName,LastName`
+- Enforce this. If a ticket mentions a wrong format, flag it.
+
+### Server Infrastructure
+| Server | Role |
+|--------|------|
+| AD Connect server | Syncs on-prem AD → Entra ID. Check here first if new users don't appear in M365. |
+| [@Aegion_FINANCE_SERVER] | Dedicated Windows Server for finance/accounting. Check with senior IT for access. |
+| Third tower | Unknown role - ask senior IT: "File storage, backup, or app hosting?" |
+
+### Key Vendors
+| Vendor | Relationship | Use for |
+|--------|-------------|---------|
+| [@Aegion_NETPARTNER] | Long-term partner | Networking, cabling, VoIP install, VPN migration |
+| [@Aegion_ISP] | ISP / contractual | Fiber, landlines (being eliminated) |
+| [@Aegion_VOIP] | VoIP provider | Phone system support |
+| [@Aegion_ALARM] | Security | Alarm monitoring, upgrading to internet-based |
+| Microsoft | Platform | M365, Azure, Entra, Intune support |
+
 ## Live environment state (from the CLAUDE.md troubleshooting section)
 
 ### Environment-specific state

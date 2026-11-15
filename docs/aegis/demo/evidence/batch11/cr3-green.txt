@@ -1,0 +1,44 @@
+$ TMPDIR=<tmp> node --test scripts/demo/ask-first.test.js scripts/demo/asker-reply.test.js scripts/demo/customer-desk.test.js scripts/ask-aegis.test.js   (class K, green)
+ℹ fail 0
+ℹ pass 144
+ℹ tests 144
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/demo/assumed-setup.test.js scripts/demo/customer-desk.test.js   (class L, green)
+ℹ fail 0
+ℹ pass 113
+ℹ tests 113
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js scripts/demo/customer-desk.test.js   (class M, green)
+ℹ fail 0
+ℹ pass 121
+ℹ tests 121
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js scripts/demo/customer-desk.test.js   (class O, green)
+ℹ fail 0
+ℹ pass 122
+ℹ tests 122
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js scripts/demo/customer-desk.test.js scripts/demo/batch11-new-way-in.test.js   (class P, green)
+ℹ fail 0
+ℹ pass 126
+ℹ tests 126
+exit 0$ TMPDIR=<tmp> node --test scripts/ask-aegis.test.js scripts/aegis-chat.test.js scripts/eval/judged/setup.test.js scripts/eval/judged/cli.test.js   (class N, green)
+ℹ fail 0
+ℹ pass 55
+ℹ tests 55
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/eval/judged/model-pin.test.js scripts/eval/judged/budget.test.js scripts/eval/judged/cli.test.js   (class R, green)
+ℹ fail 0
+ℹ pass 21
+ℹ tests 21
+exit 0$ TMPDIR=<tmp> node --test scripts/demo/customer-desk.test.js scripts/demo/render.test.js scripts/demo/batch10-readbacks.test.js   (class S, green)
+ℹ fail 0
+ℹ pass 127
+ℹ tests 127
+exit 0
+

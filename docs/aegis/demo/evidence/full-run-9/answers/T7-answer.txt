@@ -1,0 +1,28 @@
+## Fix
+Assumed setup: the studio's office router or firewall and its internet line (the profile given does not list the network equipment or the internet provider).
+
+**What's wrong:** Internet is slow for everyone. The cause is not known yet. No runbook covers this; these steps are reasoning, not a known fix.
+
+**Do this:**
+1. Find out how wide it is. Are remote staff slow too, or only the office? Is it wired and Wi-Fi, or Wi-Fi only? Is it every site, or only Google and Slack?
+2. If only Google or Slack is slow, check the Google Workspace Status Dashboard and the Slack status page. Office only points to the line or the router. Everyone everywhere points to the vendor.
+3. In the office, run a speed test on a wired Mac and compare it with the speed the plan should give.
+4. Look at the router for one device using most of the bandwidth, such as a large upload or a backup.
+5. If the line itself is slow, call the provider.
+
+**Done when:** speed tests match the plan again and staff confirm.
+**Stop if:** the router shows signs of an attack. Escalate.
+
+**Tell the user now:** "We're checking whether this affects the whole office or only some services."
+**Tell the user when done:** "Internet speed is back to normal. Tell us if anything still feels slow."
+
+See Details.
+
+## Details
+- **Why no change is advised:** every step is a read. Restarting the router or changing settings is held back until steps 1 to 4 point to it. Any later change would need the studio manager's approval, per the profile.
+- **If you start from the office:** the provider's outage page and the router's traffic view answer "how wide" fastest.
+- **Jira note:** Internet slow for all staff. Scope checked (office vs remote, all sites vs Google and Slack only). Speed test result: [RESULT] against [PLAN_SPEED]. Top bandwidth user: [DEVICE_NAME or none]. Provider ticket: [REF or n/a]. No changes made.
+
+```aegis-desk
+Gate: none
+```

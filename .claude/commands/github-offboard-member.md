@@ -34,8 +34,16 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Membership:** the `membership` read shows state (active or pending) and role (admin, member or billing_manager) (G-03). A pending state means an invitation was never accepted.
 - **`verify-offboarded`** passes only when the person is not a member, has no pending invitation, and is not an outside collaborator. After a conversion it does not pass, and says the person is now an outside collaborator: that is the conversion's proof.
 - **Teams:** the team members read includes child-team members (G-06); removal from the organization takes the person out of every team.
-- **Forks and repositories:** what happens to the person's forks of private repositories when they leave is [unconfirmed: check in the GitHub UI]. Phase A records them so the repository owner can decide before removal.
-- **Reinstatement:** whether GitHub can restore a former member's earlier access, and for how long, is [unconfirmed: check in the GitHub UI]. Plan for a fresh invitation.
+- **Forks and repositories:** GitHub's page on removing a member says removed members lose access to private forks of the organization's private repositories; a copy already on the person's own machine stays with them. Phase A records the forks so the repository owner can decide before removal.
+- **Reinstatement:** GitHub saves a removed member's access privileges and settings for three months. A reinstatement inside that time can restore the role, private forks, team memberships, previous access, stars, issue assignments and repository subscriptions; it is still a new invitation the person must accept. After three months, plan for a fresh invitation and the Phase A record.
+
+## A leaver: mail, what the seat costs, the restore window
+
+A leaver's plan answers three questions in the ticket before Phase E (answer-format section 2, the offboarding rule).
+
+- **Where the person's mail goes.** GitHub holds no mailbox. Notifications go to the address on the person's own GitHub account, which the organization does not control; the company mailbox is decided in `/gws-offboard` or `/offboard`.
+- **What keeping the membership costs, against the alternatives.** A member holds a paid licence. GitHub's page says that with volume licence billing the paid licence count does not go down by itself when a member is removed: lowering it is a separate billing step for **[org gap: who manages the GitHub plan]**. Converting to an outside collaborator (Phase D) keeps access to named repositories only; what that costs on the org's plan is [unconfirmed: check the vendor page].
+- **The restore window before the data is gone.** Three months: GitHub saves the removed member's access privileges and settings for that long (the Reinstatement line above). Write the date it ends in the ticket. The person's local clones are never recalled.
 
 ## Fast path
 
@@ -46,6 +54,16 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 5. Leaver: Phase E (R3, inside `/offboard`, after review). **WAIT UNTIL** People no longer lists them.
 6. Outside collaborator leaving: Phase F (R3), or `/github-repo-access` per repository.
 7. Every path ends with `verify-offboarded` (or, for a conversion, its expected "outside collaborator" answer).
+
+**Every change, its class and its double-check** (answer-format section 2, "Every change carries its class and its double-check"; the class is each gate's own Reversibility line):
+
+| Phase | Change | Class | Double-check |
+|---|---|---|---|
+| C | revoke a pending invitation, gate github-offboard-member-revoke-invitation-portal | R1 | no change record; the offboarded read passes and the invitations list no longer shows the person |
+| D | convert a member to an outside collaborator, gate github-offboard-member-convert-portal | R2 | the offboarded read-back answers "now an outside collaborator", the answer a conversion expects |
+| E | remove a member from the organization, gate github-offboard-member-remove-portal | R3 | the offboarded read-back passes, and People no longer lists the person |
+| F | remove an outside collaborator from every repository, gate github-offboard-member-remove-outside-portal | R3 | the offboarded read-back passes, and the outside collaborator list no longer shows the person |
+| after any of them | lower the paid licence count | no gate in this runbook: a billing step with its own owner | the organization's billing page shows the new count |
 
 ## Phase A: Read everything the person touches (R0)
 
@@ -174,7 +192,7 @@ node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GIT
 <!-- SAFETY GATE [github-offboard-member-remove-portal] -->
 - **Target:** [GITHUB_USER] in [@Aegion_GITHUB_ORG]
 - **Effect:** remove one member from [@Aegion_GITHUB_ORG]
-- **Scope:** one person; every team, every repository they reached through the organization, and their member role go at once; what happens to their forks is [unconfirmed: check in the GitHub UI]
+- **Scope:** one person; every team, every repository they reached through the organization, and their member role go at once; they lose access to private forks of the organization's private repositories
 - **Reversibility:** R3 (account removal): no one-click undo; the way back is a new invitation and the teams and roles saved in tasks/checkpoints/, planned in [github-offboard-member-reinstate-preview]
 - **Required confirmation:** Type exactly `REMOVE [GITHUB_USER] FROM ORGANIZATION [@Aegion_GITHUB_ORG]`.
 - **Failure behavior:** Empty, declined, `yes`, or any other response means stop; no change is made.
@@ -223,7 +241,9 @@ node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --
 
 **Verification checkpoint:** [ ] `verify-offboarded` exits 0 · [ ] the outside collaborator list no longer shows the person.
 
-> **PREVIEW ONLY [github-offboard-member-reinstate-preview]:** Planning only; nothing here authorizes an invitation or an access change. The way back from Phases C to F is a new organization invitation (or a new collaborator invitation per repository through `/github-repo-access`), followed by the teams and roles saved in `tasks/checkpoints/`. The invitation path was not in the pages read, and whether GitHub can reinstate a former member's earlier access is [unconfirmed: check in the GitHub UI]. A reinstatement is its own ticket with the owner's approval.
+**When the person should not have had the access they had: who else, and what left (R0).** After a removal is read back, the next step is a read, before anyone says how serious it was (answer-format section 2, "Who else, and what left"). Who else: the Phase A lists of members, outside collaborators and pending invitations, read against the list of people who should be there. What the person did: github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → Settings → Logs → Audit log → search with the `actor:` qualifier and the person's login. The audit log is open to owners only and lists the last 180 days. What left: the Phase A record of the person's forks and of the repositories they could read; a clone on their own machine stays with them, and whether a clone or a download is recorded depends on the plan [unconfirmed: check the vendor page]. Until those reads are in the ticket, the answer says "access removed, use not yet reviewed" and names no severity.
+
+> **PREVIEW ONLY [github-offboard-member-reinstate-preview]:** Planning only; nothing here authorizes an invitation or an access change. The way back from Phases C to F is a new organization invitation (or a new collaborator invitation per repository through `/github-repo-access`), followed by the teams and roles saved in `tasks/checkpoints/`. The invitation path was not in the pages read. GitHub saves a removed member's access privileges and settings for three months, and a reinstatement inside that time can restore them once the person accepts the new invitation. A reinstatement is its own ticket with the owner's approval.
 
 ## ⚠️ Risk warning
 
@@ -241,6 +261,7 @@ node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --
 - [ ] Removed from the organization: `verify-offboarded` exits 0; People no longer lists the person; on Enterprise Cloud the audit log shows the removal after `[NOT_BEFORE]`.
 - [ ] Outside collaborator removed: `verify-offboarded` exits 0.
 - [ ] The `/offboard` ticket records the GitHub step and its read-back.
+- [ ] For a leaver: the ticket says the mail is decided in the company offboarding, who lowers the paid licence count, and the date the three-month reinstatement window ends.
 
 ## 📝 Jira-ready note
 
@@ -265,3 +286,5 @@ Proving a leaver is gone from every access path, not just the one you clicked, i
 Run Phase A for `[GITHUB_USER]`, save the pre-state, clear the stops, and write the Phase B decision in the `/offboard` ticket.
 
 **Sources (checked 2026-10-28, batch G3 vendor facts, `docs/aegis/g3/vendor-facts.md`):** docs.github.com/en/organizations/managing-membership-in-your-organization/removing-a-member-from-your-organization (B-06) · docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-outside-collaborators/converting-an-organization-member-to-an-outside-collaborator (B-07) · docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/managing-teams-and-people-with-access-to-your-repository (B-01) · docs.github.com/en/rest/orgs/members (G-01, G-03) · docs.github.com/en/rest/orgs/outside-collaborators (G-07) · docs.github.com/en/rest/teams/members (G-06) · docs.github.com/en/rest/collaborators/collaborators (G-08, G-09) · docs.github.com/en/enterprise-cloud@latest/rest/orgs/orgs (G-17, G-18) · cli.github.com/manual/gh_api (B-12, B-13). A label marked [unconfirmed: check in the GitHub UI] was not on these pages.
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** docs.github.com/en/organizations/managing-membership-in-your-organization/removing-a-member-from-your-organization (private forks; the paid licence count; three months) · docs.github.com/en/organizations/managing-membership-in-your-organization/reinstating-a-former-member-of-your-organization (what a reinstatement restores; a new invitation) · docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/reviewing-the-audit-log-for-your-organization (owners only; 180 days; the actor, repo and action qualifiers).

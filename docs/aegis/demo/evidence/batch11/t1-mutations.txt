@@ -1,0 +1,110 @@
+node --test scripts/eval/judged/setup.test.js   (run once per mutation below; each mutation is one exact replacement, restored after its run)
+
+MUTATION 1: the schema no longer checks the type or length of setup
+  file: scripts/eval/judged/cases.js
+  from: "  if (hasSetup) checkString(errs, line, 'setup', obj.setup, { max: LIMITS.setup });\n"
+  to:   ""
+  exit code: 1
+  ℹ tests 9
+  ℹ pass 8
+  ℹ fail 1
+  ✖ schema: setup is the one optional top-level field: absent, empty, a string, too long, a wrong type
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "schema: setup is the one optional top-level field"
+
+MUTATION 2: the setup goes after the ticket and evidence instead of before
+  file: scripts/eval/judged/backends.js
+  from: "  return `${setupBlock(c.setup, 'ticket').join('\\n')}\\n\\n${body}`;"
+  to:   "  return `${body}\\n\\n${setupBlock(c.setup, 'ticket').join('\\n')}`;"
+  exit code: 1
+  ℹ tests 9
+  ℹ pass 6
+  ℹ fail 3
+  ✖ the system under test prompt carries a setup between ask-aegis's marker lines, as data, before the ticket
+  ✖ backends.js does not load ask-aegis.js when it loads, and still builds a prompt with a setup
+  ✖ an email address in a setup is masked in both prompts; results.json records setup_given, not the text
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "the system under test prompt carries a setup"
+
+MUTATION 3: every system under test prompt opens with a setup block, also with no setup
+  file: scripts/eval/judged/backends.js
+  from: "  if (typeof c.setup !== 'string' || c.setup.trim() === '') return body;\n"
+  to:   ""
+  exit code: 1
+  ℹ tests 9
+  ℹ pass 6
+  ℹ fail 3
+  ✖ the system under test prompt carries a setup between ask-aegis's marker lines, as data, before the ticket
+  ✖ with no setup the system under test prompt is byte for byte what it was
+  ✖ an email address in a setup is masked in both prompts; results.json records setup_given, not the text
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "with no setup the system under test prompt is byte for byte what it was"
+
+MUTATION 4: every judge prompt gets a setup line, also with no setup
+  file: scripts/eval/judged/judge.js
+  from: "    ...(setup ? [`- setup the assistant was given (what the company runs; it replaces the default environment for this case): ${setup}`] : []),\n"
+  to:   "    `- setup the assistant was given (what the company runs; it replaces the default environment for this case): ${setup || '(none)'}`,\n"
+  exit code: 1
+  ℹ tests 9
+  ℹ pass 7
+  ℹ fail 2
+  ✖ with no setup the judge prompt is byte for byte what it was
+  ✖ an email address in a setup is masked in both prompts; results.json records setup_given, not the text
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "with no setup the judge prompt is byte for byte what it was"
+
+MUTATION 5: the setup is left out of the nonce collision check
+  file: scripts/eval/judged/judge.js
+  from: "...c.expected.must_not, ...(setup ? [setup] : [])].join('\\n');"
+  to:   "...c.expected.must_not].join('\\n');"
+  exit code: 1
+  ℹ tests 9
+  ℹ pass 8
+  ℹ fail 1
+  ✖ the judge prompt states the setup in one line of THE CASE section, and checks it for the nonce
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "the judge prompt states the setup in one line of THE CASE section"
+
+MUTATION 6: the privacy step is skipped, so a setup goes out as typed
+  file: scripts/eval/judged-eval.js
+  from: "  const list = protectSetups(cases.readCaseFile(real).cases);\n"
+  to:   "  const list = cases.readCaseFile(real).cases;\n"
+  exit code: 1
+  ℹ tests 9
+  ℹ pass 7
+  ℹ fail 2
+  ✖ an email address in a setup is masked in both prompts; results.json records setup_given, not the text
+  ✖ a password in a setup refuses the run (exit 1) by case id and label, never the value, before anything starts
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "an email address in a setup is masked in both prompts"
+
+MUTATION 7: a blocked setup is masked-through instead of refusing the run
+  file: scripts/eval/judged-eval.js
+  from: "    if (p.blocked) { refused.push(`the setup of case ${c.id} holds a value Aegis never keeps (${p.blocked.join('; ')})`); return c; }\n"
+  to:   "    if (p.blocked) return c;\n"
+  exit code: 1
+  ℹ tests 9
+  ℹ pass 8
+  ℹ fail 1
+  ✖ a password in a setup refuses the run (exit 1) by case id and label, never the value, before anything starts
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "a password in a setup refuses the run"
+
+MUTATION 8: the dry run counts the cases that have the field, not a setup
+  file: scripts/eval/judged/cases.js
+  from: "setup: hasSetup && obj.setup.trim() !== '' ? obj.setup : '', line,"
+  to:   "setup: hasSetup ? (obj.setup || ' ') : '', line,"
+  exit code: 1
+  ℹ tests 9
+  ℹ pass 7
+  ℹ fail 2
+  ✖ schema: setup is the one optional top-level field: absent, empty, a string, too long, a wrong type
+  ✖ the dry run prints how many cases carry a setup and still exits 4, through main and through the real CLI
+  ✖ failing tests:
+  CAUGHT: expected a failing test named "the dry run prints how many cases carry a setup"
+
+AFTER RESTORE (every file back to its text before the mutations)
+  exit code: 0
+  ℹ tests 9
+  ℹ pass 9
+  ℹ fail 0

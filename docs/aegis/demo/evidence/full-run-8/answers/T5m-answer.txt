@@ -1,0 +1,40 @@
+Checked the quarantine runbook and the answer format; writing up the ticket now.
+
+## Fix
+**What's wrong:** The vendor's invoices are probably being held before they reach the mailbox: in Defender quarantine, by an inbox rule, or failing the sender checks. A total email outage is unlikely.
+**Do this:**
+1. Run a message trace in Exchange admin center → Mail flow → Message trace, filtered to the vendor's sending address, for the last 10 days. Each status points to a cause:
+   - **Quarantined:** go to step 2.
+   - **Delivered:** go to step 3.
+   - **Failed:** read the SPF/DKIM/DMARC result in the trace detail.
+   - **No record:** the mail never reached the tenant.
+2. If quarantined: in Defender → Email & collaboration → Review → Quarantine, read the reason for each invoice. Release a Spam or Bulk item to [SHARED_MAILBOX] only after you've reviewed it.
+3. If delivered: check the mailbox's Junk folder and its inbox rules for a rule that moves or forwards vendor mail.
+4. If there's no record or a failure, call the vendor on the phone number you already have on file. Ask them to confirm the exact address they send to and to fix their DNS records.
+
+**Done when:** all 6 invoices are in [SHARED_MAILBOX] and Aegis has confirmed each release.
+**Stop if:**
+- Any item is phish or malware.
+- You find an inbox rule nobody created.
+
+Either one means you treat this as a security incident.
+**Tell the user now:** IT is tracing the vendor's messages. Please ask the vendor to resend by phone, not by email.
+**Tell the user when done:** The held invoices are in your mailbox. Here is why they were stopped.
+
+See Details.
+
+## Details
+- **No runbook covers the whole symptom.** `/email-quarantine` covers step 2. Steps 1, 3 and 4 are reasoning, not a known fix.
+- **Why the rule check matters:** missing vendor invoices are a common sign of invoice fraud. An attacker adds a hidden inbox rule, or tells the vendor to use a new address. If step 3 finds a rule nobody made, stop and treat it as a compromised account. Don't delete the rule yet; keep it as evidence.
+- **Release (change, R2):** run it once per held invoice, with its own phrase and change record. Release to one recipient only, never to all recipients.
+- **Approvals (customer profile):** the IT lead approves each release. If the fix becomes a tenant allow entry, that changes mail flow, so the operations manager must also approve. An allow entry is never the first fix: it is scoped to one address and has an expiry, and it is never used for mail failing SPF, DKIM or DMARC. That's a later step that needs its own review (`quarantine-allow-entry`, `/email-whitelist`).
+- **Hybrid note:** if the trace shows nothing at all, check where the domain's MX record points. It should be Exchange Online, not an on-prem server.
+- **Identity gap:** the customer profile lists identity verification as an [org gap]. Verify the vendor by calling a number you already have on file, never one given in an email.
+- **Jira note:** Vendor invoice mail traced from [date]. Result: [quarantined / rule / failed auth / no record]. [N] invoices released to [SHARED_MAILBOX] under [JIRA-###]. Approved by the IT lead.
+
+```aegis-desk
+Gate: quarantine-release-one-portal
+Phrase: RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [SHARED_MAILBOX]
+Change record: R2, read-back exo:verify-quarantine-released
+Read-back: exo-client.js verify-quarantine-released --message-id "[MESSAGE_ID]" --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+```

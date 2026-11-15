@@ -13,6 +13,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, departments, or any PI
 
 Steps marked **[if applicable]** depend on role/department — skip with a note when they don't apply, never silently.
 
+**Every change carries its class and its double-check (answer-format section 2).** No step in this plan has a gate: each is a PREVIEW ONLY marker, a separate reviewed change. So in the plan written under Details every step that changes something says "no gate here" and shows two things beside it: its risk class from the table in CLAUDE.md, and a proof a person can see with their own eyes, which is that step's ✅ Verify line. The classes: the licence (Step 3) and an MFA method an admin adds (Step 4) are R3, the row for CA, MFA and licensing changes. A step that adds 2 to 10 memberships or grants at once (Steps 5 to 8 for most hires) is R2, and more than 10 is R3. A single addition that one action undoes (the AD account, one extension, one seat, one drive mapping, one printer) is R1. A step that changes nothing (the sync wait, the inventory row, the notices, the first sign-in check) says "no change". When a class is unclear the plan takes the higher one and says why.
+
 ---
 
 ## Phase A — Identity & Licensing

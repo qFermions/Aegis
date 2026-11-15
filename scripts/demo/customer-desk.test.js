@@ -1251,17 +1251,24 @@ test('task 8: step 5 shows the answer checks as rows (six since batch 9); a fail
   const old = await runDesk(t, { only: ['T1'], answers: { T1: good('mfa-require-reregister-portal') } });
   const k = old.ticket('T1');
   const rows = step(k, 5).answer_checks;
-  // batch 9, task 8c added the seventh row, lightest-step-first (its own cases are in lightest-step.test.js)
-  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts', 'user-message-now', 'lightest-step-first']);
+  // batch 9, task 8c added the seventh row, lightest-step-first (its own cases are in lightest-step.test.js); batch 11 added
+  // assumed-setup and ask-first on every answer, and a thinking-rule row when its rule applies to the ticket (T1 is
+  // about a replaced phone, so new-way-in-first; their own cases are in assumed-setup, ask-first and thinking-rules tests)
+  assert.deepEqual(rows.map((r) => r.check), ['fix-card-first', 'fix-card-parts', 'fix-card-words', 'no-command', 'customer-facts', 'user-message-now', 'lightest-step-first', 'assumed-setup', 'ask-first', 'new-way-in-first']);
   assert.equal(rows[0].verdict, 'fail', 'an answer with no Fix card fails the first row');
   assert.equal(k.closing_state, 'RESOLVED (SIMULATED)', 'and the ticket still goes on');
   assert.deepEqual(step(k, 5).checks.map((r) => r.check), ['boundary', 'human-confirmation', 'read-back', 'privacy', 'observed-output', 'probe'], 'the existing checks are unchanged');
-  assert.match(step(k, 5).result, /answer format: \d of 7 pass/);
+  assert.match(step(k, 5).result, /answer format: \d of 10 pass/);
   const carded = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\n${good()}`, 'mfa-require-reregister-portal') } });
-  // the seventh row reads the real runbook: mfa-issue's section lists [mfa-session-revoke-portal] before the
-  // re-register gate this answer names first, so it fails, is shown, and the ticket still resolves
-  assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass', 'fail']);
-  assert.match(step(carded.ticket('T1'), 5).answer_checks[6].detail, /mfa-session-revoke-portal/);
+  // the seventh row reads the real runbook. Until batch 11 mfa-issue's one section listed [mfa-session-revoke-portal]
+  // before the re-register gate; since batch 11 (a new way in before the old way out) that gate has its own section,
+  // which opens with a Try first line naming the pass and the one-method delete, so the row still fails and names
+  // that lighter step line. The answer names the re-register gate first, so the row fails, is shown, and the ticket
+  // still resolves. Batch 11's rows: this answer stays inside Customer A's setup and is not a lone question (pass,
+  // pass); its steps clear the old methods with no new way in first, so new-way-in-first fails, is shown, and the
+  // ticket still resolves
+  assert.deepEqual(step(carded.ticket('T1'), 5).answer_checks.map((r) => r.verdict), ['pass', 'pass', 'pass', 'pass', 'pass', 'pass', 'fail', 'pass', 'pass', 'fail']);
+  assert.match(step(carded.ticket('T1'), 5).answer_checks[6].detail, /mfa-require-reregister-portal, a heavy one, while its runbook section "Require re-register MFA: not the lost-or-replaced-device path" lists a lighter step line first/);
   assert.equal(carded.ticket('T1').closing_state, 'RESOLVED (SIMULATED)');
   const sms = await runDesk(t, { only: ['T1'], answers: { T1: withBlock(`${CARD}\nThe SMS fallback still works for this user.\n${good()}`, 'mfa-require-reregister-portal') } });
   assert.equal(step(sms.ticket('T1'), 5).answer_checks[4].verdict, 'fail', 'Customer A has no SMS fallback');
@@ -1499,4 +1506,77 @@ test('batch 9, task 7: T3\'s password reset passes its audit read; the wipe\'s r
   const wipe = (await runDesk(t, { only: ['T3'], answers: { T3: good('jamf-lock-erase-wipe-portal') } })).ticket('T3');
   assert.equal(wipe.closing_state, 'INCONCLUSIVE', wipe.reason);
   assert.deepEqual(step(wipe, 8).reads.map((x) => `${x.kind} ${x.state}`), ['jamf:verify-command INCONCLUSIVE']);
+});
+
+// Batch 11, task 4: an ask-first answer is one question with no Fix card and no Gate line, and the desk reads it as
+// CLARIFY; an answer with a Fix card that asks and says Gate: none still closes CLARIFY (the saved tidy T7 answer of
+// full run 7). Wrong implementations it catches: a desk that needs "Gate: none" to read a question (the lone
+// question would stop OPEN), and one that reads any no-card answer with a question as CLARIFY (the advice with a
+// stray question above must stay OPEN).
+test('batch 11, task 4: an ask-first answer closes CLARIFY with its form row shown; the saved tidy T7 answer still closes CLARIFY', async (t) => {
+  const asked = await runDesk(t, { only: ['T7'], answers: { T7: 'What exactly is slow, for whom, and since when?' } });
+  const k = asked.ticket('T7');
+  assert.equal(k.closing_state, 'CLARIFY', k.reason);
+  assert.equal(asked.code, 0);
+  assert.match(step(k, 7).result, /not reached/);
+  const row = step(k, 5).answer_checks.find((r) => r.check === 'ask-first');
+  // T7's ticket says what is slow and for whom, so the rule wants a Fix card: the row fails, is shown, and stops nothing
+  assert.equal(row.verdict, 'fail');
+  assert.match(row.detail, /Fix card/);
+  // code review round 1, findings 1 and 10: advice with a stray question stays OPEN whether its steps are numbered,
+  // bulleted or written as prose; only a lone question is ask-first
+  for (const advice of ['In the admin center, require re-registering MFA for the user, HUMAN-RUN. Did that help?', '- Restart the router.\n- Reconnect the laptop.\n\nDid that help?', 'Restart the router and reconnect the laptop. Did that help?']) {
+    const stray = await runDesk(t, { only: ['T7'], answers: { T7: advice } });
+    assert.equal(stray.ticket('T7').closing_state, 'OPEN', advice);
+  }
+
+  const saved = fs.readFileSync(path.join(REPO, 'docs', 'aegis', 'demo', 'evidence', 'full-run-7', 'answers', 'T7-answer.txt'), 'utf8');
+  const tidy = await runDesk(t, { only: ['T7'], answers: { T7: saved } });
+  const s = tidy.ticket('T7');
+  assert.equal(s.closing_state, 'CLARIFY', s.reason);
+  assert.equal(step(s, 5).answer_checks.find((r) => r.check === 'ask-first').verdict, 'pass', 'a Fix card on a ticket with a symptom');
+  assert.deepEqual(step(s, 5).answer_checks.map((r) => r.check).slice(7), ['assumed-setup', 'ask-first'], 'no thinking rule applies to a slow-internet ticket');
+});
+
+// Batch 11 resumed, task 8: the desk names its model. EXPECTED DECISION: every session the desk starts gets --model
+// claude-opus-5-5, or the value of --model; run.json keeps the model asked for, and its summary lists the models the
+// sessions reported, on a line of its own with the pin beside it; a value that is not a model name is refused before
+// any folder or session. Wrong implementations it catches: a desk that pins its first session only, a summary that
+// shows the flag instead of what the sessions reported, and a --model flag parsed and not passed on.
+test('batch 11 resumed: every desk session runs on claude-opus-5-5 or the --model given, and the summary lists the models the sessions reported', async (t) => {
+  const r = await runDesk(t, { only: ['T1', 'T7'], answers: { T1: good('mfa-require-reregister-portal'), T7: 'Which site?\nGate: none' } });
+  const sut = r.calls().filter((c) => c.role === 'sut');
+  assert.equal(sut.length, 2);
+  for (const c of sut) assert.equal(c.args[c.args.indexOf('--model') + 1], 'claude-opus-5-5');
+  assert.equal(r.run.model, 'claude-opus-5-5');
+  assert.deepEqual(r.run.summary.models, ['claude-opus-5-5']);
+  assert.match(r.out, /^models claude-opus-5-5 \(pinned claude-opus-5-5\)$/m);
+
+  const other = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, argv: ['--model', 'claude-sonnet-5-5'], sut: { model: 'claude-fable-5-2' } });
+  const [c] = other.calls().filter((x) => x.role === 'sut');
+  assert.equal(c.args[c.args.indexOf('--model') + 1], 'claude-sonnet-5-5');
+  assert.equal(other.run.model, 'claude-sonnet-5-5');
+  assert.deepEqual(other.run.summary.models, ['claude-fable-5-2'], 'what the session reported, not the flag');
+  assert.match(other.out, /^models claude-fable-5-2 \(pinned claude-sonnet-5-5\)$/m);
+
+  const said = [];
+  let started = 0;
+  const bad = await desk.main(['run', '--model', 'two words', '--execute', '--results-dir', path.join(tmp(t), 'never')], { PATH: process.env.PATH }, { out: (s) => said.push(String(s)), err: (s) => said.push(String(s)), spawn: () => { started += 1; throw new Error('no session'); } });
+  assert.equal(bad, 1);
+  assert.equal(started, 0);
+  assert.match(said.join(''), /--model/);
+});
+
+// Code review round 3, finding 14: the desk matched the output-cap reason on its wording (/larger than the cap/) while
+// the judged runner reads it through backends.ranUnpriced, so rewording backends.OUTPUT_CAP_REASON would silently break
+// the desk's budget stop. Wrong implementation it catches: a desk that reads the reason's text.
+test('code review 3: the desk reads a session of unknown cost through backends.ranUnpriced, not the cap reason\'s wording', () => {
+  const source = fs.readFileSync(path.join(REPO, 'scripts', 'demo', 'customer-desk.js'), 'utf8');
+  assert.doesNotMatch(source, /larger than the cap/);
+  assert.match(source, /backends\.ranUnpriced\(turn\)/);
+  const backends = require('../eval/judged/backends.js');
+  assert.equal(backends.ranUnpriced({ state: 'ERROR', reason: backends.OUTPUT_CAP_REASON, cost_usd: null }), true);
+  assert.equal(backends.ranUnpriced({ state: 'TIMEOUT', cost_usd: null }), true);
+  assert.equal(backends.ranUnpriced({ state: 'OK', cost_usd: 0.4, model: 'claude-opus-5-5' }), false);
+  assert.equal(backends.ranUnpriced({ state: 'ERROR', reason: 'spawn failed (ENOENT)', cost_usd: null, model: null, session_id: null }), false, 'a session that never started spent nothing');
 });

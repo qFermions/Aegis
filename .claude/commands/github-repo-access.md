@@ -211,6 +211,8 @@ node scripts/adapters/github-client.js permission --repo [REPO_NAME] --user [GIT
 
 **Verification checkpoint:** [ ] `verify-collaborator-removed` exits 0 · [ ] the `permission` read shows what a team still grants, written in the ticket.
 
+**When the person should never have had the access: who else, and what left (R0).** After the removal is read back, the next step is a read, before anyone says how serious it was (answer-format section 2, "Who else, and what left"). Who else: the Phase A direct list and team list for `[REPO_NAME]`, read against the list of people who should have it, and the same person's access to other repositories. What the person did: github.com → profile picture → Organizations → `[@Aegion_GITHUB_ORG]` → Settings → Logs → Audit log → search with the `repo:` qualifier for this repository and the `actor:` qualifier for the person. The audit log is open to owners only and lists the last 180 days. What left: the gate's Scope line already says code the person cloned stays with them; whether a clone or a download is recorded depends on the plan [unconfirmed: check the vendor page], so a secret that lived in the repository is treated as read and goes to `/github-security-alerts`. Until those reads are in the ticket, the answer says "access removed, use not yet reviewed" and names no severity.
+
 ## Phase F: A team on the repository (R2; R3 for maintain or admin, or more than 10 members)
 
 **Purpose:** give or take a team's access in one change. The member count is the blast radius.
@@ -318,6 +320,7 @@ node scripts/adapters/github-client.js verify-team-member --team [TEAM_SLUG] --u
 - [ ] Team on the repository: the spot check passes, or the `permission` read shows the lower role; Collaborators & teams agrees.
 - [ ] Team membership: `verify-team-member` exits 0 (with `--absent` for a removal).
 - [ ] R3: approval, end date and rollback path were in the ticket before step 1.
+- [ ] If the person should never have had the access: who else has it, the person's audit log entries for the repository, and any secret the repository held are in the ticket before any severity is stated.
 
 ## 📝 Jira-ready note
 
@@ -342,3 +345,5 @@ Granting through teams and reading back effective permission, not the list you e
 Run Phase A for `[GITHUB_USER]` on `[REPO_NAME]` and write the `role_name` and route in the ticket before choosing a phase.
 
 **Sources (checked 2026-10-28, batch G3 vendor facts, `docs/aegis/g3/vendor-facts.md`):** docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/managing-teams-and-people-with-access-to-your-repository (B-01, B-02) · docs.github.com/en/rest/collaborators/collaborators (G-08, G-09) · docs.github.com/en/rest/orgs/members (G-01, G-03) · docs.github.com/en/rest/teams/teams and docs.github.com/en/rest/teams/members (G-05, G-06) · docs.github.com/en/organizations/managing-membership-in-your-organization/removing-a-member-from-your-organization (B-06, the People list) · cli.github.com/manual/gh_api (B-12, B-13). A label marked [unconfirmed: check in the GitHub UI] was not on these pages.
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/reviewing-the-audit-log-for-your-organization (owners only; 180 days; the actor, repo and action qualifiers).

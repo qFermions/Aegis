@@ -42,6 +42,18 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 4. Phase D — Jamf read-backs: **WAIT UNTIL** the inventory record exists, then **WAIT UNTIL** FileVault reads Enabled with a Valid escrowed key.
 5. Phase E — identity: **WAIT UNTIL** the Okta account is Active and the Google account exists, hand the Mac over, and **WAIT UNTIL** the user signs in.
 
+**Every change, its class and its double-check** (answer-format section 2, "Every change carries its class and its double-check"; the class is each gate's own Reversibility line):
+
+| Phase | Change | Class | Double-check |
+|---|---|---|---|
+| A | assign the Mac to the Jamf device management service in Apple Business, gate mac-new-hire-laptop-assign-portal | R1 | no change record; the Apple Business row names the Jamf service |
+| B | put the Mac in the PreStage scope, gate mac-new-hire-laptop-prestage-scope-portal | R1 | no change record; the PreStage's device list shows the serial number |
+| C | first boot and Setup Assistant | no gate: done at the Mac by the person holding it | the Remote Management pane was seen, and System Settings, General, Device Management shows the MDM profile from Jamf Pro |
+| C and D | FileVault on and the key escrowed | no gate: the PreStage's profile does it | the Jamf record reads FileVault 2 Enabled and Personal Recovery Key Validation Valid |
+| D | name the Mac, if the PreStage did not | no gate in this runbook: its own change | the inventory record shows the name |
+| E | activate the Okta account, create or provision the Google account | set in `/okta-user-lifecycle` (R1 to activate) and `/gws-new-user` (R1 to create) | each of those runbooks' own read-back; here, Okta reads Active and the Google account is active |
+| E | hand the Mac over | no gate: nothing changes in a system | the user's first sign-in shows in the Okta and Google logs |
+
 ## Phase A — Apple Business: device visible, then assigned (BEFORE the Mac is powered on)
 
 **Purpose** — without this assignment Setup Assistant never shows the enrollment pane, and the Mac becomes a consumer laptop that merely looks set up.
@@ -110,6 +122,8 @@ If the row already names the Jamf device management service, skip the gate and g
 5. FileVault: on macOS 26.4 or later it is turned on during Setup Assistant by default. If the PreStage holds the Mac in Setup Assistant, it continues only after FileVault is on and the key escrowed. **WAIT UNTIL** Setup Assistant finishes and the desktop appears.
 
 **Verification checkpoint** — [ ] enrollment pane seen · [ ] Setup Assistant completed · [ ] on the Mac, System Settings → General → Device Management → read the MDM profile from Jamf Pro.
+
+**When the Mac cannot reach enrollment, or Jamf Pro or Apple Business will not open** (answer-format section 2, "How wide before why"): fix the scope before the cause. This Mac only, or every Mac being set up today; this site's network, or any network; Jamf only, or Apple's services too. Then read the vendors' own status pages: Jamf's (status.jamf.com) and Apple's System Status page (apple.com/support/systemstatus). With no incident on either, the network and name-resolution path come before the device record: put the Mac on another network (Ethernet, or a phone hotspot) and check that a browser on the same network opens `[@Aegion_JAMF_URL]`, before anything is assigned or scoped again. A second assignment or a second scope edit does not fix a network that blocks Apple or Jamf.
 
 ## Phase D — Jamf read-backs: inventory record, FileVault, escrowed key
 
@@ -182,3 +196,5 @@ Zero-touch deployment is a supply chain — serial in Apple Business → token i
 Read the Apple Business inventory row for `[SERIAL_NUMBER]` and confirm the Jamf device management service name and the PreStage name before Phase A.
 
 **Sources (checked 2026-10-15):** support.apple.com/guide/business/assign-reassign-or-unassign-devices-axmf500c0851/web · support.apple.com/guide/business/add-devices-using-apple-configurator-axm200a54d59/web · support.apple.com/guide/business/release-devices-axmec4d28461/web · support.apple.com/guide/deployment/automated-device-enrollment-management-dep73069dd57/web · support.apple.com/guide/deployment/manage-filevault-with-device-management-dep0a2cb7686/web · support.apple.com/guide/deployment/about-device-supervision-dep1d89f0bff/web · support.apple.com/guide/mac-help/protect-data-on-your-mac-with-filevault-mh11785/mac · support.apple.com/guide/mac-help/configuration-profiles-standardize-settings-mh35561/mac · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Configuring_a_Computer_PreStage_Enrollment · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Computer_PreStage_Enrollment_Payload_Reference · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Automated_Device_Enrollment_Integration · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Uploading_the_Server_Token_File_to_Configure_Automated_Device_Enrollment · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Activating_FileVault_Disk_Encryption_using_a_Configuration_Profile · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Disk_Encryption_Category · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Viewing_the_FileVault_Recovery_Key_for_a_Computer · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Sending_a_Remote_Command_to_a_Computer · learn.jamf.com/r/en-US/jamf-pro-documentation-current/Performing_a_Simple_Computer_Search · help.okta.com/oie/en-us/content/topics/oda/macos-pw-sync/about-psso.htm · help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-activate-user-account.htm · help.okta.com/oie/en-us/content/topics/oda/device-logout.htm (Reports → System Log) · help.okta.com/en-us/content/topics/provisioning/google/google-provisioning.htm · knowledge.workspace.google.com/admin/users/add-an-account-for-a-new-user · knowledge.workspace.google.com/admin/reports/data-retention-and-lag-times (learn.jamf.com topics read through the site's content API because the page URLs serve only an app shell).
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** status.jamf.com (Jamf's status page) · apple.com/support/systemstatus (Apple's System Status page; its list of services loads in the browser and was not read).

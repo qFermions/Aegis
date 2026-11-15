@@ -1,0 +1,39 @@
+$ node --test scripts/ask-aegis.test.js scripts/aegis-chat.test.js   (green: --reply-to asker in both tools)
+✔ the chat starts once under a fake claude with the desk's isolation and the setup as appended data (46.899125ms)
+✔ with no --setup the argv is the isolation alone (0.79375ms)
+✔ bad arguments exit 1 with no session; a claude that cannot start is a plain message and exit 2 (3.035292ms)
+✔ while the chat runs the parent ignores Ctrl-C, and it stops ignoring it when claude exits (0.38125ms)
+✔ code review 2, finding 14: the chat protects its setup text as ask-aegis does (0.783ms)
+✔ batch 11, task 6: chatArgs with the voice is one appended prompt; without it the arguments are today's (0.920792ms)
+✔ batch 11, task 6: --reply-to asker starts the chat with the voice; another value is refused before claude starts (27.894125ms)
+✔ the session argv is backends.sutArgs plus the budget, and nothing else (48.688583ms)
+✔ the ticket goes in as pasted evidence and the setup as data above it (69.423833ms)
+✔ it prints the Fix card and the user lines, and saves the answer and the result under the home folder (75.103333ms)
+✔ a results folder inside the repository is refused before any session, also an ignored one or one through a link (1.789542ms)
+✔ no ticket text: the usage and exit 1, with no session (41.909167ms)
+✔ --max-budget-usd passes through, in the desk's two-decimal form (38.418375ms)
+✔ a session that fails or runs past its time: a plain message, exit 2, nothing saved (353.011792ms)
+✔ code review 1, finding 3: emails and phone numbers become placeholders, and a credential stops the ask before any session (41.807041ms)
+✔ code review 1, finding 15: a budget that rounds to 0.00 is refused before any session (7.84125ms)
+✔ code review 2: a password or key stops the ask; error codes and bracket tokens pass unchanged (0.969959ms)
+✔ security review 3: only a known placeholder is kept in brackets; every phone form the intake masks is masked (0.377125ms)
+✔ code review 3, finding 1: a ticket about a password passes; a password written in it stops the ask (0.184667ms)
+✔ final security review: any written password stops the ask; a status word or a whole placeholder does not (0.653917ms)
+✔ batch 10, task 6: no-space and punctuated password spellings stop the ask; ordinary tickets about passwords pass (1.855375ms)
+✔ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (0.275917ms)
+✔ security review 1 (batch 10): every form batch 9 blocked still stops the ask (0.213041ms)
+✔ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.13675ms)
+✔ code review 3, class C3 (batch 10): digits after "'s" or " - " stop the ask in mid-sentence; menu paths and subject lines pass (0.354292ms)
+✔ batch 11, task 6: --reply-to takes asker and nothing else; without it the prompt is byte for byte today's (0.404625ms)
+✔ batch 11, task 6: with the flag, stdout is only the reply; the tech answer and the reply are saved side by side (73.750875ms)
+✔ batch 11, task 6: a reply that fails its check is printed with the reasons and exit 3; no reply at all is exit 3 with the answer saved (90.296125ms)
+✔ batch 11, tasks 4 and 6: an ask-first answer is the one question: it is the reply with the flag, and is shown as a question without it (103.985625ms)
+✔ batch 11, task 6: without the flag the output is exactly today's, whole (61.7295ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1076.910209

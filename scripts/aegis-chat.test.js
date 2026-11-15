@@ -25,8 +25,9 @@ const { REPO_ROOT } = require('./eval/judged/paths.js');
 const chat = require('./aegis-chat.js');
 
 // What every chat session gets, written out from backends.js's exports rather than from the command. The
-// whole ~/aegis-asks folder is denied (review round 1, finding 2), so a chat never reads saved answers.
-const ISOLATED = (home) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks') })];
+// whole ~/aegis-asks folder is denied (review round 1, finding 2), so a chat never reads saved answers. Since batch 11
+// (resumed) it ends with the pinned model, so a chat never runs on the settings file's default model.
+const ISOLATED = (home, model = backends.PINNED_MODEL) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks') }), '--model', model];
 
 function tempDir(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-chat-test-'));
@@ -150,4 +151,78 @@ test('code review 2, finding 14: the chat protects its setup text as ask-aegis d
   const token = ['ghp', '_', 'a'.repeat(30)].join('');
   assert.equal(await chat.main(['--setup', `token ${token}`], { HOME: os.tmpdir() }, { spawn: () => { throw new Error('no session may start'); }, out: () => {}, err: (s) => err.push(s) }), 1);
   assert.ok(!err.join('').includes(token));
+});
+
+// ── Batch 11, task 6: --reply-to asker keeps the asker's voice across the chat ──────────────────
+// EXPECTED DECISION (written before the flag): `--reply-to asker` adds the voice to the one appended system prompt
+// (with the setup block when --setup is given too), so every turn answers in it; any other value is refused before
+// claude starts; without the flag the arguments are exactly today's.
+// Wrong implementations it catches: a flag that drops the setup, one that passes the voice as a first message
+// (an instruction in the conversation instead of the appended prompt), and one that changes a plain chat's argv.
+const crypto = require('node:crypto');
+
+test('batch 11, task 6: chatArgs with the voice is one appended prompt; without it the arguments are today\'s', () => {
+  const root = '/x/aegis-asks';
+  const plain = chat.chatArgs(null, root);
+  assert.ok(!plain.includes('--append-system-prompt'), 'no setup and no voice: nothing appended');
+  assert.deepEqual(chat.chatArgs(null, root, null), plain);
+  const sha = (v) => crypto.createHash('sha256').update(JSON.stringify(v)).digest('hex');
+  // the setup-only tail of the unchanged code (computed at 6d836cc)
+  assert.equal(sha(chat.chatArgs('Google Workspace, Chromebooks', root).slice(-2)), 'de98e7bdf3a9a1132ebf07c3e957ce82ead3d62f074e648533a891205f083cb4');
+  const voiced = chat.chatArgs(null, root, 'asker');
+  assert.deepEqual(voiced.slice(0, -2), plain);
+  assert.equal(voiced[voiced.length - 2], '--append-system-prompt');
+  assert.match(voiced[voiced.length - 1], /section 8/);
+  assert.match(voiced[voiced.length - 1], /every answer in this chat/i);
+  const both = chat.chatArgs('Google Workspace, Chromebooks', root, 'asker');
+  assert.equal(both.filter((a) => a === '--append-system-prompt').length, 1, 'one appended prompt holds both');
+  assert.match(both[both.length - 1], /--- What the company runs ---/);
+  assert.match(both[both.length - 1], /section 8/);
+});
+
+test('batch 11, task 6: --reply-to asker starts the chat with the voice; another value is refused before claude starts', async (t) => {
+  const dir = tempDir(t);
+  const fake = path.join(dir, 'fake-claude-argv.js');
+  const log = path.join(dir, 'argv.json');
+  fs.writeFileSync(fake, "require('node:fs').writeFileSync(process.argv[2], JSON.stringify({ argv: process.argv.slice(3) }));\n");
+  const home = path.join(dir, 'home');
+  const env = { ...process.env, HOME: home, USERPROFILE: home };
+  const c = io();
+  const code = await chat.main(['--reply-to', 'asker'], env, { ...c.deps, backend: { command: process.execPath, prefixArgs: [fake, log] } });
+  assert.equal(code, 0, c.stderr());
+  const got = JSON.parse(fs.readFileSync(log, 'utf8'));
+  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home));
+  assert.match(got.argv[got.argv.length - 1], /section 8/);
+
+  const refused = io();
+  let started = 0;
+  const bad = await chat.main(['--reply-to', 'everyone'], env, { ...refused.deps, spawn: () => { started += 1; throw new Error('must not start'); } });
+  assert.equal(bad, 1);
+  assert.equal(started, 0);
+  assert.match(refused.stderr(), /--reply-to takes asker/);
+});
+
+// Batch 11 resumed, task 8: the chat names its model. EXPECTED DECISION: --model claude-opus-5-5 by default and the
+// value of --model otherwise, after --tools and before any appended prompt; a value that is not a model name, or
+// --model with no value, exits 1 before claude starts. Wrong implementations it catches: a chat started with no
+// --model (it would run on the settings file's default model), and a --model flag parsed and not passed on.
+test('batch 11 resumed: the chat runs on claude-opus-5-5 unless --model names another; a bad value starts nothing', async (t) => {
+  const dir = tempDir(t);
+  const fake = path.join(dir, 'fake-claude-argv.js');
+  const log = path.join(dir, 'argv.json');
+  fs.writeFileSync(fake, "require('node:fs').writeFileSync(process.argv[2], JSON.stringify({ argv: process.argv.slice(3) }));\n");
+  const home = path.join(dir, 'home');
+  const env = { ...process.env, HOME: home, USERPROFILE: home };
+  const c = io();
+  assert.equal(await chat.main(['--model', 'claude-sonnet-5-5', '--reply-to', 'asker'], env, { ...c.deps, backend: { command: process.execPath, prefixArgs: [fake, log] } }), 0, c.stderr());
+  const got = JSON.parse(fs.readFileSync(log, 'utf8'));
+  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, 'claude-sonnet-5-5'));
+  assert.deepEqual(chat.chatArgs(null, path.join('/h/me', 'aegis-asks')).slice(-2), ['--model', 'claude-opus-5-5']);
+  for (const argv of [['--model', 'two words'], ['--model']]) {
+    const refused = io();
+    let started = 0;
+    assert.equal(await chat.main(argv, env, { ...refused.deps, spawn: () => { started += 1; throw new Error('must not start'); } }), 1, argv.join(' '));
+    assert.equal(started, 0);
+    assert.match(refused.stderr(), /--model/);
+  }
 });

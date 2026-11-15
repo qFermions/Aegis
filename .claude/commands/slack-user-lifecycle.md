@@ -41,6 +41,14 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Sessions.** Slack does not honor the identity provider's session length or Single Logout. Deactivation signs the person out; the workspace-wide forced reset sits under SSO & authentication; a per-user API reset (admin.users.session.reset) exists on Enterprise only, and the adapter refuses it.
 - **The read-only adapter** (`scripts/adapters/slack-client.js`, GET only, bound to `[@Aegion_SLACK_TEAM_ID]`) reads users.info and proves each human change with `verify-deactivated`, `verify-reactivated` and `verify-guest`. It refuses every write method (admin.users.remove, admin.users.session.reset, every POST) before credentials or network. The guest fields it reads (`is_restricted` for a multi-channel guest, `is_ultra_restricted` for a single-channel guest) come from Slack's 2021 API spec; confirm the reading on first use.
 
+## A leaver: messages and mail, what the account costs, the way back
+
+A leaver's plan answers three questions in the ticket before Phase D (answer-format section 2, the offboarding rule).
+
+- **Where the person's mail and messages go.** Slack holds no mailbox: the mail is decided in `/gws-offboard`. In Slack, a deactivated member's messages and files are not deleted and stay where they were posted; nobody receives new direct messages for them, so the ticket names who tells the person's contacts where to write instead.
+- **What keeping the account costs, against the alternatives.** Slack's Fair Billing Policy bills a paid member only while they are active: a member an Owner or Admin deactivates stops being billed, and Slack credits the unused part of the billing period. Keeping the account active keeps a member seat billed; a multi-channel guest is billed as a member and a single-channel guest is free (Phase F), so a move to guest is not a way to keep a leaver cheaply inside.
+- **The way back.** Deactivation deletes nothing, and Slack's page sets no end date on reactivation (Phase E), so there is no deletion window to miss. What does not come back is the channel list: the Phase A record is the only copy.
+
 ## Fast path
 
 1. Phase A: read the member with the adapter and in the GUI; record type, status, roles and channels in the ticket (R0).
@@ -50,6 +58,18 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 5. Member to guest or back: Phase F (one R2 gate per destination type; an Owner or Admin stops it). Read back with `verify-guest`.
 6. A session-reset request: Phase G. For one person the sources offer deactivation, not a per-user GUI reset; for everyone, an R3 gate for a verified requester only.
 7. Primary Owner transfer: Phase H (planning only).
+
+**Every change, its class and its double-check** (answer-format section 2, "Every change carries its class and its double-check"; the class is each gate's own Reversibility line):
+
+| Phase | Change | Class | Double-check |
+|---|---|---|---|
+| B | invite one new member, gate slack-user-lifecycle-invite-portal | R1 | no change record; the member record reads deleted false with the expected type |
+| C | put the member in a channel, gate slack-user-lifecycle-channel-add-portal; take them out of one, gate slack-user-lifecycle-channel-remove-portal | R1 each | no change record; each channel's member list shows, or no longer shows, the person |
+| D | deactivate the account, gate slack-user-lifecycle-deactivate-portal | R3 | the deactivated read-back passes, and the members list shows the account deactivated |
+| E | reactivate the account, gate slack-user-lifecycle-reactivate-portal | R1 | no change record; the reactivated read passes and the person can sign in |
+| F | member to single-channel or multi-channel guest, gates slack-user-lifecycle-to-single-guest-portal and slack-user-lifecycle-to-multi-guest-portal | R2 each | the guest read-back passes for the chosen type |
+| F | guest to member, gate slack-user-lifecycle-to-member-portal | R2 | no verify read proves a member: the connector's `user` read shows deleted false and both guest fields false, and the members list shows the account type |
+| G | reset every member's sessions, gate slack-user-lifecycle-session-reset-portal | R3 | no connector read covers sessions: the access logs show sign-ins after the reset time |
 
 ## Phase A: Read the member and capture the pre-state (R0)
 
@@ -326,6 +346,7 @@ node scripts/adapters/slack-client.js access-logs --execute
 - [ ] Type change: `verify-guest` passes for the chosen guest type, or the `user` read shows both guest fields false for a regular member.
 - [ ] Forced reset: the request came through the ticket; the access logs show sign-ins after the reset time.
 - [ ] A request found inside Slack is flagged in the ticket and nothing was changed for it.
+- [ ] For a leaver: the ticket says where the mail goes (decided in `/gws-offboard`), who tells the person's contacts, that the deactivated account is no longer billed, and that the Phase A channel list is kept as the only way back.
 
 ## 📝 Linear-ready note
 
@@ -357,3 +378,5 @@ Treating the identity provider as the source of truth and every app as a read-ba
 Run Phase A for `[USER_ID]` and put the type, roles and channel list in `[ISSUE_ID]` before choosing a phase.
 
 **Sources (checked 2026-10-27):** slack.com/help/articles/204475027-Deactivate-a-members-account (who can deactivate, Primary Owner exception, org-level only on Enterprise, effects; search excerpt) · slack.com/help/articles/360002061747-Reactivate-a-members-account (org and workspace paths, role on reactivation; search excerpt) · slack.com/help/articles/218124397-Change-a-members-role (Change account type path and conversion rules; search excerpt) · slack.com/help/articles/204401633-Transfer-ownership-of-a-workspace-or-org (Primary Owner transfer, Slack Support fallback; search excerpt) · slack.com/help/articles/206924507-Reset-all-single-sign-on-sessions (workspace-wide forced reset; search excerpt) · slack.com/help/articles/201330256 (invitations, 30 days; search excerpt) · slack.com/help/articles/202518103 (guest types, five per paid member; search excerpt) · slack.com/help/articles/205168057 (Slack ignores IdP session length and Single Logout; search excerpt) · docs.slack.dev/reference/scim-api/scim-api-2 and docs.slack.dev/admins/scim-api (SCIM deactivation, admin scope; search excerpt) · docs.slack.dev/reference/methods/admin.users.session.reset (Enterprise only; search excerpt) · docs.slack.dev/reference/methods/users.info, /reference/objects/user-object, /reference/methods/auth.test, /reference/methods/team.accessLogs (fields, paid plans; search excerpt) · github.com/slackapi/python-slack-sdk at commit 449cf2f, slack_sdk/web/client.py (method names, the write methods the adapter refuses; vendor repo) · github.com/slackapi/slack-api-specs, web-api/slack_web_openapi_v2_without_examples.json (user fields deleted, is_restricted, is_ultra_restricted, is_primary_owner; vendor repo, last updated 2021).
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** slack.com/help/articles/204475027-Deactivate-a-members-account (messages and files are not deleted; an account can be reactivated) · slack.com/help/articles/218915077-Slacks-Fair-Billing-Policy (members are billable only while active; credits for the unused part of the period; single-channel guests are free).

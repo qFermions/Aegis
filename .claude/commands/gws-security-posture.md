@@ -316,6 +316,8 @@ node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start 
 
 **Verification checkpoint:** [ ] the app list shows Blocked for `[OU_PATH]` (the proof) · [ ] the admin event whose parameters carry `[APP_ID]` or `[OU_PATH]` noted with its name, or its absence noted.
 
+**After a forwarding rule or an app is closed because it should not have had access: who else, and what left (R0).** Once E1 or E3 is read back, the next step is a read, before the report says how serious the finding was (answer-format section 2, "Who else, and what left"). Who else: the Phase C token events name every user who granted `[APP_NAME]` and the scopes each grant carried, in every unit, not only `[OU_PATH]`; for forwarding, the Phase C checks list every user with automatic forwarding to an outside address. What left: for an app, the scopes say what it could read (mail, Drive, contacts), and the Drive log events for those users over the grant's life show what was viewed or downloaded; for forwarding, Email Log Search for each forwarding user shows what was sent on and where. Until those reads are in the ticket, the report line reads "closed, use not yet reviewed" and names no severity.
+
 ### Changes this runbook only previews
 
 > **PREVIEW ONLY [gws-security-posture-app-trust-preview]:** Planning only: nothing here authorizes a change. Setting an app to Trusted or Limited opens access to Google Workspace data for every user in scope; it is a separate reviewed change with the app's scopes, its user count, the approver and the captured access level as its rollback.
@@ -368,6 +370,7 @@ If the generator refuses the target, read its reason and pick another name; neve
 - [ ] Phase E (if run): the panel or app list shows the new value (the proof); for each change, the admin event that carries the unit or the app is noted with its name, or its absence is noted.
 - [ ] Phase F (if run): the generator reported one new report written; its location is in the ticket.
 - [ ] The Linear comment is proven by `verify-comment` (below).
+- [ ] After E1 or E3 closed access that should not have existed: the other users with the same forwarding or the same app grant, and what was sent on or read, are in the ticket before any severity is stated.
 
 ## 📝 Linear-ready note
 

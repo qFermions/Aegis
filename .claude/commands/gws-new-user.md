@@ -42,6 +42,16 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 6. Phase E — hand over the credentials; the welcome email's reset link expires after 48 hours.
 7. Verify every read-back before `[START_DATE]`.
 
+**Every change, its class and its double-check** (answer-format section 2, "Every change carries its class and its double-check"; the class is each gate's own Reversibility line):
+
+| Step | Change | Class | Double-check |
+|---|---|---|---|
+| Phase A, Okta path | assign the Google Workspace app in Okta | set in `/okta-app-assignment` (R1 for one person) | that runbook's read-back |
+| Phase B, Admin console path | create the account, gate gws-new-user-create-portal | R1 | no change record; the user is listed under Directory, Users in `[OU_PATH]` with the right name and address |
+| Phase C | a licence, only if none was assigned automatically | set in `/gws-license-assign` (R1 to assign) | that runbook's read-back |
+| Phase D, once per group | add the user to a team group, gate gws-new-user-group-add-portal | R1 | no change record; the group's member list shows the user with the Member role |
+| Phase E | hand over the credentials | no gate: nothing changes in Google | the user reaches Gmail and Drive on their own device |
+
 ## Phase A — Confirm the creation path (R0)
 
 **Purpose** — create the account exactly once, from the system that owns it.

@@ -15,8 +15,14 @@
 //   score        the judge score for every row that is not null (default 2)
 //   met / present  the judge booleans for every must / must_not item (default true / false)
 //   invalid_first  judge: answer with invalid JSON on the first call only
+//   slow_first   judge: behave as mode slow on the first call only (a first attempt that times out, then a retry)
 //   fence        judge: wrap the JSON in a ```json fence
-//   model, cost  what the init and result events report
+//   model, cost  what the init and result events report; with no model, the init event reports the --model it was
+//                given, as the real CLI does, else fake-sut-model or fake-judge-model
+//   tool_calls   SUT: [{ "name", "input", "parent": bool, "error": bool, "match": <substring of the prompt> }];
+//                each becomes a tool_use event and its tool_result before the answer, on every turn. parent
+//                marks a call made inside a subagent, error a refused or failed call, and a call with match
+//                is sent only when the prompt holds that text (batch 11, task 7)
 // With "log" set, every call appends one JSON line: role, cwd, argument count, the
 // prompt, whether --resume was given, and the sorted NAMES (never values) of its environment.
 
@@ -51,7 +57,7 @@ if (config.log) {
 }
 
 const sessionId = resume || crypto.randomUUID();
-const model = settings.model || (role === 'judge' ? 'fake-judge-model' : 'fake-sut-model');
+const model = settings.model || valueAfter('--model') || (role === 'judge' ? 'fake-judge-model' : 'fake-sut-model');
 const emit = (ev) => process.stdout.write(`${JSON.stringify(ev)}\n`);
 
 function sutAnswer() {
@@ -81,6 +87,12 @@ function answer() {
     return;
   }
   emit({ type: 'system', subtype: 'init', session_id: sessionId, model, cwd: process.cwd(), tools: [] });
+  (role === 'sut' ? settings.tool_calls || [] : []).filter((c) => !c.match || prompt.includes(c.match)).forEach((c, i) => {
+    const id = `toolu_fake_${i + 1}`;
+    const parent = c.parent ? 'toolu_fake_parent' : null;
+    emit({ type: 'assistant', session_id: sessionId, parent_tool_use_id: parent, message: { content: [{ type: 'tool_use', id, name: c.name, input: c.input }] } });
+    emit({ type: 'user', session_id: sessionId, parent_tool_use_id: parent, message: { content: [{ type: 'tool_result', tool_use_id: id, is_error: Boolean(c.error), content: c.error ? 'refused' : 'ok' }] } });
+  });
   emit({ type: 'assistant', session_id: sessionId, message: { content: [{ type: 'text', text }] } });
   if (settings.mode === 'error') {
     emit({ type: 'result', subtype: 'error_during_execution', is_error: true, num_turns: 1, session_id: sessionId });
@@ -91,5 +103,6 @@ function answer() {
 }
 
 if (settings.mode === 'ignore-term') process.on('SIGTERM', () => { /* ignored on purpose: the runner must SIGKILL */ });
-if (settings.mode === 'slow' || settings.mode === 'ignore-term') setTimeout(answer, settings.sleep_ms || 60000);
+const slowNow = settings.mode === 'slow' || settings.mode === 'ignore-term' || (settings.slow_first && role === 'judge' && previousJudgeCalls === 0);
+if (slowNow) setTimeout(answer, settings.sleep_ms || 60000);
 else answer();

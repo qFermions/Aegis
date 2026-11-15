@@ -1,0 +1,118 @@
+$ TMPDIR=<tmp> node --test scripts/demo/ask-first.test.js scripts/demo/customer-desk.test.js   (finding 1 and 10, red)
+  AssertionError [ERR_ASSERTION]: In the admin center, require re-registering MFA for the user, HUMAN-RUN. Did that help?
+ℹ fail 2
+ℹ pass 107
+ℹ tests 109
+✖ batch 11, task 4: an ask-first answer closes CLARIFY with its form row shown; the saved tidy T7 answer still closes CLARIFY (177.097125ms)
+✖ code review 1: advice as bullets or prose with a question is not an ask-first answer; a lone question with a plain lead-in is (0.328667ms)
+exit 1
+
+$ TMPDIR=<tmp> node --test scripts/demo/assumed-setup.test.js   (finding 4, red)
+  AssertionError [ERR_ASSERTION]: it uses the setup that was given
+ℹ fail 1
+ℹ pass 7
+ℹ tests 8
+✖ code review 1: a system the setup says the company does not run is not listed by it (0.371458ms)
+exit 1
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js   (finding 6, red)
+  AssertionError [ERR_ASSERTION]: I left my phone at home today and cannot sign in.
+ℹ fail 1
+ℹ pass 10
+ℹ tests 11
+✖ code review 1: the new-way-in rule applies when the ticket names the sign-in method on a lost or replaced device, not to a phone left at home (0.341791ms)
+exit 1
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js scripts/demo/customer-desk.test.js scripts/demo/batch11-new-way-in.test.js   (finding 6, a first fix that missed "swapped" and "change": still red)
+  AssertionError [ERR_ASSERTION]: My phone was swapped under warranty and Okta Verify did not come across to the new one.
+ℹ fail 1
+ℹ pass 116
+ℹ tests 117
+✖ code review 1: the new-way-in rule applies when the ticket names the sign-in method on a lost or replaced device, not to a phone left at home (0.464333ms)
+exit 1
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js scripts/demo/customer-desk.test.js scripts/demo/batch11-new-way-in.test.js   (finding 6, a first fix that missed "swapped" and "change": still red)
+  AssertionError [ERR_ASSERTION]: Locked out after a phone change, Authenticator gone.
+ℹ fail 1
+ℹ pass 116
+ℹ tests 117
+✖ code review 1: the new-way-in rule applies when the ticket names the sign-in method on a lost or replaced device, not to a phone left at home (0.456292ms)
+exit 1
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js   (finding 7, red)
+  AssertionError [ERR_ASSERTION]: how wide before why applies
+ℹ fail 1
+ℹ pass 11
+ℹ tests 12
+✖ code review 1: "nobody at <a place> can get into" is a service down, and "should never have" is access someone should not have had (0.587208ms)
+exit 1
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js   (finding 15, red)
+  AssertionError [ERR_ASSERTION]: an account-level cause comes before the network and name-resolution path
+ℹ fail 1
+ℹ pass 12
+ℹ tests 13
+✖ code review 1: the word "account" in the scope step is not an account-level cause (0.332667ms)
+exit 1
+
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js scripts/demo/customer-desk.test.js   (finding 15, a first fix whose index never reached the test: still red)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+ℹ fail 2
+ℹ pass 114
+ℹ tests 116
+✖ code review 1: the word "account" in the scope step is not an account-level cause (0.140834ms)
+✖ task 5c (Microsoft): a status page with no scope in step 1 fails, and so does an account cause before the network (0.477417ms)
+exit 1
+
+
+$ TMPDIR=<tmp> node --test scripts/adapters/msgraph-client.test.js   (finding 9, red)
+  AssertionError [ERR_ASSERTION]: {
+ℹ fail 1
+ℹ pass 12
+ℹ tests 13
+✖ verify-temporary-access-pass: passes only on a usable pass created at or after --not-before; an older, unusable or unlisted pass does not pass, and an answer that proves nothing is INCONCLUSIVE (13.716625ms)
+exit 1
+
+$ TMPDIR=<tmp> node --test scripts/ask-aegis.test.js   (finding 13, red)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /aegis-desk|Gate: none/. Input:
+ℹ fail 1
+ℹ pass 25
+ℹ tests 26
+✖ code review 1: the ask-first printout is the question without the aegis-desk block (19.933416ms)
+exit 1
+
+$ TMPDIR=<tmp> node --test scripts/ask-aegis.test.js   (finding 14, red)
+  AssertionError [ERR_ASSERTION]: -- End of what the company runs --
+ℹ fail 1
+ℹ pass 26
+ℹ tests 27
+✖ code review 1: a setup line with a marker's words is bracketed whatever its dashes (0.322542ms)
+exit 1
+
+$ TMPDIR=<tmp> node --test scripts/eval/judged/budget.test.js   (finding 2, red)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+ℹ fail 1
+ℹ pass 3
+ℹ tests 4
+✖ code review 1: a session that stops with no cost reported stops the run under a limit; the rest are not run (2479.402ms)
+exit 1
+
+$ TMPDIR=<tmp> node --test scripts/eval/judged/model-pin.test.js   (finding 3, red)
+  AssertionError [ERR_ASSERTION]: --model opus
+ℹ fail 1
+ℹ pass 5
+ℹ tests 6
+✖ code review 1: the judged runner refuses a model alias before anything starts, and says to give the full id (82.5495ms)
+exit 1
+
+
+$ TMPDIR=<tmp> node --test scripts/eval/judged/model-pin.test.js scripts/eval/judged/cli.test.js scripts/eval/judged/budget.test.js   (finding 3, the fix before the two tests that pass --judge-model judge-x took a full id: still red)
+  AssertionError [ERR_ASSERTION]: 
+ℹ fail 2
+ℹ pass 16
+ℹ tests 18
+✖ judged-eval: a session that reports another model than the one asked for makes its case INCONCLUSIVE, and the report counts it (1.024ms)
+✖ the DEV set runs through the runner with the fake backends and produces the report; no threshold gives NO VERDICT (exit 3) (0.937666ms)
+exit 1
+
+

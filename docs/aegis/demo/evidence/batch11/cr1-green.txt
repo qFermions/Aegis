@@ -1,0 +1,63 @@
+$ TMPDIR=<tmp> node --test scripts/demo/ask-first.test.js scripts/demo/customer-desk.test.js scripts/demo/asker-reply.test.js scripts/ask-aegis.test.js   (finding 1 and 10, green)
+ℹ fail 0
+ℹ pass 139
+ℹ tests 139
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/demo/assumed-setup.test.js scripts/demo/customer-desk.test.js scripts/demo/thinking-rules.test.js   (finding 4, green)
+ℹ fail 0
+ℹ pass 121
+ℹ tests 121
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js scripts/demo/customer-desk.test.js scripts/demo/batch11-new-way-in.test.js   (finding 6, green)
+ℹ fail 0
+ℹ pass 117
+ℹ tests 117
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js scripts/demo/customer-desk.test.js   (finding 7, green)
+ℹ fail 0
+ℹ pass 115
+ℹ tests 115
+exit 0$ TMPDIR=<tmp> node --test scripts/demo/thinking-rules.test.js scripts/demo/customer-desk.test.js   (finding 15, green)
+ℹ fail 0
+ℹ pass 116
+ℹ tests 116
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/adapters/msgraph-client.test.js scripts/demo/batch11-new-way-in.test.js scripts/mfa-issue-gates.test.js   (finding 9, green)
+ℹ fail 0
+ℹ pass 27
+ℹ tests 27
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/ask-aegis.test.js scripts/aegis-chat.test.js   (finding 13, green)
+ℹ fail 0
+ℹ pass 34
+ℹ tests 34
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/ask-aegis.test.js scripts/aegis-chat.test.js scripts/eval/judged/setup.test.js   (finding 14, green)
+ℹ fail 0
+ℹ pass 44
+ℹ tests 44
+exit 0$ TMPDIR=<tmp> node --test scripts/eval/judged/budget.test.js scripts/eval/judged/cli.test.js scripts/eval/judged/model-pin.test.js   (finding 2, green)
+ℹ fail 0
+ℹ pass 17
+ℹ tests 17
+exit 0$ TMPDIR=<tmp> node --test scripts/eval/judged/model-pin.test.js scripts/eval/judged/cli.test.js scripts/eval/judged/budget.test.js   (finding 3, green)
+ℹ fail 0
+ℹ pass 18
+ℹ tests 18
+exit 0
+
+$ TMPDIR=<tmp> node --test scripts/eval/judged/cli.test.js   (finding 11, green (a new coverage test, no code change))
+ℹ fail 0
+ℹ pass 9
+ℹ tests 9
+exit 0
+
+
+mutation F11 the runner drops the case's setup: scripts/eval/judged/backends.js: "  if (typeof c.setup !== 'string' || c.setup.trim() === '') return body;" -> "  return body;"
+  scripts/eval/judged/cli.test.js: exit 1; caught by: ✖ code review 1: the whole DEV file runs through the runner; the two setup cases reach the session with their setup (1003.023792ms)

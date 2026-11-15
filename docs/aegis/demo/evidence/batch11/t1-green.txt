@@ -1,0 +1,35 @@
+node --test scripts/eval/judged/setup.test.js
+# GREEN: the same tests against the new code.
+✔ schema: setup is the one optional top-level field: absent, empty, a string, too long, a wrong type (1.039ms)
+✔ the system under test prompt carries a setup between ask-aegis's marker lines, as data, before the ticket (0.1165ms)
+✔ with no setup the system under test prompt is byte for byte what it was (0.194333ms)
+✔ backends.js does not load ask-aegis.js when it loads, and still builds a prompt with a setup (22.698083ms)
+✔ the judge prompt states the setup in one line of THE CASE section, and checks it for the nonce (0.323084ms)
+✔ with no setup the judge prompt is byte for byte what it was (0.1535ms)
+✔ the dry run prints how many cases carry a setup and still exits 4, through main and through the real CLI (33.627417ms)
+✔ an email address in a setup is masked in both prompts; results.json records setup_given, not the text (388.981125ms)
+✔ a password in a setup refuses the run (exit 1) by case id and label, never the value, before anything starts (1.509875ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 486.331375
+exit code: 0
+
+node --test "scripts/eval/judged/*.test.js" scripts/ask-aegis.test.js scripts/aegis-chat.test.js "scripts/demo/*.test.js"
+# the whole judged runner folder and the three callers of backends.buildSutPrompt, none of whose tests changed (last lines of the run)
+✔ capability-map row 26 reads implemented but unverified and names the runner (0.761083ms)
+✔ CI dry-runs the runner on the DEV set copied out of the repository, and runs node --test (0.1075ms)
+✔ the explainer exists and is under 60 lines (0.213125ms)
+ℹ tests 335
+ℹ suites 0
+ℹ pass 335
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 27542.88675
+exit code: 0

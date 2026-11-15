@@ -91,6 +91,8 @@ gam info member "[USER@DOMAIN.COM]" "[GROUP_EMAIL]"   # the user's membership re
 
 **Verification checkpoint** — [ ] the member count equals the pre-state count minus one · [ ] the former role is recorded in the ticket.
 
+**When the member should never have been in the group: who else, and what left (R0).** After the removal is read back, the next step is a read, before anyone says how serious it was (answer-format section 2, "Who else, and what left"). Who else: read the pre-state member list against the list of people who should be in `[GROUP_EMAIL]`, and ask how this member got in (an owner, a bulk add, a rule in Okta), because the same route may have let others in. What the membership reached: the group's purpose from the pre-state says what it grants (its mail, the Drive items and shared drives shared with the group). What left: `/gws-audit-log` Phase 2 for the Drive items the group can open, read for view, download and sharing events by `[USER@DOMAIN.COM]` since they joined. Until those reads are in the ticket, the answer says "membership removed, use not yet reviewed" and names no severity.
+
 <details>
 <summary>GAM — the scale version (HUMAN-RUN, for reference)</summary>
 
@@ -164,6 +166,7 @@ gam print group-members group "[GROUP_EMAIL]"
 - [ ] `gam info member "[USER@DOMAIN.COM]" "[GROUP_EMAIL]"` returns the membership with role MEMBER (add) or no membership (remove).
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows the add-member or remove-member event with the expected admin and time.
 - [ ] Removal only: the pre-state member list and the member's former role are in the ticket.
+- [ ] If the member should never have been in the group: the other members were checked against the expected list and the member's Drive events for the items the group opens were read, before the ticket stated any severity.
 
 ## 📝 Jira-ready note
 

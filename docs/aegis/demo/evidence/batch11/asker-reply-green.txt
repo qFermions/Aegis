@@ -1,0 +1,14 @@
+$ node --test scripts/demo/asker-reply.test.js   (green: the tests against senior-rules.js and answer.js as committed with this file)
+✔ task 6: three whole replies, on mail, sign-in and a laptop, pass the form check (37.34025ms)
+✔ task 6: eight pairs: the reply passes, and the same reply with one fault fails for that fault (12.587041ms)
+✔ task 6: length, paragraphs, voice and whole sentences (0.387209ms)
+✔ task 6: a time only when the ticket or the setup sets it; a check only when it is about what the asker sent (1.233708ms)
+✔ task 6: the reply is read from the asker-reply block before the aegis-desk block, or is the one question of an ask-first answer (3.822708ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 125.45375

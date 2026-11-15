@@ -58,8 +58,9 @@ test('every verify-* command of the nine connectors declares every flag it takes
   const t = taken();
   assert.deepEqual(Object.keys(declared.VERIFY_FLAGS).sort(), Object.keys(READERS).sort(), 'one block per connector');
   const commands = Object.values(t).reduce((n, c) => n + Object.keys(c).length, 0);
-  // 59 before batch 9; task 4 adds exo's three read-backs; batch 10, task 4 adds google-workspace verify-transfer
-  assert.equal(commands, 63, `verify-* commands read: ${commands}`);
+  // 59 before batch 9; task 4 adds exo's three read-backs; batch 10, task 4 adds google-workspace verify-transfer;
+  // batch 11, task 5 adds msgraph verify-temporary-access-pass
+  assert.equal(commands, 64, `verify-* commands read: ${commands}`);
   assert.deepEqual(declared.undeclared(declared.VERIFY_FLAGS, t), []);
 });
 
@@ -93,7 +94,8 @@ test('the owner\'s minimum is a pass flag wherever a command takes it: --not-bef
   // 28 before the A3 fix on branch fix/g4-a3-factor-type, plus okta verify-factor-reset --factor-type;
   // batch 9, task 4: plus exo verify-mailbox-permission and verify-recipient-permission --absent;
   // batch 10, task 4: plus google-workspace verify-transfer --not-before
-  assert.equal(seen, 32, `minimum flags seen: ${seen}`);
+  // batch 11, task 5: msgraph verify-temporary-access-pass --not-before (32 to 33)
+  assert.equal(seen, 33, `minimum flags seen: ${seen}`);
   assert.equal(declared.VERIFY_FLAGS.msgraph['verify-sessions-revoked']['not-before'], declared.TIME);
   assert.equal(declared.VERIFY_FLAGS.jira['verify-create']['not-before'], declared.TIME);
 });

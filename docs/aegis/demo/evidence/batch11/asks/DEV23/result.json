@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 49115,
+  "stop_reason": "end_turn",
+  "session_id": "8f45b818-ea74-4bde-b2c8-28ea7d75747e",
+  "total_cost_usd": 0.3508826,
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 28011,
+    "cache_read_input_tokens": 169253,
+    "output_tokens": 4644,
+    "output_tokens_details": {
+      "thinking_tokens": 1845
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 28011,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 3483,
+        "cache_read_input_tokens": 27159,
+        "cache_creation_input_tokens": 6854,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 6854
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 16,
+      "outputTokens": 4644,
+      "cacheReadInputTokens": 169253,
+      "cacheCreationInputTokens": 28011,
+      "webSearchRequests": 0,
+      "costUSD": 0.3508826,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1845,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 28011,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 10,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Fix\n**What's wrong:** [FIRST_NAME]'s new Google account rejects the password from the welcome sheet when she signs in on the Chromebook.\n\n**Do this:**\n1. Open Admin console → Reporting → Audit and investigation → User log events, and filter to [USER@DOMAIN.COM]. A failed sign-in with a wrong password means the password typed or issued is wrong. No attempt at all means she is typing a different address. Sign-ins from somewhere else mean you should stop (see below).\n2. Open Admin console → Directory → Users → [USER@DOMAIN.COM]. Check the account is Active, and the address matches the welcome sheet character for character.\n3. Meet her in person, or confirm it is her through her manager. Have her retype the full address and password slowly. She should tap the eye icon to see the password and check capitals and look-alike characters (l and 1, O and 0).\n4. If it still fails, while still in person, reset her password in Directory → Users → Reset password and tick \"Ask the user to change their password\". Hand the password to her in person or read it out on that call.\n\n**Done when:** she reaches Gmail on the Chromebook with a password she chose. Aegis then checks the admin log for this reset.\n\n**Stop if:** the log shows sign-ins from elsewhere, or the Chromebook says she is not allowed on this device.\n\n**Tell the user now:** IT is checking your new account. Please try once more, typing slowly with the eye icon on so you can see the password. Someone from IT will help you in person.\n\n**Tell the user when done:** Your password has been reset and you chose your own. You can now sign in on your Chromebook.\n\nSee Details for the reasoning, the risk and the ticket note.\n\n## Details\n\n**Verdict:** This is a password problem on day one, for one person on one device. The runbook is `/gws-password-reset`. The setup has no Okta and no Active Directory, so the Google password is the one she types and that runbook applies directly. What changed is that the account is brand new. The likely causes, from most to least likely, are:\n- a mistyped address or a look-alike character\n- a password on the sheet that doesn't match what the admin actually set\n- an account that isn't Active yet\n\n**What to check first:** The User log events (step 1) and the account status (step 2). Both are reads with no risk. If the account is Suspended, the fix is to lift the suspension, not to reset the password.\n\n**Lighter options first:** There are no sessions to sign out and nothing to re-sync, because she has never signed in. The careful retype in step 3 is the only lighter option. The reset is the only change the runbook offers for this symptom, and it can be redone with a fresh confirmation.\n\n**Change:** Step 4 (password reset with a forced change at next sign-in) is R1. Double-check: Aegis reads the admin log for this account's password-change event, with you as the actor, after the time you noted just before the reset.\n\n**⚠️ Risks**\n- Confirm it is her before the reset (in person, or through her manager). Org gap: confirm the organisation's identity-check rule.\n- Never put the temporary password in Jira or in a chat thread.\n- Optional extra (cookie reset): not needed, because there are no sessions yet.\n\n**Verification:**\n- [ ] The account is Active.\n- [ ] The admin log shows the reset for [USER@DOMAIN.COM].\n- [ ] She signs in and sets her own password.\n- [ ] She reaches Gmail on her Chromebook.\n\n**Jira-ready note:**\n> [Only if all checks passed] Resolved [date/time]. New starter [USER@DOMAIN.COM] could not sign in on her first day; the error said the password was wrong. Identity confirmed via [in person / manager]. Account Active. Cause: [mistyped address / look-alike character / issued password didn't match]. [Password reset with a forced change, handed over in person / no reset needed]. The admin log confirms the change. Time spent: [X] min.\n\n```asker-reply\nThis looks like a problem with the new account's starting password, not with her or the Chromebook. So far I have only read what the ticket says, and nothing on the account has been checked yet.\n\nShe may well have typed exactly what was on the welcome sheet. That fits if the sheet itself is wrong, or if it has characters that look alike, such as a lowercase l and the number 1. I haven't confirmed either one.\n\nIn the meantime, she can try once more, typing slowly with the eye icon on so she can see the password, and checking the full email address too. A technician will check her account and sign-in record next. If she still can't get in, they will give her a new temporary password in person or on a phone call, and she will choose her own password at that first sign-in.\n```\n\n```aegis-desk\nGate: gws-password-reset-password-portal\nPhrase: RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]\nChange record: none (R1)\nRead-back: node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute\n```",
+  "ttft_ms": 1572,
+  "type": "result",
+  "duration_ms": 49579,
+  "uuid": "5979d2f8-847f-4d33-b44f-30cfee83641e",
+  "ttft_stream_ms": 942,
+  "time_to_request_ms": 145,
+  "first_content_frame_ms": 942,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 16,
+      "outputTokens": 4644,
+      "cacheReadInputTokens": 169253,
+      "cacheCreationInputTokens": 28011,
+      "webSearchRequests": 0,
+      "costUSD": 0.3508826,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1845,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 28011,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-12-03T09:34:14.654Z"
+}

@@ -1,0 +1,2 @@
+docs/aegis/owner/vendor-facts-priority.md is current.
+exit 0

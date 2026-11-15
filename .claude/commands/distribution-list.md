@@ -31,6 +31,8 @@ disable-model-invocation: true
 > **PREVIEW ONLY [distribution-delivery-management-portal]:** Restricting senders or requiring moderation is a separate mail-flow policy change with different scope. Prepare it in a separate reviewed runbook; the external-sender phrase cannot change moderation or delivery restrictions.
 5. **Delivery management / moderation:** document the proposed sender restrictions or owner-approval rule for that separate review.
 
+**Who else, and what left (answer-format section 2; reads only, R0, no gate):** when the list reached someone it should not have (a member who should never have been on it, or outside senders let in by mistake), closing the path is not the last step. The next step reads who else came in the same way: the list's membership and settings changes in the audit log of the Microsoft Purview portal. Then it reads what the list carried while the path was open: a message trace on `[DL_NAME]` for that time (Exchange admin center → Mail flow → Message trace) shows what was delivered, and to whom. Until those reads are done the answer does not say how serious it is (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-20, MB-21, MB-25a).
+
 <details>
 <summary>PowerShell — for reference only</summary>
 

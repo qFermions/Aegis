@@ -17,6 +17,8 @@ description: Master IT troubleshooting decision tree — scope → outage check 
 - **M365 health:** admin.microsoft.com → Health → Service health.
 - **Network:** Meraki dashboard (MX uplink, AP/switch status).
 - **ISP:** `[@Aegion_ISP]` status / modem lights.
+- **Read it together with the scope** (answer-format section 2, "How wide before why"): for anything reported down or unreachable, step 1 and this step are one step. One person or everyone, one site or all, this service only or other internet services too. The vendors' own public status pages: https://status.cloud.microsoft for Microsoft 365 when the admin center does not load, https://status.meraki.net for the Meraki cloud, https://status.zoom.us for Zoom (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-31, MB-33, MB-34).
+- **No vendor incident:** the network and name-resolution path come before any account-level cause: the same sign-in on another network, then `nslookup` on the name that fails, and only then the account, the licence or the policy.
 > **PREVIEW ONLY [troubleshoot-provider-outage]:** Logging the outage and notifying users are planning notes for the ticket and the communication owner; this router cannot post a ticket update or send a notice. A person posts each one.
 - If a provider outage explains it → log it, notify users, wait/escalate. Don't troubleshoot their cloud.
 

@@ -1,0 +1,94 @@
+$ node --test scripts/demo/asker-reply.test.js   (red: the tests against a stub of senior-rules.js that passes every row, and the unchanged answer.js, at 6d836cc)
+✔ task 6: three whole replies, on mail, sign-in and a laptop, pass the form check (0.435084ms)
+✖ task 6: eight pairs: the reply passes, and the same reply with one fault fails for that fault (0.248292ms)
+✖ task 6: length, paragraphs, voice and whole sentences (1.874792ms)
+✖ task 6: a time only when the ticket or the setup sets it; a check only when it is about what the asker sent (0.063583ms)
+✖ task 6: the reply is read from the asker-reply block before the aegis-desk block, or is the one question of an ask-first answer (0.157292ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 1
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39.847209
+
+✖ failing tests:
+
+test at scripts/demo/asker-reply.test.js:48:1
+✖ task 6: eight pairs: the reply passes, and the same reply with one fault fails for that fault (0.248292ms)
+  AssertionError [ERR_ASSERTION]: a heading: must fail
+      at TestContext.<anonymous> (<repo>/scripts/demo/asker-reply.test.js:61:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/demo/asker-reply.test.js:66:1
+✖ task 6: length, paragraphs, voice and whole sentences (1.874792ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(problems(long).some((f) => /words/.test(f)))
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/asker-reply.test.js:68:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/demo/asker-reply.test.js:78:1
+✖ task 6: a time only when the ticket or the setup sets it; a check only when it is about what the asker sent (0.063583ms)
+  AssertionError [ERR_ASSERTION]: a time nobody set is a promise
+      at TestContext.<anonymous> (<repo>/scripts/demo/asker-reply.test.js:80:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/demo/asker-reply.test.js:91:1
+✖ task 6: the reply is read from the asker-reply block before the aegis-desk block, or is the one question of an ask-first answer (0.157292ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/asker-reply.test.js:116:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

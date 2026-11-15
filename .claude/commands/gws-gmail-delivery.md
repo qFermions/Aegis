@@ -11,12 +11,19 @@ disable-model-invocation: true
 
 ## Verdict
 
-Two different tickets hide under "mail problems":
+Three different tickets hide under "mail problems", and a fourth, "mail is down", is a scope question before it is a mail question (What to check first, below):
 
 - **Inbound bounce, external senders only** ("mail from outside bounces, internal mail is fine"): internal mail never touches DNS, so the first suspects are the domain's MX records and Gmail's front door (inbound gateway, blocked senders, a missing alias). The bounce text the external sender received names the hop that rejected it.
 - **Outbound mail filed as spam** ("our scan-to-email notices land in spam since Monday, nothing changed on our side"): Google's sender guidelines require SPF or DKIM for every sender and SPF, DKIM and DMARC for bulk senders. A device that sends as `[@Aegion_DOMAIN]` from outside Google's servers, or a DKIM key that no longer matches DNS, fails authentication and is filed as spam. "Nothing changed" usually means the receiver's rules changed, or a DNS record did.
+- **Inbound mail from one outside sender is rejected or filed as spam** and its headers show SPF, DKIM or DMARC failing: the failing record belongs to the sender, so the fix is on their side (Phase 3). Allowing their whole domain on our side is never the first fix.
 
 ## What to check first
+
+**When the ticket says mail is down or cannot be reached** (answer-format section 2, "How wide before why"), fix the scope before the cause, together with Google's own status page:
+
+- **How wide (R0, questions and one page):** one person or everyone; one site or every site; Gmail only, or other internet services too. Then read the Gmail row on the Google Workspace Status Dashboard (google.com/appsstatus/dashboard). An incident there that matches the scope is the answer: nothing on our side fixes it, and the user is told what Google reports.
+- **No Google incident: the network and name-resolution path come before the account.** From an affected machine, check that mail.google.com resolves and opens and that another site opens on the same network, then on another network or off the VPN. One site or everyone on one network points at the network, DNS or the VPN (`/wifi-issue`, `/lan-wan`, `/vpn-check`), not at Gmail.
+- **Only then the account:** a clean path and a scope of one person points at that account (suspended, password, 2-Step Verification: `/gws-password-reset`, `/gws-2sv-reset`). A delivery problem (mail opens, but messages bounce or land in spam) is the numbered list below.
 
 1. **Email Log Search (R0):** Admin console → Reporting → Email Log Search → enter the sender or recipient and the date range → read the delivery status. It needs the Gmail Settings privilege, cannot show message contents, and keeps 30 days — older messages need the recipient and message ID and show post-delivery status only. A message absent from ELS never reached Google.
 2. **The bounce text (R0):** ask the external sender for the full bounce. Google's own codes: `550 5.1.1` means "The email account that you tried to reach does not exist"; `550 5.7.1` is a policy rejection.
@@ -125,6 +132,24 @@ Two different tickets hide under "mail problems":
 1. At the DNS host, add a TXT record at `_dmarc.[@Aegion_DOMAIN]` built from Google's "Set up DMARC" page — start with `v=DMARC1; p=none;` and a reporting address you control.
 2. Save, then read-back: the `dig` query below returns the record, and a fresh test message's Show original reads DMARC PASS.
 
+### Phase 3: Inbound: an outside sender's mail fails SPF, DKIM or DMARC
+
+**Purpose:** when mail from one outside sender is rejected or lands in Spam and its headers show a failed sender-authentication check, say what the sender must fix on their side. Allowing a whole domain is never the first fix (answer-format section 2, the mail rule). Nothing in this phase changes a setting.
+
+1. Admin console → Reporting → Email Log Search → sender = the outside address, recipient `[USER@DOMAIN.COM]` and the date → read whether the message was rejected, marked as spam or delivered.
+2. From the recipient's copy in the Spam folder: Gmail → More → Show original → read the SPF, DKIM and DMARC lines: which one failed, and for which domain (the From domain, the envelope sender's domain, or the domain in the DKIM signature). A rejected message leaves no copy: read the rejection reason in the step 1 result and ask the sender for the full bounce text.
+3. Write the note the user sends to the sender's IT contact. It names the failed check and what the sender fixes at their own DNS host and mail system:
+   - SPF fails: the server that sent the message is not in the SPF record of the sender's domain. The sender puts that sending service in their SPF record.
+   - DKIM fails or is missing: the sender turns on DKIM signing for that sending service and publishes its key in their DNS.
+   - DMARC fails: neither SPF nor DKIM passed for a domain that matches the From address. The sender gets one of the two to pass for the From domain.
+4. Lighter steps on our side that open nothing to anyone else: the user marks the message as Not spam and saves the sender's address in their own contacts. No gate: the user's own action in their own mailbox. Proof a person can see: the sender's next message lands in the user's inbox.
+
+Google's own advice for this case is the same: "Tell your trusted customers, suppliers, and others to authenticate their sent email."
+
+**Allowing the sender is the last step, never the first, and never a whole domain.** If the business cannot wait for the sender's fix, the narrowest allow is one address, on an approved senders list that still requires sender authentication, with an end date and an owner: write it up as a separate ticket with the header evidence; this runbook reads the spam settings and does not edit them. Google's guidance says "Do not include domains in your approved sender list", because mail from them "is not filtered for spam, which increases the risk of spoofing", and a message Gmail finds suspicious can still be rejected or sent to spam with its sender on the list.
+
+**Done when:** the ticket names the failed check and the domain it failed for, the note to the sender is sent, and a fresh message from the sender shows the check passing in Show original. No domain was allowed on our side.
+
 <details>
 <summary>Terminal — read-only DNS checks (HUMAN-RUN, for reference)</summary>
 
@@ -144,6 +169,8 @@ dig +short TXT _dmarc.[@Aegion_DOMAIN]   # shows the DMARC record (v=DMARC1 ...)
 - **DMARC starts at policy none.** A reject or quarantine policy before SPF and DKIM are right bounces the organization's own legitimate mail.
 - Do not "fix" spam placement by widening SPF to allow everything, by routing the scanner through a personal account, or by asking recipients to allowlist the domain — fix authentication.
 - The inbound gateway, routing rules and aliases are each their own gated change; this runbook reads them and does not edit them.
+- **An outside sender that fails SPF, DKIM or DMARC fixes it on their side.** Allowing their whole domain on our side is never the first fix: it turns spam filtering off for every message that claims that domain, the forged ones included.
+- **"Mail is down" is a scope question first.** A Google incident, a site's network or a DNS fault is not fixed by changing an account or a DNS record.
 
 ## ✅ Verification checklist
 
@@ -151,11 +178,13 @@ dig +short TXT _dmarc.[@Aegion_DOMAIN]   # shows the DMARC record (v=DMARC1 ...)
 - [ ] Inbound case: Admin console → Reporting → Email Log Search shows a delivered status for a fresh external test message to `[USER@DOMAIN.COM]`.
 - [ ] Outbound case: a recipient's Show original on a fresh scan-to-email message reads SPF PASS, DKIM PASS and DMARC PASS; Authenticate email shows `[@Aegion_DOMAIN]` authenticating.
 - [ ] `dig +short TXT _dmarc.[@Aegion_DOMAIN]` returns the DMARC record if one was added.
+- [ ] Outside sender failing authentication (Phase 3): the ticket names the failed check and the domain it failed for, the note to the sender says what they must fix, a fresh message shows the check passing, and no domain was allowed on our side.
+- [ ] "Mail is down" ticket: the scope (who, which site, which services) and the Google Workspace Status Dashboard reading are in the ticket, and the network and name-resolution path was checked before any account.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows the DKIM change with the admin and time; the DNS host's change history shows the record edits.
 
 ## 📝 Jira-ready note
 
-> Resolved [date/time]. [Inbound: external mail to `[USER@DOMAIN.COM]` bounced with `[SMTP code]` while internal mail delivered / Outbound: scan-to-email messages from `[@Aegion_DOMAIN]` were filed as spam by recipients]. Cause: [MX records not pointing at Google / inbound gateway no longer in use / missing alias / SPF missing the device's sender / DKIM key not matching DNS / no DMARC record]. Fix: [record changed at the DNS host by the administrator, confirmed by the exact phrase; DKIM generated, published and started], pre-state recorded in this ticket. Verified: Email Log Search shows delivered; recipient headers read SPF, DKIM and DMARC PASS; Check MX clean. Time spent: [X] min.
+> Resolved [date/time]. [Inbound: external mail to `[USER@DOMAIN.COM]` bounced with `[SMTP code]` while internal mail delivered / Outbound: scan-to-email messages from `[@Aegion_DOMAIN]` were filed as spam by recipients]. Cause: [MX records not pointing at Google / inbound gateway no longer in use / missing alias / SPF missing the device's sender / DKIM key not matching DNS / no DMARC record / an outside sender's own SPF, DKIM or DMARC failing, the sender told what to fix and nothing allowed on our side / a Google incident or a network or DNS fault on the path, scope and status page recorded]. Fix: [record changed at the DNS host by the administrator, confirmed by the exact phrase; DKIM generated, published and started], pre-state recorded in this ticket. Verified: Email Log Search shows delivered; recipient headers read SPF, DKIM and DMARC PASS; Check MX clean. Time spent: [X] min.
 
 ## Aha moment
 
@@ -170,3 +199,5 @@ Reading SPF, DKIM and DMARC results straight from headers is the same evidence d
 Run the Email Log Search for the ticket's message and record whether it never arrived, which hop rejected it, or that it delivered — that one line decides which phase you are in.
 
 **Sources (checked 2026-10-15):** knowledge.workspace.google.com/admin/support/troubleshooting/find-messages-with-email-log-search · knowledge.workspace.google.com/admin/reports/data-retention-and-lag-times · knowledge.workspace.google.com/admin/domains/set-up-mx-records-for-google-workspace · toolbox.googleapps.com/apps/checkmx · toolbox.googleapps.com/apps/messageheader · knowledge.workspace.google.com/admin/support/troubleshooting/gmail-smtp-errors-and-codes · knowledge.workspace.google.com/admin/gmail/advanced/set-up-an-inbound-mail-gateway · knowledge.workspace.google.com/admin/gmail/send-email-from-a-printer-scanner-or-app · knowledge.workspace.google.com/admin/gmail/advanced/route-outgoing-smtp-relay-messages-through-google · knowledge.workspace.google.com/admin/security/set-up-spf · knowledge.workspace.google.com/admin/security/set-up-dkim · knowledge.workspace.google.com/admin/security/set-up-dmarc · support.google.com/mail/answer/81126 (Email sender guidelines) · support.google.com/mail/answer/9981691 (Postmaster Tools) · support.google.com/mail/answer/29436 (Show original) · support.google.com/mail/answer/180707 (message authentication) · knowledge.workspace.google.com/admin/reports/admin-log-events.
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** google.com/appsstatus/dashboard (Google Workspace Status Dashboard) · knowledge.workspace.google.com/admin/support/troubleshooting/gmail-marks-valid-email-messages-as-spam (tell senders to authenticate; a suspicious message can still go to spam with its sender allowed) · knowledge.workspace.google.com/admin/security/monitor-the-health-of-your-gmail-settings (no domains in the approved sender list; require sender authentication for approved senders).

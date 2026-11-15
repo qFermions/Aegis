@@ -17,6 +17,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **Google 2SV and Okta MFA are separate controls.** A user who "lost their phone" may be locked out of Okta Verify, of Google 2SV, or both — read Phase A before touching either. Okta authenticators are reset in the Okta MFA-reset procedure, not here.
 - Verify the requester first — a "lost my phone, need codes" request is a textbook account-takeover attempt — using the agreed identity check **[org gap — confirm the identity-verification rule]**. Backup codes, like passwords, never go into the ticket.
 - Every state change below has its own exact phrase; "yes" is never a confirmation.
+- **A lost or replaced phone or key follows one order** (answer-format section 2, "A new way in before the old way out"): identity first, then a backup code handed over on a verified channel, then the user registers the new second step, and only then is the old one removed. The section "Lost or replaced phone or key" below fixes that order. Phase E is not that path: it takes the old way out before a new way in exists.
 
 ## Inputs needed
 
@@ -41,6 +42,21 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 5. Phase E — last resort only: turn 2SV off for this one user (R3 gate, pre-state first).
 6. **WAIT UNTIL** the user is back in and has re-enrolled a second step; verify.
 
+A lost or replaced phone or key runs these phases in the order the next section sets: Phase A, Phase B, the user's new second step, then the removal of the old one.
+
+## Lost or replaced phone or key: a new way in before the old way out
+
+**Purpose:** the order for a person who lost or replaced the device that holds their second step (answer-format section 2, "A new way in before the old way out"). Phases A to C hold the steps and the gates; this section fixes their order and names what each step must show.
+
+1. **Prove who is asking (Phase A).** Use the identity check the org names: **[org gap: confirm the identity-verification rule]**. Until that rule is written down, the check this step names is a call the tech places to a number on file that is not the lost or replaced phone (a desk line, a second number on record), or the person's manager confirming on a call the tech places or in person. A call to the lost phone reaches whoever holds it, and a number or address taken from the request proves nothing.
+2. **Give a way in that runs out (Phase B).** A backup verification code is a one-time code: one the person saved, or one an admin reads for them (User management privilege; for another admin's account, a super admin). A new set is generated only under the Phase B gate [gws-2sv-reset-backup-codes-portal].
+3. **Hand the code over on a verified channel.** Say it on a call the tech places to a number on file that is not the lost or replaced phone (a desk line, a second number on record), hand it over in person, or give it to the manager to pass on in person; never to the lost phone's own number. Google's own page says to send the code "in an IM or text message"; that is not enough on a lost-device ticket, because a chat account or a phone number named in the request may be the attacker's. Write the channel in the ticket, never the code.
+4. **The person registers the new second step.** **WAIT UNTIL** they have signed in with the code and put the new phone, key or passkey on their own account, in their own Google Account's 2-Step Verification settings. No gate: it is the user's own action. Proof a person can see: the user's Security card in the Admin console still reads 2-step verification on, a new key or passkey shows in the Passkeys & security keys table with today's date, and for a phone the person reads the second steps on their own 2-Step Verification page aloud and the new phone is among them.
+5. **Only then take the old one out.** A lost security key or passkey: the Phase C gate [gws-2sv-reset-key-remove-portal], after step 4 and never before it. A lost phone: the admin controls this runbook lists (Two controls, two consoles) include none that takes one phone off a user's account, so there is no gate; the person signs the lost phone out of their Google Account and takes its number or prompt off their own 2-Step Verification settings. Google's help for a lost phone says to sign out of the lost phone and change the password: the password change and the sign-out of every session are `/gws-password-reset` (Phases B and C there).
+6. **Read back both halves.** New one present: the step 4 proof. Old one gone: the Phase C read-back (the key table no longer lists the lost key), or for a phone the person reads their 2-Step Verification page and their device list aloud and the lost phone is on neither. The ticket is not done on one half.
+
+**Not this path: Phase E.** Turning 2SV off for the user, and GAM `turnoff2sv`, which strips every registered second step, take the old way out before a new way in exists: the account is left on a password alone. Phase E is the right tool only when Phases B to D cannot get a verified person in and 2SV is not enforced, under its own R3 gate.
+
 ## Phase A — Read first (R0)
 
 **Purpose** — know which control failed and what the policy allows before changing anything.
@@ -63,7 +79,9 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 
 **Purpose** — let the user sign in with their password plus a one-time code while they keep 2SV on.
 
-**Read (R0):** Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **2-step verification** → **Get Backup Verification Codes** → read the existing codes; if the set is intact and not suspected stolen, copy one unused code and send it to the user by IM or text. Nothing changes. Requires the User management privilege; only a super admin can do this for another admin.
+**Read (R0):** Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **2-step verification** → **Get Backup Verification Codes** → read the existing codes; if the set is intact and not suspected stolen, copy one unused code and hand it over on the verified channel named below. Nothing changes. Requires the User management privilege; only a super admin can do this for another admin.
+
+**Verified channel (every code this phase hands out):** a call the tech places to a number on file that is not the lost or replaced phone (a desk line, a second number on record), in person, or through the user's manager in person. Never a reply to the message that asked, never a chat account or phone number the request supplied, and never the lost phone's own number. Google's page suggests an IM or text message; on a lost-device ticket that channel is only as good as the proof of who holds it, so the step names the channel and the ticket records it (answer-format section 2, "A new way in before the old way out").
 
 **User check:** ask the user to sign in with a backup code they saved when they turned on 2-Step Verification, or with another second step they enrolled earlier: a saved backup code covers a lost phone, and nothing changes on the account. The Read (R0) above is the next lighter step; new codes come only when the set is used up or suspected stolen.
 
@@ -78,7 +96,9 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 **PORTAL ACTION [gws-2sv-reset-backup-codes-portal]:** Only when the existing codes are used up or suspected stolen, and after the exact match:
 1. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → **Security** → **2-step verification** → **Get Backup Verification Codes**.
 2. Click **Generate new codes**; the previous set becomes inactive at once.
-3. Copy one code and send it to the user by IM or text; they sign in with their password and that code.
+3. Copy one code and hand it to the user on the verified channel named above (a call the tech places to a number on file that is not the lost phone, in person, or through the manager); they sign in with their password and that code.
+
+No connector read proves new codes exist (the Read-back field above is the R1 form). Proof a person can see: the Get Backup Verification Codes dialog lists the new set, and Admin log events shows the backup-code change with your address and the time.
 
 **Gotcha** — a user who is required to use a security key cannot generate their own backup codes: an administrator must, and a grace period for using the code starts when it is generated. A suspended user cannot receive codes at all.
 
@@ -93,6 +113,8 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 **Pre-state (R0, record it):** the key table from Phase A — name, platform, when it was added and last used. Remove a security key only when it is lost; a key that is merely left at home gets a backup code (Phase B) instead.
 
 **Try first:** when the key may only be left at home, not lost, Phase B's backup code gets the user in and nothing is removed.
+
+**Order on a lost or replaced key:** the removal below comes after the user has signed in with a Phase B code and registered the replacement second step, never before it (answer-format section 2, "A new way in before the old way out"). Write in the ticket what the replacement is: the name and the added date of a new key or passkey the table shows, or, when the replacement is a phone, the second steps the user read out from their own settings. Then remove the lost one.
 
 <!-- SAFETY GATE [gws-2sv-reset-key-remove-portal] -->
 - **Target:** [USER@DOMAIN.COM]
@@ -109,7 +131,7 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 
 **Gotcha** — an automatically created Android passkey is removed under **Connected applications** on the same Security page, not in the key table; and to stop another one being created, reset the password and the sign-in cookies (`/gws-password-reset`).
 
-**Verification checkpoint** — [ ] the key table no longer lists the lost key · [ ] the user can still sign in with another factor or a Phase B code.
+**Verification checkpoint:** [ ] the replacement second step is in the ticket: a new key or passkey in the key table, or a phone the user read out (new one present) · [ ] the key table no longer lists the lost key (old one gone) · [ ] the user can still sign in with another factor or a Phase B code.
 
 ## Phase D — A login challenge the user cannot answer (R1 gate, self-expiring)
 
@@ -134,6 +156,8 @@ gam user "[USER@DOMAIN.COM]" print backupcodes countsonly   # count only; a susp
 ## Phase E — Last resort: turn 2SV off for one user (R3, security control)
 
 **Purpose** — only when Phases B–D cannot get a verified user in, and policy allows it. Google does not recommend this; the backup code is the documented answer.
+
+**Not the lost-or-replaced-device path:** this phase takes the old way out before a new way in exists (the account signs in on a password alone until the user turns 2SV back on), so a lost or replaced phone or key goes through the section "Lost or replaced phone or key" above, not here. It is the right tool only for a verified person whom a backup code, a key removal and the ten-minute challenge window all failed to get in, where 2SV is not enforced.
 
 **Pre-state (R0, record it before the gate):** 2SV on, enforcement state, the enrolled methods and keys from Phase A, the justification, and the date the user will re-enroll. The option is disabled when 2SV is enforced across the organization or the account is suspended — in both cases this phase is not available and Phase B is the only path.
 
@@ -230,13 +254,14 @@ gam info user "[USER@DOMAIN.COM]"
 - [ ] Backup codes: `gam user "[USER@DOMAIN.COM]" print backupcodes countsonly` shows the new set's count; the user signed in with password plus one code and re-enrolled a second step.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows the backup-code, key-revocation, login-challenge or 2SV change event with the expected admin and time.
 - [ ] Phase C: Directory → Users → the user → Security → Passkeys & security keys no longer lists the lost key.
+- [ ] Lost or replaced phone or key: the ticket names the identity check and the verified channel the code went over (never the code); the new second step was registered before the old one was removed; both halves were read back, the new one present and the old one gone.
 - [ ] Phase E only: the pre-state, justification and re-enrollment date are in the ticket, and the user's 2SV reads on again by that date.
 
 ## 📝 Jira-ready note
 
 Use the completed form only when every read-back above passed; otherwise write a partial-state note naming what is verified, what is pending, and the next owner.
 
-> [Only if all checks passed] Resolved [date/time]. `[USER@DOMAIN.COM]` was locked out of Google 2-Step Verification ([lost phone / lost security key or passkey / login challenge]). Requester verified via [channel]. Action: [existing backup code handed out / new backup codes generated under the exact phrase / lost key removed, pre-state recorded / 10-minute login-challenge bypass / 2SV turned off for the user under the R3 gate — pre-state and justification recorded, re-enrollment due [date]]. Okta MFA [not involved / reset separately in the Okta procedure]. User signed in and re-enrolled a second step [timestamp]; Admin log events confirm the change. Time spent: [X] min.
+> [Only if all checks passed] Resolved [date/time]. `[USER@DOMAIN.COM]` was locked out of Google 2-Step Verification ([lost phone / lost security key or passkey / login challenge]). Requester verified via [channel]. [Lost or replaced device: code handed over by [a call placed to a number on file that is not the lost phone / in person / the manager]; new second step registered [timestamp], then the old one removed; both read back.] Action: [existing backup code handed out / new backup codes generated under the exact phrase / lost key removed, pre-state recorded / 10-minute login-challenge bypass / 2SV turned off for the user under the R3 gate, pre-state and justification recorded, re-enrollment due [date]]. Okta MFA [not involved / reset separately in the Okta procedure]. User signed in and re-enrolled a second step [timestamp]; Admin log events confirm the change. Time spent: [X] min.
 
 ## Aha moment
 
@@ -251,3 +276,5 @@ Choosing the least-privileged recovery path (code → factor removal → time-bo
 Run Phase A: verify the requester and record the user's 2SV state, enforcement, and which factor actually failed.
 
 **Sources (checked 2026-10-15):** knowledge.workspace.google.com/admin/security/manage-a-users-security-settings · knowledge.workspace.google.com/admin/security/recover-an-account-protected-by-2-step-verification · knowledge.workspace.google.com/admin/security/deploy-2-step-verification · knowledge.workspace.google.com/admin/security/temporarily-turn-off-login-challenges-for-a-user · knowledge.workspace.google.com/admin/reports/admin-log-events · help.okta.com/oie/en-us/content/topics/security/mfa/mfa-reset-users.htm · knowledge.workspace.google.com/admin/security/about-context-aware-access · knowledge.workspace.google.com/admin/security/deploy-context-aware-access · GAM syntax: raw.githubusercontent.com/wiki/GAM-team/GAM (Users-Backup-Verification-Codes, Users-Signout-Turnoff2SV and Users pages; GAM is an open-source tool, not a Google product).
+
+**Sources (checked 2026-11-13, vendor facts GB-01 to GB-03 and GB-59 in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** knowledge.workspace.google.com/admin/security/recover-an-account-protected-by-2-step-verification (the backup code steps, the privilege, Google's "IM or text message" sentence) · support.google.com/accounts/answer/185834 (a lost or stolen phone: sign out of it and change the password).

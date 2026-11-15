@@ -1,0 +1,9 @@
+$ TMPDIR=<tmp> node --test scripts/demo/batch11-new-way-in.test.js   (CI fix, red)
+  AssertionError [ERR_ASSERTION]: the desk wrote customers/A
+ℹ fail 2
+ℹ pass 1
+ℹ tests 3
+✖ the desk acts both gates in one ticket, the pass and then the one-method delete, each read passed; it does not act out the user registering, and verify-mfa-method shows that (260.52725ms)
+✖ the desk acts the gate out: the read passes after the simulated pass, and fails on a pass that was there before the approval (277.2805ms)
+exit 1
+

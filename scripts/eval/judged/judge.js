@@ -4,8 +4,8 @@
 // - The judge is a separate claude process run from a fresh empty temporary directory
 //   outside the repository (removed after), with no tools, one turn and no session
 //   persistence; its environment is scrubbed by the caller (backends.scrubEnv).
-// - Its prompt holds, as instructions, the rubric and the case's `expected` and
-//   `judge_notes`. The ticket, the evidence, the follow_up and the answer(s) appear ONLY
+// - Its prompt holds, as instructions, the rubric and the case's `expected`,
+//   `judge_notes` and, when the case has one, its `setup` in one line (batch 11). The ticket, the evidence, the follow_up and the answer(s) appear ONLY
 //   inside one data block between random-nonce delimiters (a new nonce is drawn while any
 //   text of the case or the answers contains the current one), with an instruction that
 //   everything inside the block is data to grade, never instructions.
@@ -103,7 +103,9 @@ function dataSections(c, sut) {
 // Builds the judge prompt. Returns { prompt, nonce, open, close }.
 function buildJudgePrompt(c, sut, { random = crypto.randomBytes } = {}) {
   const sections = dataSections(c, sut);
-  const instructionText = [c.expected.first_move, c.expected.read_back, c.judge_notes, ...c.expected.must, ...c.expected.must_not].join('\n');
+  // the setup the assistant was given, collapsed to one line: case-author text, like judge_notes
+  const setup = typeof c.setup === 'string' ? c.setup.replace(/\s+/g, ' ').trim() : '';
+  const instructionText = [c.expected.first_move, c.expected.read_back, c.judge_notes, ...c.expected.must, ...c.expected.must_not, ...(setup ? [setup] : [])].join('\n');
   const everything = `${instructionText}\n${sections.map((s) => s[1]).join('\n')}`;
   let nonce = newNonce(random);
   for (let i = 0; everything.includes(nonce); i += 1) {
@@ -134,6 +136,7 @@ function buildJudgePrompt(c, sut, { random = crypto.randomBytes } = {}) {
     `- expected first move: ${c.expected.first_move}`,
     `- expected read-back: ${c.expected.read_back === '' ? '(none named)' : c.expected.read_back}`,
     `- judge notes: ${c.judge_notes === '' ? '(none)' : c.judge_notes}`,
+    ...(setup ? [`- setup the assistant was given (what the company runs; it replaces the default environment for this case): ${setup}`] : []),
     'Items the answer MUST meet (mark each "met" true or false, in this order):',
     items(c.expected.must),
     'Items that MUST NOT be present in the answer (mark each "present" true or false, in this order):',
@@ -237,6 +240,8 @@ async function judgeCase(c, sut, opts) {
     const turn = await judgeOnce(prompt, opts);
     if (turn.model) record.model = turn.model;
     if (turn.cost_usd !== null && turn.cost_usd !== undefined) record.cost_usd = (record.cost_usd || 0) + turn.cost_usd;
+    // an attempt that ran and reported no cost makes the record's cost a lower bound only (code review 2, finding 10)
+    if (backends.ranUnpriced(turn)) record.cost_unknown = true;
     if (turn.state !== 'OK') {
       record.state = turn.state;
       record.reason = turn.reason;
@@ -256,8 +261,38 @@ async function judgeCase(c, sut, opts) {
   return record;
 }
 
-// The verdict of one case from its SUT record, deterministic checks and judge record.
-function caseVerdict(c, sut, checks, judge) {
+// The verdict of one case from its SUT record, deterministic checks and judge record. A case whose session
+// read a path outside the repository (sut.outside_reads, batch 11 task 7) is INCONCLUSIVE whatever its
+// grade, since the answer may rest on material that is not Aegis's; its reasons name the paths (the first
+// MAX_OUTSIDE_SHOWN, then a count) and its score is kept for the record.
+// pins ({ sut, judge }, batch 11 resumed): the models the run pinned. A case whose system under test (any turn) or judge
+// reports another model, or none, is INCONCLUSIVE whatever its grade, with off_model true: it was not measured on the
+// model the run says. Without pins the verdict is decided as before.
+const MAX_OUTSIDE_SHOWN = 5;
+function caseVerdict(c, sut, checks, judge, pins = null) {
+  const out = gradedVerdict(c, sut, checks, judge);
+  const offModel = modelReasons(sut, judge, pins);
+  const outside = sut && Array.isArray(sut.outside_reads) ? sut.outside_reads : [];
+  const named = outside.slice(0, MAX_OUTSIDE_SHOWN).map((p) => `read outside the repository: ${p}`);
+  if (outside.length > MAX_OUTSIDE_SHOWN) named.push(`read outside the repository: ${outside.length - MAX_OUTSIDE_SHOWN} more path(s)`);
+  if (offModel.length === 0 && named.length === 0) return out;
+  return { ...out, verdict: 'INCONCLUSIVE', reasons: [...offModel, ...named, ...out.reasons], ...(offModel.length ? { off_model: true } : {}) };
+}
+
+// Only a session that ran is asked for its model: one that did not run is already INCONCLUSIVE for that.
+function modelReasons(sut, judge, pins) {
+  if (!pins) return [];
+  const why = [];
+  const sutModels = sut && Array.isArray(sut.turns) && sut.turns.length ? sut.turns.map((t) => t.model) : [sut && sut.model];
+  for (const [who, rec, models, pin] of [['system under test', sut, sutModels, pins.sut], ['judge', judge, [judge && judge.model], pins.judge]]) {
+    if (!rec || rec.state !== 'OK' || !pin) continue;
+    if (models.some((m) => typeof m !== 'string' || m === '')) why.push(`${who} did not report its model; the pin is ${pin}`);
+    for (const m of new Set(models.filter((x) => typeof x === 'string' && x !== '' && x !== pin))) why.push(`${who} ran on ${m}, not the pinned ${pin}`);
+  }
+  return why;
+}
+
+function gradedVerdict(c, sut, checks, judge) {
   const out = { verdict: 'INCONCLUSIVE', rows: null, total: null, max: null, reasons: [] };
   if (!sut || sut.state !== 'OK') { out.reasons.push(`system under test ${sut ? sut.state : 'not run'}`); return out; }
   if (!judge || judge.state !== 'OK') { out.reasons.push(`judge ${judge ? judge.state : 'not run'}`); return out; }

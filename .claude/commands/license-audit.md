@@ -50,6 +50,7 @@ Get-MgUser -All -Property DisplayName,UserPrincipalName,AccountEnabled,AssignedL
 ## ⚠️ Risk warning
 - Removing a license **deletes that user's service data after the grace period** (e.g., mailbox after 30 days). Confirm before removing — this hits the destructive-action gate. For mailboxes you want to keep, convert to shared first (`/shared-mailbox`).
 - Mass license changes (>10 users) require explicit confirmation; route through independent plan review.
+- A leaver's licence is reclaimed only after the offboarding plan says where the mail goes, for how long, and the date the restore window closes (`/offboard`, the mail decision). The saving is one licence a month against none for a shared mailbox under 50 GB; a shared mailbox needs a licence again when it holds more than 50 GB, uses in-place archiving or is on litigation hold, and holds come off before a licence does (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-50, MB-51, MB-55, MB-57).
 
 ## ✅ Verification checklist
 - [ ] Per-SKU assigned vs available counts captured

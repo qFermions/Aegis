@@ -1,0 +1,26 @@
+Each mutation below was applied to the named file, the named tests were run, and the file was restored (scratch tool mutate.js; commit base 6d836cc plus the working copy). "caught by" lists the failing test names; a name appears twice because node prints it in the run and again in its summary.
+
+MUTATION t2-a the assumed line is counted in the card's words
+  file: scripts/demo/answer.js
+  change: fixCard no longer leaves the Assumed setup line out of the word count
+  $ node --test scripts/demo/assumed-setup.test.js
+  ℹ tests 7 ℹ pass 6 ℹ fail 1
+  caught by: ✖ task 2: the line is not counted in the card's words, and the card still reads its six parts | ✖ task 2: the line is not counted in the card's words, and the card still reads its six parts
+  file restored: true
+
+MUTATION t2-b the row never reads the setup for admin paths
+  file: scripts/demo/senior-rules.js
+  change: assumedSetup stops looking for an admin path of a system the setup does not list
+  $ node --test scripts/demo/assumed-setup.test.js
+  ℹ tests 7 ℹ pass 6 ℹ fail 1
+  caught by: ✖ task 2: with a Google or Okta setup given, a Microsoft admin path in the answer fails the row | ✖ task 2: with a Google or Okta setup given, a Microsoft admin path in the answer fails the row
+  file restored: true
+
+MUTATION t2-c the line may sit anywhere in the card
+  file: scripts/demo/answer.js
+  change: fixCard takes an Assumed setup line anywhere in the card, not only directly under the heading
+  $ node --test scripts/demo/assumed-setup.test.js
+  ℹ tests 7 ℹ pass 6 ℹ fail 1
+  caught by: ✖ task 2: the line counts only directly under the heading, with the systems and the words that no profile was given | ✖ task 2: the line counts only directly under the heading, with the systems and the words that no profile was given
+  file restored: true
+

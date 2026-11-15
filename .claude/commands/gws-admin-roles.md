@@ -270,6 +270,18 @@ GUI read-back: Admin console → Directory → Users → `[USER@DOMAIN.COM]` →
 
 **Verification checkpoint**: [ ] `verify-admin-role-removed` exit 0 · [ ] the role is gone from the user's page.
 
+### After a role that should not have been held is removed: who else, and what left (R0)
+
+**Purpose:** when Phase D1 or D2 took away a role the account should never have had, the next step is a read, before anyone says how serious it was (answer-format section 2, "Who else, and what left"). Nothing here changes anything.
+
+1. **Who else holds it:** read the Phase A role and role-assignment reads again against the list of people who should hold each admin role. The request, the group or the copied account that gave one person the role may have given it to others.
+2. **What the account did with it:** Admin console → Reporting → Audit and investigation → Admin log events → the dates from the day the role was assigned to its removal → actor `[USER@DOMAIN.COM]` → read every user, role, setting and device change that account made (`/gws-audit-log` Phase 1). A change it made to another account or to a sharing or forwarding setting is its own ticket.
+3. **What left:** the same account's Drive log events for the same dates (`/gws-audit-log` Phase 2): files it viewed, downloaded or shared onward that the role put within its reach.
+
+Until these reads are in the ticket, the answer and the ticket note say "role removed, use not yet reviewed". They do not say it was harmless, and they do not say it was a breach.
+
+**Verification checkpoint**: [ ] every other holder of the role checked against the expected list · [ ] the account's admin events for the period recorded · [ ] its Drive events for the period recorded, or none.
+
 ## ⚠️ Risk warning
 
 - **Never remove the last super admin, and never your own Super Admin role.** Google's pattern is to assign the new super admin first and let the new admin remove the old role; a tenant with no reachable super admin depends on Google's recovery process.
@@ -286,6 +298,7 @@ GUI read-back: Admin console → Directory → Users → `[USER@DOMAIN.COM]` →
 - [ ] After a removal: `verify-admin-role-removed --user [USER@DOMAIN.COM] --role-id [ROLE_ID]` exits 0, the role's Admins tab no longer lists the user, and at least one other active super admin remains.
 - [ ] Admin console → Reporting → Audit and investigation → Admin log events shows each change with your address as the actor and the expected time.
 - [ ] The Linear comment is proved by `verify-comment` (below).
+- [ ] After a removal of a role that should not have been held: the other holders, the account's admin events and its Drive events for the period are in the ticket, and the ticket stated no severity before those reads.
 
 ## 📝 Linear-ready note
 

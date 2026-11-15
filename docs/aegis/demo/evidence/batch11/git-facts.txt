@@ -1,0 +1,38 @@
+$ git diff --stat 3ca7a12 HEAD -- scripts/eval/judged/checks.test.js   (task 3: the existing probe tests unchanged; empty means the file is as at 3ca7a12)
+exit 0
+
+$ git diff --stat dc11a5e 8e539a5 -- scripts .claude CLAUDE.md docs/aegis/answer-format.md   (the code the runs used, to the last run's evidence; empty means unchanged)
+exit 0
+
+$ git merge-base --is-ancestor worktree-agent-aeb57245b749b7915 HEAD   (the Microsoft lane merged with its hashes)
+exit 0
+
+$ git cherry -v HEAD worktree-agent-ad75befea3c2202b3   ("-": an identical patch is on the batch branch)
+- 89bdf658cf3efae085ecb397de0f4ce16a14f7fb feat(batch 11, rule a): /gws-2sv-reset puts a new way in before the old way out on a lost or replaced phone or key
+- d3d9c9b061837447e07025c8aa91cb4f4dc4eb53 feat(batch 11, rule a): /okta-mfa-reset issues a Temporary Access Code before any reset on a lost or replaced phone (new R1 gate okta-mfa-reset-tac-portal)
+- 48dd549dd35c747daf35145ec8e826defdaaaaa5 feat(batch 11, rules c and e): /gws-gmail-delivery fixes the scope before the cause, and an outside sender fixes their own SPF, DKIM or DMARC
+- a4e2faba784102c9b77eb74221e7459bba57f86e feat(batch 11, rules d and f): /gws-offboard says where the mail goes, what each choice costs, the restore window, and each change's class and double-check
+- 3a91ca4e917cff50fa06fb28bedbbec8f2be92a9 feat(batch 11, rule b): the Okta unassign and group removal are followed by who else, and what left
+- 7fa6f98ed7af7d5e0d80090188a35d713d61ec6f feat(batch 11, rules c, d and f): /okta-user-lifecycle fixes the scope first, shows each change's class and double-check, and answers the leaver questions
+- 0f0937cecfb395d990362bbccb806e4618cfd66f feat(batch 11, rules b and d): the Google access removals are followed by who else, and what left; new-user and containment show each change's class and double-check
+- a9765979d22a3c4545435d9436d16be7000af86a feat(batch 11, rules a to d and f): the Slack runbooks answer the leaver questions, show each change's class, fix the scope before an outage post, and read who else and what left
+- db2b8a3d459caa39492a8dbb4078c16ee3a239c4 feat(batch 11, rules b, d and f): the GitHub and Linear runbooks answer the leaver questions and read who else and what left
+- db1295d32e0e142b9d5f8f9c92572a9ac43d99df feat(batch 11, rules c and d): enrolment, the new-hire laptop, Mac troubleshooting, Fleet host health and the Drive transfer
+- 5509a86ca3a8b240c290f7686dadfd87bbc3827d docs(batch 11): the vendor facts behind the six rules in the Google, Okta, Jamf, Mac, Fleet, Slack, GitHub and Linear runbooks (GB-01 to GB-53)
+- 4832c8903b913e5b8f5b329b934d59fcf6c41b28 fix(batch 11): the fresh-context review's findings on the Google, Okta and Jamf lane runbooks
+exit 0
+
+$ git cherry -v HEAD worktree-agent-af8fdd54d203881dd   ("-": an identical patch is on the batch branch)
+- 4b4ba49fb6b2b3d3760a30c3cc96774ff84065d3 feat(judged eval): a case can say what the company runs (batch 11, task 1)
+- de08efa14ef68243356ab5f2cffce700dce255d4 fix(judged eval): quoting an injected note is not complying with it (batch 11, task 3)
+- c004523ba4a79aaf83adb5298687c3bcaeaa060a feat(judged eval): the exam wall and the reading record (batch 11, task 7)
+- 02270439eab8188274be28702f66163eb48d963e docs(batch 11): the final checks of tasks 1, 3 and 7 at c004523
+exit 0
+
+$ git log --cherry-mark --oneline --right-only HEAD...worktree-agent-ad75befea3c2202b3 | head -3   ("=": equivalent to a commit on the batch branch)
+= 4832c89 fix(batch 11): the fresh-context review's findings on the Google, Okta and Jamf lane runbooks
+= 5509a86 docs(batch 11): the vendor facts behind the six rules in the Google, Okta, Jamf, Mac, Fleet, Slack, GitHub and Linear runbooks (GB-01 to GB-53)
+= db1295d feat(batch 11, rules c and d): enrolment, the new-hire laptop, Mac troubleshooting, Fleet host health and the Drive transfer
+
+$ (batch 11 baseline) failing-names.sh baseline/node-test.txt | comm -3 - <batch 9 failing-tests.txt, both normalized the same way>   (empty means the same names; baseline/node-test-vs-batch9.txt compared one side unnormalized)
+names: 41 here, 41 in batch 9

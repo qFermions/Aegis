@@ -5,7 +5,7 @@
 > batch G3") and by the batch G3 close-out on 2026-10-30 ("Changed by the batch G3 close-out"), and by
 > batch G4 on 2026-10-31 ("Changed by batch G4"), and by batch 9b on 2026-11-07 ("Changed by batch 9" and "Changed by
 > batch 9b"; batches 6 to 8 have no section here, their tables are `docs/review/batches/batch6-checks.md` to `batch8-checks.md`),
-> and by batch 10 on 2026-11-07 ("Changed by batch 10").
+> and by batch 10 on 2026-11-07 ("Changed by batch 10"), and by batch 11 on 2026-11-14 ("Changed by batch 11").
 > Every "verified" line below names a check that ran in that session and the
 > capture that holds its output. Machine-checked fresh-session snapshot: `tasks/continuity.md` with
 > `node scripts/harness/check-continuity.js`.
@@ -288,6 +288,34 @@ Still open after batch 10: the transfer reads rest on UNCONFIRMED facts (W-11, W
 until the owner checks them; the desk still applies every gate in a block (it trusts the block to hold one rung); the lightest-step row
 reads the runbook's ladder, not an answer's "no lighter fix" reason (full run 7's T1).
 
+## Changed by batch 11
+
+Branch `feat/batch11-senior-answers-and-asker-reply` from `3ca7a12` (main after PR #17). Acceptance table: `checks.md`; progress:
+`progress.md`; captures: `docs/aegis/demo/evidence/batch11/`; runs: the dev judged run and the asker replies in that folder, `full-run-8/`
+(messy) and `full-run-9/` (tidy); the owner's page: `docs/explainers/batch11-senior-answers-and-asker-reply.md` and its quiz. Batch 10's
+table and progress are archived in `docs/review/batches/batch10-checks.md` and `batch10-progress.md`. The first session ran on Fable 5.2
+and stopped on a rate limit; the rest ran on Opus 5.5, and every model session of the runs on `claude-opus-5-5`.
+
+| What changed | Where | Proof |
+|---|---|---|
+| a case can say what the company runs (`setup`): the system under test gets it as data between marker lines, the judge one line; no setup gives a byte-identical prompt | `scripts/eval/judged/cases.js`, `backends.js`, `judge.js`, `scripts/ask-aegis.js` (`setupBlock`) | `scripts/eval/judged/setup.test.js` (`t1-red.txt`, `t1-green.txt`) |
+| quoting an injected note while refusing it is not complying | `scripts/eval/judged/checks.js` | `scripts/eval/judged/quoting.test.js` (`t3-*`); the earlier probe tests unchanged |
+| an answer with no company profile says which setup it assumed; a given setup is used, with no admin path for a system it does not list | `CLAUDE.md` (Rule 11, Answer format), `docs/aegis/answer-format.md` section 1 | `scripts/demo/assumed-setup.test.js` (`assumed-setup-*`) |
+| a ticket with nothing to go on gets one question and nothing else; the desk reads it as CLARIFY | `CLAUDE.md` (Rule 8, Answer format), `docs/aegis/answer-format.md` section 7, `scripts/demo/senior-rules.js` | `scripts/demo/ask-first.test.js` (`ask-first-*`); the tidy T7 answer still closes CLARIFY |
+| four more thinking rules (a new way in before the old way out; who else, and what left; how wide before why; every change carries its class and double-check) and two runbook-content rules (sender authentication; where a leaver's mail goes) | `docs/aegis/answer-format.md` section 2; about 60 runbooks in `.claude/commands/` on Microsoft, Google, Okta, Jamf, Slack, GitHub and Linear | `scripts/demo/thinking-rules.test.js` (`thinking-rules-*`, `review-f3-*`); the lanes' checks `t5-ms-*`, `t5-gok-*` |
+| new gates: `mfa-temporary-access-pass-portal` (R3, read-back `msgraph-client.js verify-temporary-access-pass`, GET only) and `okta-mfa-reset-tac-portal` (R1) | `.claude/commands/mfa-issue.md`, `okta-mfa-reset.md`, `scripts/adapters/msgraph-client.js`, `scripts/demo/sim/gates.js` | `scripts/adapters/msgraph-client.test.js`, `scripts/demo/batch11-new-way-in.test.js` (`t5-ms-*`, `t5-ms-review-*`); 351 gates |
+| vendor facts MB-01 to MB-58 (Microsoft and vendor-neutral) and GB-01 to GB-59 (Google, Okta, Jamf, Mac, Fleet, Slack, GitHub, Linear), each CONFIRMED with its link or UNCONFIRMED | `docs/aegis/batch11/`, `docs/aegis/owner/vendor-facts-priority.md` (regenerated) | `node scripts/eval/vendor-facts-priority.js --check` exit 0 |
+| the reply to the person who asked: `ask-aegis.js --reply-to asker` prints only that reply and saves the tech answer beside it; `aegis-chat.js --reply-to asker` keeps the voice; a form check | `docs/aegis/answer-format.md` section 8, `scripts/ask-aegis.js`, `scripts/aegis-chat.js`, `scripts/demo/senior-rules.js` | `scripts/demo/asker-reply.test.js`, `scripts/ask-aegis.test.js`, `scripts/aegis-chat.test.js` (`asker-reply-*`, `reply-to-*`) |
+| the exam wall: the case folder is denied to the system under test; every tool call recorded; a read outside the repository is INCONCLUSIVE; Fix card words per case | `scripts/eval/judged/backends.js`, `paths.js`, `judge.js`, `report.js` | `scripts/eval/judged/exam-wall.test.js` (`t7-*`); the real-session probe `exam-wall-probe.txt` |
+| `--budget-usd`, a limit for a whole judged run | `scripts/eval/judged-eval.js` | `scripts/eval/judged/budget.test.js` (`budget-*`) |
+| every model session names its model: `claude-opus-5-5` unless `--model` (or `--judge-model`) names another; a judged case on another model is INCONCLUSIVE; the desk's summary lists the models its sessions reported; an ask saves `init.json` | `scripts/eval/judged/backends.js`, `judged-eval.js`, `judge.js`, `report.js`, `scripts/demo/customer-desk.js`, `render.js`, `scripts/ask-aegis.js`, `scripts/aegis-chat.js` | `scripts/eval/judged/model-pin.test.js` and the three tools' tests (`model-pin-*`, four mutations caught) |
+| the runs | `docs/aegis/demo/evidence/batch11/judged-dev-run/`, `asker-replies.md`, `full-run-8/`, `full-run-9/` | every session on `claude-opus-5-5`, 15.80 US dollars of the 18 allowed: the dev judged run 9 PASS, 15 FAIL, 0 INCONCLUSIVE of 24 builder cases (8.95); six asker replies, 5 pass the form check (2.17); messy 8 RESOLVED (SIMULATED), 1 CLARIFY (3.55); tidy T1, T4, T5, T7, T8: 4 RESOLVED (SIMULATED), 1 CLARIFY (1.13), T2, T3 and T6 not run for the limit |
+
+Still open after batch 11: the dev cases are the builder's own, so only the commander's outside cases measure answers on unseen tickets;
+both ask-first dev cases failed because the answer asked two questions; every Fix card is over 150 words (154 to 249); the
+class-and-double-check row failed on T4 and T8; the tidy tickets T2, T3 and T6 did not run; the `.claude/agents/` files that name
+`model: fable` (atlas, forge, tier1-support, tier2-support, warden, zac) are unchanged and were not started.
+
 ## Partial
 
 13 capability-map rows: Microsoft answer quality (row 2, no model-judged run in this session);
@@ -328,8 +356,8 @@ batch G3 close-out's (#7) on 2026-10-30 (`f086c88`); the batch G3 close-out 2's 
 3's (#9) on 2026-10-31 (`0a5feb7`, `1f6647c`); batch G4's (#10) on 2026-11-01 (`77b7114`); the Customer Desk
 pull requests #11 to #14 on 2026-11-06 and 2026-11-07 (`0250ad2`, `c71c09b`, `5a4c209`, `73bdc68`); batch 9's (#15)
 and batch 9b's (#16) on 2026-11-07 (`c0f3757`, `1a719ed`), read from the GitHub pull request API on 2026-11-08 UTC
-(`docs/aegis/demo/evidence/batch10/pr-list.txt`). Batch 10 is on branch `feat/batch10-ladder-and-readbacks`, its
-draft pull request against `main`.
+(`docs/aegis/demo/evidence/batch10/pr-list.txt`). Batch 10's pull request (#17) was merged on 2026-11-07 (`3ca7a12`). Batch 11 is on branch
+`feat/batch11-senior-answers-and-asker-reply`, its draft pull request against `main`.
 `node scripts/dev/claim.js list` showed 0 active claims on 2026-10-27
 (`docs/aegis/evidence/claim-list.txt`).
 

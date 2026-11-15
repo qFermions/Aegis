@@ -1,0 +1,59 @@
+## Fix
+**What's wrong:** [FIRST_NAME]'s work MacBook was stolen, and their Google account may still be signed in on it.
+**Do this:**
+1. Call [FIRST_NAME] back on the number in the studio's staff list. Confirm it is them and get the Mac's serial number.
+2. Look before changing anything. In Jamf Pro → Computers → [SERIAL_NUMBER], read FileVault and the last check-in. In Admin console → Reporting → Audit and investigation → User log events, read [USER@DOMAIN.COM] since the theft. If there are no new sign-ins, only the open session is at risk. New sign-ins point to a compromised account.
+3. With the studio manager's approval, sign them out everywhere: Directory → Users → [USER@DOMAIN.COM] → Security → Sign-in cookies → Reset.
+4. Lock the Mac: Jamf Pro → [SERIAL_NUMBER] → Management → Lock Computer. Put the PIN in the password manager first.
+5. Last resort, only if the Mac isn't recovered: wipe it. This needs both managers.
+
+**Done when:** Jamf's history shows the lock completed. Aegis then checks that Google recorded the sign-out for [USER@DOMAIN.COM].
+**Stop if:** the log shows sign-ins or setting changes after the theft. That is an account compromise.
+**Tell the user now:** Thanks for filing the police report. IT is checking your account and the laptop now. Please keep the report number handy, and tell us if anything in your email looks odd.
+**Tell the user when done:** Your account is signed out on the stolen laptop, and the laptop is locked. Sign in again on your other devices when asked.
+
+This needs a longer plan across three systems: see Details.
+
+## Details
+
+**Verdict:** This is a stolen managed Mac with a live session. It is not yet a confirmed account compromise. Runbooks used: `/jamf-lock-erase` (Phases A, B and C) and `/gws-password-reset` (Phase C). If step 2 finds sign-ins after the theft, switch to `/gws-account-containment`. Its first step is to suspend the account, and that replaces step 3.
+
+**Why this order**
+- **Identity first.** The ticket is a forwarded email. Per the studio's profile, the call-back on the staff-list number is the identity check.
+- **Read first.** The Jamf record shows whether the data is protected while the Mac is offline (FileVault on, Activation Lock). It also shows whether a wipe would even land (Apple silicon needs an escrowed bootstrap token). The Google log separates "session left open" from "account in use by someone else".
+- **Lightest step first.** Resetting the sign-in cookies is R1: nothing is deleted, and the user just signs in again. Gmail can take up to an hour to sign out. The cookie reset does **not** sign out desktop apps such as Drive for desktop. The lock covers that.
+- **Lock before wipe.** A lock is reversible with the PIN and runs at the Mac's next check-in. A wipe is permanent. A Mac that never comes online never receives either one, so FileVault and Activation Lock are the real protection until then.
+
+**Changes, class and double-check**
+- Step 3 (reset sign-in cookies): R1. Double-check: Aegis reads Google's admin log for the cookie reset on [USER@DOMAIN.COM], with you as the actor.
+- Step 4 (lock the Mac): R2, because the PIN is the pre-state. Double-check: Aegis reads Jamf's command history for a lock the Mac acknowledged.
+- Step 5 is a later rung. Run it only if the Mac is not recovered and both the studio manager and [FIRST_NAME]'s manager approve: gate `jamf-lock-erase-wipe-portal` (R3, permanent, independent review first).
+
+**Slack (no runbook step; this part is reasoning):** Slack ignores Google's sign-out. Its admin console offers no per-user session reset. The admin options are deactivating the person (R3) or a workspace-wide reset (R3, signs out everyone), and neither fits here. Ask [FIRST_NAME] to use Slack's option to sign out of all other sessions from a device they still have. Confirm the label on screen.
+
+**⚠️ Risk**
+- Never put the lock PIN in the ticket or in chat.
+- Do not wipe on urgency alone. The wipe is irreversible and needs both approvals.
+- If a password was saved in the Mac's browser or keychain, a password reset (`/gws-password-reset` Phase B) becomes worth doing. Raise it as its own change.
+
+**Verify**
+- [ ] Identity confirmed by call-back
+- [ ] Jamf pre-state written in the ticket
+- [ ] Google log read back
+- [ ] Cookie reset event found
+- [ ] Lock acknowledged
+- [ ] PIN stored only in the password manager
+- [ ] Slack sign-out confirmed by [FIRST_NAME]
+- [ ] Police report number in the ticket
+
+**Ticket note:** Stolen MacBook [SERIAL_NUMBER] ([FIRST_NAME]), police report [REPORT_#]. Identity confirmed by call-back. Pre-state: FileVault [on/off], last check-in [time]. Google log since the theft: [no new sign-ins / see containment]. Cookie reset [time] (verified). Lock Computer sent [time], acknowledged [time / pending check-in]. Wipe: not run, pending recovery and two approvals.
+
+```aegis-desk
+Gate: gws-password-reset-cookies-portal
+Phrase: RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]
+Read-back: node scripts/adapters/gws-client.js verify-event --app admin --event RESET_SIGNIN_COOKIES --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+Gate: jamf-lock-erase-lock-portal
+Phrase: LOCK MAC [SERIAL_NUMBER]
+Change record: R2, read-back jamf:verify-command --not-before --type DEVICE_LOCK
+Read-back: jamf-client.js verify-command --management-id [DEVICE_ID] --type DEVICE_LOCK --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+```

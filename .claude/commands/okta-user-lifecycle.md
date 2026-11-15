@@ -63,6 +63,14 @@ Activate and reactivate are two different API calls: **activate** works on STAGE
 - **A Google super admin bypasses Okta SSO** and can sign in directly to the Google Admin console; check admin roles before trusting the Okta deactivation alone.
 - Offboarding starts here (Okta first). The Google side (contain, transfer Drive and Calendar, suspend or delete) is `/gws-offboard`.
 
+## A leaver: the mail, what keeping the account costs, the window before deletion
+
+A leaver's plan answers three questions in the ticket before Phase F (answer-format section 2, the offboarding rule).
+
+- **Where the person's mail goes, and for how long.** Okta holds no mailbox. The mailbox is in Google Workspace, and `/gws-offboard` decides who receives the mail and until what date (its section "Mail, cost and the restore window"). Decide it before Phase F: with the integration's default options, deactivating the Okta user suspends the Google account, and a suspended Google account receives no new mail.
+- **What keeping the Okta account costs, against the alternatives.** A deactivated user keeps its profile, its group memberships and its enrolled authenticators, and Phase G brings it back (some apps may need to be assigned again). Okta's deactivation page does not say what a deactivated user costs: **[org gap: whether deactivated users count toward the Okta licence; read the contract]**. A deleted user cannot come back.
+- **The window before deletion.** Okta has no restore window after a delete: its page says "When you delete a user account, you can't undo the deletion", and Okta starts the permanent deletion of the customer data in 30 days. The window is the Deactivated state itself: the account stays Deactivated for as long as the retention decision says, **[org gap: how long a leaver stays Deactivated before Phase H]**, and the ticket names the date.
+
 ## Fast path
 
 1. Phase A: read status, apps, and the Google integration's deactivation options (R0).
@@ -73,6 +81,18 @@ Activate and reactivate are two different API calls: **activate** works on STAGE
 6. Phase G: activate a deactivated user (gate) when someone returns.
 7. Phase H: delete only after deactivation, the retention decision and the independent review (R3 gate).
 
+**Every change, its class and its double-check** (answer-format section 2, "Every change carries its class and its double-check"; the class is each gate's own Reversibility line, and a joiner, mover or leaver plan lists the rows it uses):
+
+| Phase | Change | Class | Double-check |
+|---|---|---|---|
+| B | reset the password, gate okta-user-lifecycle-reset-password-portal | R2 | the password-reset read-back passes against the `[NOT_BEFORE]` written before the click |
+| C | clear the user's sessions, gate okta-user-lifecycle-clear-sessions-portal | R1 | no change record; the sessions-cleared read passes against `[NOT_BEFORE]` |
+| D | suspend, gate okta-user-lifecycle-suspend-portal | R2 | the status read-back passes with SUSPENDED |
+| E | unsuspend, gate okta-user-lifecycle-unsuspend-portal | R2 | the status read-back passes with ACTIVE |
+| F | deactivate, gate okta-user-lifecycle-deactivate-portal | R3 | the status read-back passes with DEPROVISIONED, and the Google status is read |
+| G | activate, gate okta-user-lifecycle-activate-portal | R1 | no change record; the status read shows PROVISIONED, then ACTIVE once the user finishes the activation email |
+| H | delete, gate okta-user-lifecycle-delete-portal | R3 | no connector read proves a deletion: the People page no longer lists the user |
+
 ## Phase A: Read first (R0)
 
 **Purpose:** know the current state and the downstream effects before choosing a phase.
@@ -81,6 +101,12 @@ Activate and reactivate are two different API calls: **activate** works on STAGE
 - Okta Admin Console → Applications and Resources → Applications → the Google Workspace integration → **Assignments** tab → the user's row → **Edit** → read the **Deactivation** options on the Edit User Assignment page, then leave the page without saving (Phase F depends on them).
 - Okta Admin Console → Reports → System Log → search for `[UPN]` → read the recent lifecycle and sign-in events.
 - Google side: Admin console → Directory → Users → `[USER@DOMAIN.COM]` → read the status and whether the user holds an admin role.
+
+**When the ticket says Okta, or an app behind it, is down or cannot be reached** (answer-format section 2, "How wide before why"), fix the scope before the cause, together with Okta's own status page, and before any phase below:
+
+- **How wide (R0):** one person or everyone; one site or every site; Okta only, or other internet services too. Then read Okta's status page (status.okta.com) for an incident on the org's cell. An incident that matches the scope is the answer: no password reset or session clear fixes it.
+- **No Okta incident: the network and name-resolution path come before the account.** From an affected machine, check that `[@Aegion_OKTA_ORG_URL]` resolves and opens, and that another site opens on the same network, then on another network or off the VPN (`/wifi-issue`, `/lan-wan`, `/vpn-check`).
+- **Only then the account:** a clean path and a scope of one person is this runbook: read the Status above and the System Log for that person.
 
 <details>
 <summary>Read-only connector read, the pre-state (HUMAN-RUN)</summary>
@@ -506,12 +532,14 @@ curl -sS "https://[@Aegion_OKTA_ORG_URL]/api/v1/users/[USER_ID]" -H "Authorizati
 - [ ] After a session clear, suspend or deactivate: the user reports being signed out on every device.
 - [ ] After a deactivation: the Applications tab is empty, and the Google account shows the expected provisioning result (`gam info user "[USER@DOMAIN.COM]"` or Admin console → Directory → Users → status), recorded in the ticket.
 - [ ] After a delete: `[UPN]` is absent from the People page and the ticket notes the 30-day customer-data purge.
+- [ ] For a leaver: the ticket says where the mail goes and until what date (decided in `/gws-offboard`), how long the account stays Deactivated before any deletion, and that an Okta deletion has no restore window.
+- [ ] For a "cannot reach Okta" ticket: the scope (who, which site, which services) and the status.okta.com reading are in the ticket, and the network and name-resolution path was checked before any account change.
 
 ## 📝 Jira-ready note
 
 Use the completed form only when every read-back above passed; otherwise write a partial-state note naming what is verified, what is pending, and the next owner.
 
-> [Only if all checks passed] Okta lifecycle change for `[UPN]`: [password reset by email link / temporary password handed over out of band · sessions cleared · suspended · unsuspended · deactivated · activated · deleted] at [timestamp], confirmed by the exact phrase. Status read back as [status] (API [status]); connector read-back [verify-status / verify-password-reset / verify-sessions-cleared] passed at [timestamp] against the recorded pre-state [status]. [Deactivation: Google account [suspended by Okta provisioning / left active per "Do not suspend user"; Google suspension tracked in `[JIRA-###]`]; app assignments removed; independent review recorded.] [Deletion: user absent from People; 30-day purge noted.] System Log shows the event. Time spent: [X] min.
+> [Only if all checks passed] Okta lifecycle change for `[UPN]`: [password reset by email link / temporary password handed over out of band · sessions cleared · suspended · unsuspended · deactivated · activated · deleted] at [timestamp], confirmed by the exact phrase. Status read back as [status] (API [status]); connector read-back [verify-status / verify-password-reset / verify-sessions-cleared] passed at [timestamp] against the recorded pre-state [status]. [Deactivation: Google account [suspended by Okta provisioning / left active per "Do not suspend user"; Google suspension tracked in `[JIRA-###]`]; app assignments removed; independent review recorded.] [Deletion: user absent from People; 30-day purge noted; no restore window.] [Leaver: mail decided in `[JIRA-###]`; the account stays Deactivated until [date].] System Log shows the event. Time spent: [X] min.
 
 ## Aha moment
 
@@ -526,3 +554,5 @@ Mapping lifecycle states to downstream provisioning effects is the core of IAM e
 Run Phase A and record the status, the app list and the Google integration's deactivation options before choosing a phase.
 
 **Sources (checked 2026-10-15):** help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-end-user-states.htm · help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-suspend.htm · help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-deactivate-user-account.htm · help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-activate-user-account.htm · help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-reset-individual.htm · help.okta.com/oie/en-us/content/topics/oda/device-logout.htm · help.okta.com/oie/en-us/content/topics/provisioning/google/managing-g-suite-users.htm · help.okta.com/en-us/content/topics/provisioning/google/google-provisioning.htm · developer.okta.com/docs/api/openapi/okta-management/management/tags/userlifecycle.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/userlifecycle/other/activateuser.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/user.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/usercred.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/usercred/other/resetpassword.md · developer.okta.com/docs/api/openapi/okta-management/management/tags/usersessions.md · developer.okta.com/docs/guides/create-an-api-token/main/
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** help.okta.com/oie/en-us/content/topics/users-groups-profiles/usgp-deactivate-user-account.htm (a deletion cannot be undone; customer data deleted in 30 days; reactivation may need apps assigned again) · status.okta.com (Okta's status page).

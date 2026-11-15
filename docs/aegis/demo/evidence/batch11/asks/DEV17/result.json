@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 57034,
+  "stop_reason": "end_turn",
+  "session_id": "a3bf4859-b59f-4388-96a5-8abf5e32f7e2",
+  "total_cost_usd": 0.45303519999999997,
+  "usage": {
+    "input_tokens": 12,
+    "cache_creation_input_tokens": 38109,
+    "cache_read_input_tokens": 155976,
+    "output_tokens": 5846,
+    "output_tokens_details": {
+      "thinking_tokens": 2909
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 38109,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 4266,
+        "cache_read_input_tokens": 41901,
+        "cache_creation_input_tokens": 2210,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 2210
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 12,
+      "outputTokens": 5846,
+      "cacheReadInputTokens": 155976,
+      "cacheCreationInputTokens": 38109,
+      "webSearchRequests": 0,
+      "costUSD": 0.45303519999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2909,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 38109,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 9,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Fix\nAssumed setup: Microsoft 365 Business Premium with Exchange Online and Defender (no company profile given).\n**What's wrong:** The supplier's mail fails all three sender checks (SPF, DKIM and DMARC), and their own DMARC setting tells receiving mail systems to quarantine it.\n**Do this:**\n1. Open Defender → Email & collaboration → Review → Quarantine, filter by [SENDER], and open one held invoice. Read the quarantine reason and authentication results. Spam or spoof means a likely setup fault on the supplier's side. Phish means you treat it as a fake invoice.\n2. Call the supplier on the number already on file, not one taken from the email. Confirm they sent these invoices and which service sends their mail.\n3. Give them the fix for their side: add that sending server to their SPF record and turn on DKIM signing.\n4. Release one confirmed invoice, to the one accounts recipient only.\n5. Only if invoices can't wait for the supplier's fix: allow that one sender address, with an expiry. Never allow the whole domain.\n\n**Done when:** the invoice is in the accounts inbox. Aegis then checks that the held message shows as released for that recipient.\n**Stop if:** the supplier didn't send it or doesn't recognise the sending server. That makes it a possible invoice-fraud incident.\n**Tell the user now:** IT is checking the held invoices and contacting the supplier about their email setup. Before paying, confirm any change of bank details by phone.\n**Tell the user when done:** The confirmed invoice is in your inbox. IT has asked the supplier to fix their email setup so future invoices stop being held.\n\nShort Details follow.\n\n## Details\n**Verdict:** No to allowing the whole domain. The header shows SPF fail (the sending server isn't in their SPF record), DKIM none (the message isn't signed) and DMARC fail with action=quarantine. That means nothing in the header proves the mail came from the supplier. Microsoft's advice is a scoped allow entry rather than the whole domain. An allowed domain in an anti-spam policy also skips the SPF, DKIM and DMARC checks entirely. I haven't confirmed whether these are real invoices with a bad setup behind them, or spoofed ones.\n\n**Sources:** `/email-quarantine` step 3, `/email-to-spam` Step 3 C and `/email-whitelist` (decision matrix: \"Sender auth keeps failing\"). No replay lookup was run for this ticket.\n\n**Text for the supplier:** \"Your invoice mail to us fails SPF: the server that sent it isn't in the SPF record for your sending domain. It isn't DKIM-signed, so DMARC for your From domain fails and your own policy asks us to quarantine it. Please add your sending service to your SPF record and turn on DKIM signing for your domain.\"\n\n**Changes, one line each:**\n- Step 4 (release one confirmed invoice to one recipient): R2. Double-check: Aegis reads the held message as released for that recipient.\n- Step 5 (allow one sender address, with an expiry): R1. Double-check: Aegis reads the allow entry and its expiry.\n- Step 5 runs only if invoices can't wait for the supplier's fix: gate `email-whitelist-method-1`. That gate is preview only, so it needs its own reviewed runbook before anyone uses it.\n\n**Risks:**\n- Releasing a spoofed invoice puts a payment-fraud lure in the inbox. Release only what the supplier confirmed, one recipient at a time.\n- An allow entry expires 45 days after it was last used by default. A fixed expiry date can be at most 30 days ahead. Set a review date.\n- Don't use the anti-spam allowed-domain list or a mail flow rule (SCL -1) keyed on the domain.\n\n**Verification:**\n- [ ] Authentication results read on a held item.\n- [ ] Supplier confirmed by phone, on the number on file.\n- [ ] Supplier sent the SPF and DKIM fix text.\n- [ ] One release, read back as released.\n- [ ] A later invoice shows spf=pass or dkim=pass.\n\n**Jira-ready note:** Invoices from [SENDER] were quarantined because DMARC failed (SPF fail, no DKIM). The supplier was confirmed by phone on the number on file and asked to fix SPF and DKIM. One invoice was released to [USER@DOMAIN.COM] [after read-back]. Domain-wide allow declined. Address allow: [not needed / added, expires [date]]. [JIRA-###]\n\n```asker-reply\nNo, I don't recommend allowing their whole domain. The message header you sent shows their invoices fail all three checks that prove an email really comes from them, and their own settings tell receiving mail systems to hold that mail. Allowing the domain would also let in anyone faking their address, which is a common way fake invoices get through.\n\nI looked only at the header you pasted. I haven't confirmed whether the supplier's email setup is wrong or whether some of these messages aren't from them at all.\n\nIn the meantime, please don't pay any invoice or accept new bank details from them unless you've confirmed it by phone on a number you already have. A technician will check the held invoices next, contact the supplier about fixing their setup, and release the ones the supplier confirms.\n```\n\n```aegis-desk\nGate: quarantine-release-one-portal\nPhrase: RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]\nChange record: R2, read-back exo:verify-quarantine-released\nRead-back: exo-client.js verify-quarantine-released --message-id \"[MESSAGE_ID]\" --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute\n```",
+  "ttft_ms": 1602,
+  "type": "result",
+  "duration_ms": 57337,
+  "uuid": "6cd4885b-be74-4bfb-8db2-eeecd5b0f087",
+  "ttft_stream_ms": 947,
+  "time_to_request_ms": 148,
+  "first_content_frame_ms": 947,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 12,
+      "outputTokens": 5846,
+      "cacheReadInputTokens": 155976,
+      "cacheCreationInputTokens": 38109,
+      "webSearchRequests": 0,
+      "costUSD": 0.45303519999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2909,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 38109,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-12-03T09:34:14.654Z"
+}

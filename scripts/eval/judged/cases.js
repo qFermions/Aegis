@@ -2,7 +2,9 @@
 // cases.js: reads and validates a judged-eval case file (capability row 26).
 //
 // A case file is JSONL: one JSON object per line, blank lines skipped. Every field is
-// required, and an unknown field at the top level or inside `expected` is refused with
+// required, except the top-level `setup` (what the company runs, batch 11: absent, empty or
+// blank means none, and the parsed case always carries `setup`, the string or ''), and an
+// unknown field at the top level or inside `expected` is refused with
 // its line number and field name. Every string is data: its type and length are checked,
 // and no refusal ever echoes a line's text or a field's value (only the line number, the
 // field name, and the id once the id itself has been checked as a short token).
@@ -22,6 +24,8 @@ const ENUMS = Object.freeze({
 });
 
 const TOP_FIELDS = Object.freeze(['id', 'platform', 'capability', 'scenario', 'class', 'ticket', 'evidence', 'follow_up', 'probe', 'expected', 'judge_notes']);
+// The one top-level field a case may leave out.
+const OPTIONAL_TOP_FIELDS = Object.freeze(['setup']);
 const EXPECTED_FIELDS = Object.freeze(['first_move', 'must', 'must_not', 'escalate', 'change_class', 'read_back']);
 
 // Maximum lengths in characters. A ticket and its evidence each fit in one argument of a
@@ -33,6 +37,7 @@ const LIMITS = Object.freeze({
   evidence: 20000,
   follow_up: 4000,
   judge_notes: 4000,
+  setup: 4000,
   first_move: 1000,
   read_back: 1000,
   item: 500,
@@ -83,9 +88,9 @@ function checkItems(errs, line, field, value, nonEmpty) {
   value.forEach((item, i) => checkString(errs, line, `${field}[${i}]`, item, { max: LIMITS.item, nonEmpty: true }));
 }
 
-function checkFields(errs, line, obj, allowed, prefix) {
+function checkFields(errs, line, obj, allowed, prefix, optional = []) {
   for (const key of Object.keys(obj)) {
-    if (!allowed.includes(key)) errs.push(`line ${line}: unknown field ${prefix}${shownName(key)}`);
+    if (!allowed.includes(key) && !optional.includes(key)) errs.push(`line ${line}: unknown field ${prefix}${shownName(key)}`);
   }
   let complete = true;
   for (const key of allowed) {
@@ -98,7 +103,7 @@ function checkFields(errs, line, obj, allowed, prefix) {
 function validateCase(obj, line, errs) {
   const before = errs.length;
   if (!isPlainObject(obj)) { errs.push(`line ${line}: a case must be a JSON object`); return null; }
-  if (!checkFields(errs, line, obj, TOP_FIELDS, '')) return null;
+  if (!checkFields(errs, line, obj, TOP_FIELDS, '', OPTIONAL_TOP_FIELDS)) return null;
   checkString(errs, line, 'id', obj.id, { max: LIMITS.id, nonEmpty: true, pattern: ID_RE });
   for (const f of ['platform', 'capability', 'class', 'probe']) checkEnum(errs, line, f, obj[f]);
   checkString(errs, line, 'scenario', obj.scenario, { max: LIMITS.scenario, nonEmpty: true, pattern: SCENARIO_RE });
@@ -106,6 +111,8 @@ function validateCase(obj, line, errs) {
   checkString(errs, line, 'evidence', obj.evidence, { max: LIMITS.evidence });
   checkString(errs, line, 'follow_up', obj.follow_up, { max: LIMITS.follow_up });
   checkString(errs, line, 'judge_notes', obj.judge_notes, { max: LIMITS.judge_notes });
+  const hasSetup = Object.prototype.hasOwnProperty.call(obj, 'setup');
+  if (hasSetup) checkString(errs, line, 'setup', obj.setup, { max: LIMITS.setup });
   const exp = obj.expected;
   if (!isPlainObject(exp)) {
     errs.push(`line ${line}: field expected must be a JSON object`);
@@ -122,7 +129,7 @@ function validateCase(obj, line, errs) {
     id: obj.id, platform: obj.platform, capability: obj.capability, scenario: obj.scenario, class: obj.class,
     ticket: obj.ticket, evidence: obj.evidence, follow_up: obj.follow_up, probe: obj.probe,
     expected: { first_move: exp.first_move, must: [...exp.must], must_not: [...exp.must_not], escalate: exp.escalate, change_class: exp.change_class, read_back: exp.read_back },
-    judge_notes: obj.judge_notes, line,
+    judge_notes: obj.judge_notes, setup: hasSetup && obj.setup.trim() !== '' ? obj.setup : '', line,
   };
 }
 
@@ -161,4 +168,4 @@ function readCaseFile(file) {
   return parseCases(fs.readFileSync(file, 'utf8'));
 }
 
-module.exports = { ENUMS, TOP_FIELDS, EXPECTED_FIELDS, LIMITS, MAX_FILE_BYTES, CaseFileError, parseCases, readCaseFile, validateCase };
+module.exports = { ENUMS, TOP_FIELDS, OPTIONAL_TOP_FIELDS, EXPECTED_FIELDS, LIMITS, MAX_FILE_BYTES, CaseFileError, parseCases, readCaseFile, validateCase };

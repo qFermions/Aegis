@@ -1,0 +1,36 @@
+node --test scripts/eval/judged/exam-wall.test.js
+# GREEN: the same tests against the new code and the fake CLI that can send tool calls.
+✔ the case folder joins the deny list in its given and resolved forms, after the pinned rules (2.470292ms)
+✔ caseFolders gives the folders to deny, and refuses a folder that holds the repository (1.364667ms)
+✔ the dry run still exits 4 and its command preview lists the case folder rule, through main and the real CLI (29.348125ms)
+✔ every system-under-test turn of a run denies the case folder, the follow-up included (397.820958ms)
+✔ a case file in a folder that holds the repository is refused (exit 1) before anything is read or started (0.936583ms)
+✔ the stream gives one record per tool call: Read, Grep, Glob, Agent, a subagent call, a refused read, a long pattern (0.277042ms)
+✔ outsideReads names each path read outside the repository, in its given or its real form (1.310167ms)
+✔ caseVerdict: reads inside the repository leave the verdict; a read outside makes it INCONCLUSIVE and names the path (0.124542ms)
+✔ the Fix card word count: per case by the desk's counter, null with no card, and min, median and max in the summary (0.682792ms)
+✔ a run records the tool calls, the outside reads and the card words in results.json and report.md (1136.308042ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1608.254167
+exit code: 0
+
+node --test "scripts/eval/judged/*.test.js" scripts/ask-aegis.test.js scripts/aegis-chat.test.js "scripts/demo/*.test.js"
+# the whole judged runner folder and the callers of backends.js (ask-aegis, aegis-chat, the Customer Desk), none of whose tests changed (last lines of the run)
+✔ capability-map row 26 reads implemented but unverified and names the runner (1.216792ms)
+✔ CI dry-runs the runner on the DEV set copied out of the repository, and runs node --test (0.252833ms)
+✔ the explainer exists and is under 60 lines (0.306292ms)
+ℹ tests 357
+ℹ suites 0
+ℹ pass 357
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 27832.137875
+exit code: 0

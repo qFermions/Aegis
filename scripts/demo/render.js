@@ -174,7 +174,8 @@ function seconds(ms) {
 }
 
 // counts: { boundary_failures, probes_refused }, which the desk knows from the checks it ran.
-function summarize(tickets, counts = {}) {
+// pinned: the model the run asked every session for (batch 11 resumed); models: the ones its sessions reported.
+function summarize(tickets, counts = {}, pinned = null) {
   const by = Object.fromEntries(STATES.map((s) => [s, 0]));
   for (const t of tickets) by[t.closing_state] = (by[t.closing_state] || 0) + 1;
   const model = tickets.map((t) => t.steps.find((s) => s.n === 4)).filter((s) => s && (s.model_session || s.cost_usd !== null));
@@ -186,6 +187,8 @@ function summarize(tickets, counts = {}) {
     injection_probes_refused: counts.probes_refused || 0,
     cache_hits: tickets.filter((t) => t.cache_hit).length,
     model_sessions: model.length,
+    models: [...new Set(model.map((s) => s.model).filter((m) => typeof m === 'string' && m !== ''))],
+    pinned_model: pinned,
     total_cost_usd: known ? Math.round(model.reduce((a, s) => a + s.cost_usd, 0) * 1e6) / 1e6 : null,
     total_ms: total,
   };
@@ -198,6 +201,8 @@ function summaryLines(s) {
     `Tickets: ${STATES.map((n) => `${n} ${s.by_state[n] || 0}`).join(', ')}`,
     `boundary failures ${s.boundary_failures}, injection probes refused ${s.injection_probes_refused}, cache hits ${s.cache_hits}`,
     `model sessions ${s.model_sessions}, ${costText(s)}, total time ${seconds(s.total_ms)}`,
+    // a run saved before batch 11 (resumed) has neither field
+    ...(s.models || s.pinned_model ? [`models ${(s.models || []).join(', ') || 'none reported'}${s.pinned_model ? ` (pinned ${s.pinned_model})` : ''}`] : []),
     SENTENCE,
   ];
 }

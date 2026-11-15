@@ -30,6 +30,10 @@
 //                                         revocation (vendor fact M-28)
 //     verify-method-absent    --user [USER_ID] --method-id [METHOD_ID]   (that method id no longer
 //                                         listed in the user's authentication methods)
+//     verify-temporary-access-pass --user [USER_ID] --not-before T   (a Temporary Access Pass created
+//                                         at or after T is listed and the user can use it: the read-back
+//                                         of /mfa-issue's pass gate, batch 11; the same methods read, and
+//                                         the pass value is never printed; vendor facts MB-09, MB-11, MB-12)
 //
 // Environment: MS_TENANT_ID (the tenant GUID: the token URL is the tenant's own, so a
 // token can only come from this tenant), MS_CLIENT_ID, MS_PRIVATE_KEY (PEM) and
@@ -61,6 +65,10 @@ const SIGNIN_FILTER = /^userId eq '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 const METHODS = ['microsoftAuthenticator', 'phone', 'fido2', 'softwareOath', 'windowsHelloForBusiness', 'email', 'temporaryAccessPass'];
 // "Require re-register MFA" deletes these (vendor fact B-18)
 const CLEARED_BY_REREGISTER = ['microsoftAuthenticator', 'phone', 'softwareOath'];
+// A Temporary Access Pass in the methods read, and the methodUsabilityReason values Microsoft documents
+// for it (vendor fact MB-11)
+const TEMPORARY_ACCESS_PASS = '#microsoft.graph.temporaryAccessPassAuthenticationMethod';
+const USABILITY_REASONS = ['EnabledByPolicy', 'DisabledByPolicy', 'Expired', 'NotYetValid', 'OneTimeUsed'];
 
 const USER_SELECT = 'id,userPrincipalName,accountEnabled,userType,onPremisesSyncEnabled,lastPasswordChangeDateTime,createdDateTime';
 const DEVICE_SELECT = 'id,deviceName,lastSyncDateTime,complianceState,operatingSystem,managementState';
@@ -139,6 +147,10 @@ const COMMANDS = Object.freeze({
   // and one-method delete
   'verify-sessions-revoked': { kind: 'verify', flags: ['user', 'not-before'], steps: (a) => [step('userSessions', { user: a.user })], expected: (a) => ({ user: a.user, signInSessionsValidFromDateTime: `at or after ${a['not-before']}` }) },
   'verify-method-absent': { kind: 'verify', flags: ['user', 'method-id'], steps: (a) => [step('authMethods', { user: a.user })], expected: (a) => ({ user: a.user, method_id: a['method-id'], listed: false }) },
+  // batch 11, task 5: the read-back of /mfa-issue's Temporary Access Pass gate (a new way in before the
+  // old way out). The same authentication-methods read; the time bound is required, since a user's old
+  // pass stays listed after it expires
+  'verify-temporary-access-pass': { kind: 'verify', flags: ['user', 'not-before'], steps: (a) => [step('authMethods', { user: a.user })], expected: (a) => ({ user: a.user, temporary_access_pass: `created at or after ${a['not-before']} and usable` }) },
 });
 
 const USAGE = `Usage: node scripts/adapters/msgraph-client.js <command> [flags] [--execute]
@@ -262,6 +274,37 @@ function judge(command, a, data) {
       // absence on a page with more pages behind it proves nothing
       if (morePages(data)) return unproven({ listed: false }, 'the method list has another page, so this is not proof either way');
       return { verified: true, observed: { listed: false, methods_read: ids.length } };
+    }
+    case 'verify-temporary-access-pass': {
+      // A user holds one pass at a time, and an expired one stays listed until it is deleted or replaced
+      // (vendor fact MB-09), so "a pass is listed" proves nothing about this change: the pass must have
+      // been created at or after --not-before. Graph returns the pass value as null on a GET (MB-11);
+      // observed names only its creation time and usability, so a value in an answer is never printed.
+      if (!Array.isArray(d.value)) return unproven({ listed: null }, NO_LIST);
+      const passes = d.value.filter(isObject).filter((m) => m['@odata.type'] === TEMPORARY_ACCESS_PASS);
+      if (!passes.length) {
+        if (morePages(d)) return unproven({ listed: false }, 'the method list has another page, so this is not proof either way');
+        return { verified: false, observed: { listed: false }, reason: 'no Temporary Access Pass is listed' };
+      }
+      const since = passes.find((m) => atOrAfter(m.createdDateTime, a['not-before']));
+      if (!since) {
+        const undated = passes.find((m) => timeOf(m.createdDateTime) === null);
+        if (undated) return unproven({ listed: true, createdDateTime: null }, 'a Temporary Access Pass is listed with a createdDateTime that is not a time, so this is not proof it was issued since');
+        // an older pass on this page and another page behind it: the new one may be there (code review 1, finding 9)
+        if (morePages(d)) return unproven({ listed: true, createdDateTime: passes[0].createdDateTime }, 'only an older pass is on this page and the method list has another page, so this is not proof either way');
+        return { verified: false, observed: { listed: true, createdDateTime: passes[0].createdDateTime }, reason: `the listed pass was created ${passes[0].createdDateTime}, before ${a['not-before']}: it is not this change's` };
+      }
+      // the reason is printed only when it is one of the values Microsoft documents, so nothing else an
+      // answer puts in that field reaches the output (fresh review of batch 11, finding 4)
+      const why = USABILITY_REASONS.includes(since.methodUsabilityReason) ? since.methodUsabilityReason : null;
+      const observed = { createdDateTime: since.createdDateTime, isUsable: typeof since.isUsable === 'boolean' ? since.isUsable : null, methodUsabilityReason: why };
+      // "the user can use it" is isUsable true and nothing else. A pass the answer shows as not usable is
+      // no way in, whatever the reason: outside the policy, run out, not yet valid, or already used once
+      // (before the handover, a used pass means someone else signed in with it). An answer that does not
+      // say (vendor fact MB-12a is unconfirmed) proves nothing either way (fresh review, finding 1).
+      if (since.isUsable === false) return { verified: false, observed, reason: `the pass is listed but cannot be used: ${why === null ? 'no documented reason given' : why}` };
+      if (since.isUsable !== true) return unproven(observed, 'the answer does not show isUsable as true or false for the pass, so this is not proof the user can use it');
+      return { verified: true, observed };
     }
     default:
       throw new RefusedError('unknown read-back');

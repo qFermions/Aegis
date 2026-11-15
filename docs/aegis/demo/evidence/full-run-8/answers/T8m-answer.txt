@@ -1,0 +1,33 @@
+## Fix
+**What's wrong:** A staff member wants access to the shared billing mailbox, the same access a colleague was given last week.
+
+**Do this:**
+1. Open Exchange admin center → Recipients → Mailboxes → billing mailbox → Mailbox Delegation. Copy the current lists into the ticket. Check what [FIRST_NAME] holds: read access only, or also Send as.
+2. Call the requester back on the number in the firm's staff list. Confirm it is them, and ask whether they need to read billing mail or also send as billing.
+3. Get the managing partner's approval in the ticket.
+4. Under Read and manage (Full Access) → Edit → Add members → [UPN] → Save → Confirm.
+
+**Done when:** the billing inbox shows up in their Outlook. Aegis then checks that they hold Full Access on it.
+
+**Stop if:** "billing" is a person's own mailbox, not a shared one. That is a different request.
+
+**Tell the user now:** We'll call you on your number in the staff list to confirm. Your request is going to the managing partner for approval.
+
+**Tell the user when done:** You can now open the billing inbox. It appears in Outlook by itself. If it doesn't, close and reopen Outlook.
+
+## Details
+- **Runbook:** `/shared-mailbox`. A shared mailbox needs no licence while it is under 50 GB.
+- **Why not just copy [FIRST_NAME]'s access:** "Same as [FIRST_NAME]" tells you where to look, not what to approve. Give only what the requester needs. Send as and Send on Behalf are separate kinds of access.
+- **Step 4 (Full Access):** R2, because what they read while they had access can't be taken back. Double-check: Aegis reads that [UPN] has Full Access on the billing mailbox. Undo: remove the access with `/mailbox-permissions`.
+- **Send as:** only if the step 2 call confirms they need it, and only with its own approval from the managing partner. Gate: `shared-mailbox-send-as-portal`. It is not advised now.
+- **Hours:** do the change during business hours (Mon–Fri, 08:30–17:30) so the requester can check it.
+- **Risk:** Full Access opens all billing mail, including client financial data. Get the approval before the click.
+- **Checklist:** pre-state copied to ticket · identity call done · approval recorded · access granted · billing inbox shows in Outlook · Aegis read-back passed.
+- **Jira note:** Resolved [date/time]. Pre-state of billing mailbox delegation recorded. Identity confirmed by call-back to staff-list number. Managing partner approved. Full Access granted to `[UPN]` and verified by read-back. Send as: [not requested / separate approval]. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

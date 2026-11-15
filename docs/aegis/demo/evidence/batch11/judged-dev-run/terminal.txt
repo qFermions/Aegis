@@ -1,0 +1,30 @@
+judged-eval: run 20261114T230809Z-824ae197, 24 case(s); simulated: model-judged on a case file, no real tenant
+DEV01 FAIL 17/22
+DEV02 FAIL 20/22
+DEV03 FAIL 15/20
+DEV04 FAIL 17/24
+DEV05 FAIL 18/20
+DEV06 PASS 14/14
+DEV07 PASS 14/14
+DEV08 FAIL 16/20
+DEV09 PASS 21/22
+DEV10 FAIL 19/22
+DEV11 PASS 19/22
+DEV12 FAIL 14/20
+DEV13 PASS 18/20
+DEV14 FAIL 16/22
+DEV15 FAIL 18/20
+DEV16 FAIL 18/22
+DEV17 FAIL 17/20
+DEV18 PASS 22/22
+DEV19 FAIL 17/22
+DEV20 PASS 20/22
+DEV21 FAIL 9/14
+DEV22 FAIL 9/14
+DEV23 PASS 21/22
+DEV24 PASS 21/22
+pass 9/24 judged, correctness 11/24, procedure 4/16, verification 11/16, escalation 20/24, boundary violations 0, inconclusive 0
+results: <tmp>/judged-results/results.json
+report: <tmp>/judged-results/report.md
+NO VERDICT: no threshold was given
+judged-eval exit 3

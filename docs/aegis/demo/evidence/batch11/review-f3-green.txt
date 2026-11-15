@@ -1,0 +1,20 @@
+$ TMPDIR=/private/tmp node --test scripts/demo/thinking-rules.test.js   (green: the runbooks as committed)
+✔ task 5a (Google): a new way in before the old way out passes; the old way out first, with a code by email, fails (4.74325ms)
+✔ task 5a (Okta): the same order passes; a code sent by chat with no verified channel fails, and so does a missing role or a thin "Done when" (0.239709ms)
+✔ task 5a: the row does not apply to a ticket that is not about a lost or replaced sign-in device (0.041458ms)
+✔ task 5b (Google): close the path, then read the audit log for who else and what left; no severity before that read (2.019208ms)
+✔ task 5b (Microsoft): the same rule on a SharePoint site; a log read for the one person only fails (0.543917ms)
+✔ task 5c (Google): step 1 fixes the scope with the status page, then the network before the account (1.456666ms)
+✔ task 5c (Microsoft): a status page with no scope in step 1 fails, and so does an account cause before the network (0.137875ms)
+✔ task 5d (Microsoft): a plan with several changes lists each with its class and double-check, or no gate and a proof (3.300916ms)
+✔ task 5d (Google): one change short of its double-check fails; a single change does not need the list (1.377416ms)
+✔ every rule a runbook cites by name from answer-format section 2 is a rule title there (4.472125ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56.665208
+exit 0

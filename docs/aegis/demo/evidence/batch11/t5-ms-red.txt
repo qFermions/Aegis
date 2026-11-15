@@ -1,0 +1,178 @@
+$ TMPDIR=/private/tmp node --test scripts/adapters/msgraph-client.test.js scripts/mfa-issue-gates.test.js scripts/demo/batch11-new-way-in.test.js   (run before the command, the gate and the simulator entry existed; red)
+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (1.208375ms)
+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (3.75175ms)
+✔ each read sends one GET to its path; user and device reads carry a fixed $select (4.363792ms)
+✔ a dry run sends nothing and reads no credential; bad values and writes are refused before anything is sent (0.37325ms)
+✔ verify read-backs for the password-reset and MFA runbooks (9.279667ms)
+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (0.693375ms)
+✔ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404 (3.690458ms)
+✔ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404 (3.365417ms)
+✔ verify-method-absent: an answer that proves nothing either way is recorded as INCONCLUSIVE, never as a failed object (1.84175ms)
+✔ verify-method-absent: a GUID method id still listed in another case is still listed; a base64url id keeps its case (2.219833ms)
+✔ every --not-before takes the approved_at form with milliseconds and compares at millisecond precision (5.944541ms)
+✖ verify-temporary-access-pass: passes only on a usable pass created at or after --not-before; an older, unusable or unlisted pass does not pass, and an answer that proves nothing is INCONCLUSIVE (0.444791ms)
+✖ verify-temporary-access-pass uses the authentication-methods GET the connector already had; no command creates or deletes a pass (0.068958ms)
+✖ the Temporary Access Pass gate is R3 and binds verify-temporary-access-pass, bounded in time, under its change record (31.793625ms)
+✖ the desk acts the gate out: the read passes after the simulated pass, and fails on a pass that was there before the approval (130.090542ms)
+✖ the whole path resolves: the pass first, then the one obsolete method deleted, with both reads passed (104.641584ms)
+✖ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (1.146083ms)
+✔ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (0.319083ms)
+✔ verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named (0.139791ms)
+✔ vendor fact B-18 quotes the page as re-read on 2026-10-31 (0.497667ms)
+✔ /mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof (0.270083ms)
+✔ every R2 and R3 gate in /mfa-issue has a read-back bound to its change (0.560833ms)
+✔ the New phone / re-register list starts at step 1 and counts on (0.147875ms)
+✔ each step of the New phone / re-register list after the first renders as a list item (0.092833ms)
+✔ the change-record paragraph names every gate a read-back below binds (2.644875ms)
+✔ /mfa-issue verifies the requester first, before its first gate (0.16775ms)
+✖ /mfa-issue gives a new way in before the old way out on the lost-or-replaced-device path (0.361916ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 20
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 315.817584
+
+✖ failing tests:
+
+test at scripts/adapters/msgraph-client.test.js:375:1
+✖ verify-temporary-access-pass: passes only on a usable pass created at or after --not-before; an older, unusable or unlisted pass does not pass, and an answer that proves nothing is INCONCLUSIVE (0.444791ms)
+  AssertionError [ERR_ASSERTION]: Usage: node scripts/adapters/msgraph-client.js <command> [flags] [--execute]
+    Commands: user | auth-methods | member-of | group-members | sign-ins | managed-device | verify-password-changed | verify-account-enabled | verify-mfa-method | verify-mfa-cleared | verify-signin | verify-device-synced | verify-group-member | verify-sessions-revoked | verify-method-absent
+    MS_TENANT_ID names the tenant; the credentials are read only with --execute.
+    Known limit, verify-sessions-revoked: Microsoft does not document whether a password reset moves signInSessionsValidFromDateTime, so on a ticket that also reset the password this read-back may pass without a revocation (vendor fact M-28).
+  {
+    "state": "REFUSED",
+    "ok": false,
+    "error": "unknown command; no command writes to Microsoft 365",
+    "operator_message": "Aegis refused this request before reading any credential or contacting Microsoft Graph. Nothing was read and nothing was changed. Check the command and its flags against the runbook, then run it again.",
+    "admin_detail": "platform=msgraph operation=- state=REFUSED status=- attempts=- request_id=- handoff=-"
+  }
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/adapters/msgraph-client.test.js:386:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/adapters/msgraph-client.test.js:446:1
+✖ verify-temporary-access-pass uses the authentication-methods GET the connector already had; no command creates or deletes a pass (0.068958ms)
+  TypeError: Cannot read properties of undefined (reading 'steps')
+      at TestContext.<anonymous> (<repo>/scripts/adapters/msgraph-client.test.js:447:64)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/demo/batch11-new-way-in.test.js:73:1
+✖ the Temporary Access Pass gate is R3 and binds verify-temporary-access-pass, bounded in time, under its change record (31.793625ms)
+  AssertionError [ERR_ASSERTION]: mfa-temporary-access-pass-portal is a SAFETY GATE of a runbook
+      at TestContext.<anonymous> (<repo>/scripts/demo/batch11-new-way-in.test.js:75:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/demo/batch11-new-way-in.test.js:91:1
+✖ the desk acts the gate out: the read passes after the simulated pass, and fails on a pass that was there before the approval (130.090542ms)
+  AssertionError [ERR_ASSERTION]: the answer names mfa-temporary-access-pass-portal, which no runbook holds as a gate
+  + actual - expected
+  
+  + 'OPEN'
+  - 'RESOLVED (SIMULATED)'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/batch11-new-way-in.test.js:93:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'OPEN',
+    expected: 'RESOLVED (SIMULATED)',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/batch11-new-way-in.test.js:110:1
+✖ the whole path resolves: the pass first, then the one obsolete method deleted, with both reads passed (104.641584ms)
+  AssertionError [ERR_ASSERTION]: the answer names mfa-temporary-access-pass-portal, which no runbook holds as a gate
+  + actual - expected
+  
+  + 'OPEN'
+  - 'RESOLVED (SIMULATED)'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/batch11-new-way-in.test.js:112:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'OPEN',
+    expected: 'RESOLVED (SIMULATED)',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:53:1
+✖ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (1.146083ms)
+  AssertionError [ERR_ASSERTION]: the gates of /mfa-issue
+  + actual - expected
+  
+    [
+      'mfa-method-delete-portal',
+      'mfa-require-reregister-portal',
+      'mfa-session-revoke',
+      'mfa-session-revoke-portal',
+  -   'mfa-temporary-access-pass-portal'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:55:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'mfa-method-delete-portal', 'mfa-require-reregister-portal', 'mfa-session-revoke', 'mfa-session-revoke-portal' ],
+    expected: [ 'mfa-method-delete-portal', 'mfa-require-reregister-portal', 'mfa-session-revoke', 'mfa-session-revoke-portal', 'mfa-temporary-access-pass-portal' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mfa-issue-gates.test.js:250:1
+✖ /mfa-issue gives a new way in before the old way out on the lost-or-replaced-device path (0.361916ms)
+  AssertionError [ERR_ASSERTION]: who is on the page
+      at TestContext.<anonymous> (<repo>/scripts/mfa-issue-gates.test.js:260:103)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit 1

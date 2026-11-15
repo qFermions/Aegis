@@ -42,11 +42,22 @@ For a person who does not write code. You need a computer with Git and Node.js.
    node scripts/aegis-chat.js --setup "Microsoft 365, Macs managed by Jamf"
    ```
 
-`--setup` tells Aegis what your company runs, in plain words; leave it out to use the example company in `CLAUDE.md`.
+`--setup` tells Aegis what your company runs, in plain words; leave it out to use the example company in `CLAUDE.md`. When you leave it out and your ticket names no system, the Fix card opens with one line, `Assumed setup: ...`, that says which systems the answer took for granted.
+
+5. Or ask for the short reply to send the person who asked for help:
+
+   ```bash
+   node scripts/ask-aegis.js "A supplier says their email to me bounced. Is my mailbox broken?" --reply-to asker
+   node scripts/aegis-chat.js --reply-to asker
+   ```
+
+   With `--reply-to asker` Aegis prints only that reply: at most three short paragraphs, in plain words, with no admin steps. The full answer for the tech is saved beside it (`answer.md` and `reply.md`). Aegis sends nothing: the reply is text for you to read and send. If the reply does not pass Aegis's own form check, it is still printed, with the reasons, and the command exits 3.
+
+A ticket with nothing to go on ("The printer is broken.") gets one question back, not a list of steps: answer it and ask again.
 
 What Aegis will do: read the problem, read its own runbooks, and tell you the steps, how to check they worked, and when to stop.
 What it will not do: it reads only. It cannot run commands, and it never changes anything in your systems. A person does every change.
-Before your ticket reaches Aegis, email addresses and phone numbers in it become placeholders, and a password written after the word "password", or a token or key in a common format, stops the ask. Other secrets are not caught, so leave them out. Each answer is saved in your home folder under `aegis-asks`. One ask stops at about 3 US dollars of your Claude allowance (`--max-budget-usd` sets another limit).
+Before your ticket reaches Aegis, email addresses and phone numbers in it become placeholders, and a password written after the word "password", or a token or key in a common format, stops the ask. Other secrets are not caught, so leave them out. Each answer is saved in your home folder under `aegis-asks`. One ask stops at about 3 US dollars of your Claude allowance (`--max-budget-usd` sets another limit). Both commands run Aegis on `claude-opus-5-5`, whatever your default model is; `--model` names another, and each ask saves the model it ran on in `init.json`.
 
 ## The problem
 

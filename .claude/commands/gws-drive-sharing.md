@@ -135,6 +135,21 @@ node scripts/adapters/gws-client.js verify-event --app drive --event change_user
 ```
 </details>
 
+## After the access is closed: who else, and what left (R0)
+
+**Purpose:** once Phase C closed an outside account's access and its read-back passed, the next step is a read, before anyone says how serious the share was (answer-format section 2, "Who else, and what left"). Nothing here changes anything.
+
+1. **Who else on this file:** the Phase B Audit File Permissions view for `[FILE_NAME]`: read every other account outside `[@Aegion_DOMAIN]` on the People tab, and whether the file is open to anyone with the link. Each one is its own Phase C decision.
+2. **What else that account or domain can open:** run the Phase B investigation-tool search again without the file, for the owner `[USER@DOMAIN.COM]` and for `[EXTERNAL_DOMAIN]`: read every other item shared with it. One wrong share is often one of several made the same way.
+3. **What left:** Admin console → Reporting → Audit and investigation → Drive log events → the dates from the share to the Phase C removal → the item `[FILE_NAME]` → read the View, Download, Print and Source Copy events and the actor of each. An event by an account outside `[@Aegion_DOMAIN]` is content that left; a Source Copy with an external copy type is a copy made outside the organization.
+4. **Read the limits before concluding:** Google records most downloads, not all, and records no Print event for a file opened in a Google format, so a log with no Download event is not proof that nothing left. Write what the log shows and what it cannot show.
+
+The Phase B `activities` read lists the same Drive events for the connector; narrow its window to the dates above.
+
+Until these reads are in the ticket, the answer and the ticket note say "access removed, use not yet reviewed". They do not say the share was harmless, and they do not say it was a breach; the owner of the file's data decides that from the reads **[org gap: who owns that decision]**.
+
+**Verification checkpoint:** [ ] every other outside account on the file listed, or none · [ ] the other items shared with the same account or domain listed, or none · [ ] the view, download, print and copy events by outside accounts recorded, with the limits of the log named.
+
 ## Phase D: Add a partner domain to the allowlist (R2)
 
 **Purpose:** let units set to Allowlisted Domains share with `[EXTERNAL_DOMAIN]`.
@@ -285,6 +300,7 @@ node scripts/adapters/gws-client.js activities --app admin --user [UPN] --start 
 - [ ] Phase D (if run): Admin console → Account → Domains → Allowlisted domains lists `[EXTERNAL_DOMAIN]` (the proof); the admin event that carries `[EXTERNAL_DOMAIN]` is noted with its name, or its absence is noted.
 - [ ] Phase E (if run): the sharing panel shows the new value for `[OU_PATH]` (the proof); the admin event that carries `[OU_PATH]` is noted with its name, or its absence is noted; 24 hours have passed and the Phase B spot check matches.
 - [ ] The Linear comment is proven by `verify-comment` (below).
+- [ ] After a removal: who else could open the file, what else the outside account or domain could open, and the view, download, print and copy events by outside accounts are in the ticket, and the ticket stated no severity before those reads.
 
 ## 📝 Linear-ready note
 
@@ -316,3 +332,5 @@ Keeping evidence (an event log) apart from state (an access list) is the core ha
 Start Phase A: read the sharing option for `[OU_PATH]`, any group value and the allowlist into the ticket before anything else.
 
 **Sources (checked 2026-10-27):** knowledge.workspace.google.com/admin/drive/manage-external-sharing-for-your-organization (search excerpt: Sharing options and its three values, group overrides unit, per-user enforcement, up to 24 hours with mixed enforcement) · knowledge.workspace.google.com/admin/domains/allow-external-sharing-with-only-trusted-domains (search excerpt: Allowlisted Domains, one organization-wide list, verified Google Workspace domains, Domain settings privilege) · knowledge.workspace.google.com/admin/drive/manage-shared-drives-as-an-admin (search excerpt: default sharing settings for new shared drives) · support.google.com/a/answer/4579696 (search excerpt: Drive log events, Visibility filter, Visibility against Visibility change, the group-sharing caveat) · knowledge.workspace.google.com/admin/security/take-action-based-on-search-results (search excerpt: Actions, Audit File Permissions, Files and People tabs, no shared-drive files) · raw.githubusercontent.com/googleapis/google-api-go-client/main/admin/reports/v1/admin-api.json (vendor repo: Reports API activities for the drive and admin applications) · raw.githubusercontent.com/wiki/GAM-team/GAM/Users-Drive-Permissions.md and Reports.md (project wiki: GAM read syntax and the role mapping; GAM is a community tool, not a Google product) · docs/aegis/lanes/g2.md (the read-only adapter surface).
+
+**Sources (checked 2026-11-13, vendor facts in `docs/aegis/batch11/vendor-facts-google-okta-jamf.md`):** knowledge.workspace.google.com/admin/reports/drive-log-events (the View, Download, Print and Source Copy events; Print is not recorded for a file opened in a Google format; most downloads are logged).

@@ -1,0 +1,23 @@
+$ TMPDIR=/private/tmp node --test scripts/adapters/msgraph-client.test.js   (the same command after the fix; green)
+✔ SPEC: GET-only routes on graph.microsoft.com; the token exchange on login.microsoftonline.com with exactly the certificate fields; scopes not exposed (0.969958ms)
+✔ the token exchange: one POST with a PS256 assertion carrying x5t#S256, verified with the public key; then the read with only the bearer token (3.270667ms)
+✔ each read sends one GET to its path; user and device reads carry a fixed $select (3.519042ms)
+✔ a dry run sends nothing and reads no credential; bad values and writes are refused before anything is sent (0.313958ms)
+✔ verify read-backs for the password-reset and MFA runbooks (8.473125ms)
+✔ a failure prints the two-part message for Microsoft Graph with no body, key, assertion or token (0.765666ms)
+✔ verify-sessions-revoked: passes when the sessions are valid only from --not-before on; fails on an earlier, missing or malformed time, and on 403 or 404 (3.046375ms)
+✔ verify-method-absent: passes when the method id is no longer listed; fails when it is, when the list is missing or has another page, and on 403 or 404 (3.045083ms)
+✔ verify-method-absent: an answer that proves nothing either way is recorded as INCONCLUSIVE, never as a failed object (1.581417ms)
+✔ verify-method-absent: a GUID method id still listed in another case is still listed; a base64url id keeps its case (2.030834ms)
+✔ every --not-before takes the approved_at form with milliseconds and compares at millisecond precision (5.358875ms)
+✔ verify-temporary-access-pass: passes only on a usable pass created at or after --not-before; an older, unusable or unlisted pass does not pass, and an answer that proves nothing is INCONCLUSIVE (11.963667ms)
+✔ verify-temporary-access-pass uses the authentication-methods GET the connector already had; no command or route creates or deletes a pass (0.094375ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 121.072125
+exit 0

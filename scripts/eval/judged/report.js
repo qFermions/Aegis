@@ -6,6 +6,9 @@
 // platform row with fewer than 10 cases carries SMALL_PLATFORM_NOTE. Latency is the
 // system under test's wall-clock duration (nearest-rank p50 and p95) over the cases that
 // ran; cost is summed over the cases that reported one, and says how many did.
+// outside_reads counts the cases whose session read a path outside the repository; fix_card_words
+// is the minimum, median and maximum of the answers' Fix card word counts (batch 11, task 7). off_model counts the
+// cases a session of which ran on another model than the run pinned, or did not say (batch 11 resumed).
 // terminalLines() gives the only per-case text the terminal shows: ids, verdicts, scores.
 
 const fs = require('node:fs');
@@ -25,6 +28,13 @@ function percentile(values, p) {
   const sorted = [...values].sort((a, b) => a - b);
   const rank = Math.max(1, Math.ceil((p / 100) * sorted.length));
   return sorted[rank - 1];
+}
+
+// The median of a sorted list of numbers (the mean of the two middle values for an even count); null when empty.
+function median(sorted) {
+  if (!sorted.length) return null;
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
 const judged = (r) => r.verdict === 'PASS' || r.verdict === 'FAIL';
@@ -76,7 +86,14 @@ function summarize(results, { baseline = null } = {}) {
   const costed = results.filter((r) => r.sut && typeof r.sut.cost_usd === 'number');
   const costTotal = costed.reduce((a, r) => a + r.sut.cost_usd, 0);
   const judgeCosted = results.filter((r) => r.judge && typeof r.judge.cost_usd === 'number');
+  // batch 11, task 7: the cases whose session read outside the repository (each INCONCLUSIVE), and the Fix
+  // card word counts of the answered cases, a measure and never a pass or fail
+  const outside = results.filter((r) => r.sut && Array.isArray(r.sut.outside_reads) && r.sut.outside_reads.length > 0).map((r) => r.id);
+  const cardWords = answered.map((r) => r.fix_card_words).filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
+  const offModel = results.filter((r) => r.off_model).map((r) => r.id);
   return {
+    outside_reads: { count: outside.length, ids: outside },
+    off_model: { count: offModel.length, ids: offModel },
     label: LABEL,
     cases: results.length,
     judged: j.length,
@@ -100,6 +117,13 @@ function summarize(results, { baseline = null } = {}) {
         judge_total: judgeCosted.length ? judgeCosted.reduce((a, r) => a + r.judge.cost_usd, 0) : null,
         judge_reported: judgeCosted.length,
       },
+      fix_card_words: {
+        min: cardWords.length ? cardWords[0] : null,
+        median: median(cardWords),
+        max: cardWords.length ? cardWords[cardWords.length - 1] : null,
+        over: cardWords.length,
+        no_card: answered.length - cardWords.length,
+      },
     },
     platforms: groupBy(results, 'platform').map(([value, list]) => countRow({ key: 'platform', value }, list, { note: list.length < 10 ? SMALL_PLATFORM_NOTE : null })),
     scenarios: groupBy(results, 'scenario').map(([value, list]) => countRow({ key: 'scenario', value }, list)),
@@ -117,7 +141,7 @@ function renderMarkdown(summary, meta) {
     '',
     `> ${LABEL}`,
     '',
-    `Started ${meta.started}, finished ${meta.finished}. System under test model: ${meta.sut_models.join(', ') || 'not reported'}. Judge model: ${meta.judge_models.join(', ') || 'not reported'}${meta.config.judge_model ? ` (flag ${meta.config.judge_model})` : ''}. Max turns ${meta.config.max_turns}; web tools ${meta.config.web ? 'on' : 'off'}; timeout ${meta.config.timeout_ms} ms per process.`,
+    `Started ${meta.started}, finished ${meta.finished}. System under test model: ${meta.sut_models.join(', ') || 'not reported'}${meta.config.model ? ` (pinned ${meta.config.model})` : ''}. Judge model: ${meta.judge_models.join(', ') || 'not reported'}${meta.config.judge_model ? ` (pinned ${meta.config.judge_model})` : ''}. Max turns ${meta.config.max_turns}; web tools ${meta.config.web ? 'on' : 'off'}; timeout ${meta.config.timeout_ms} ms per process.`,
     '',
     `Cases ${summary.cases}: ${summary.passed} PASS, ${summary.failed} FAIL, ${summary.inconclusive} INCONCLUSIVE (an inconclusive case never counts as a pass).`,
     '',
@@ -135,6 +159,9 @@ function renderMarkdown(summary, meta) {
     `| Latency p50 / p95 (ms, over ${m.latency_ms.over} cases that ran) | ${m.latency_ms.p50 ?? 'n/a'} / ${m.latency_ms.p95 ?? 'n/a'} |`,
     `| Cost (system under test, US dollars) | ${m.cost_usd.total === null ? 'not reported' : `total ${m.cost_usd.total.toFixed(4)}, per case ${m.cost_usd.per_case.toFixed(4)}`} (reported by ${m.cost_usd.reported} of ${m.cost_usd.of} cases) |`,
     `| Cost (judge, US dollars) | ${m.cost_usd.judge_total === null ? 'not reported' : m.cost_usd.judge_total.toFixed(4)} (reported by ${m.cost_usd.judge_reported} cases) |`,
+    `| Cases that read a path outside the repository (each is INCONCLUSIVE) | ${summary.outside_reads.count}${summary.outside_reads.ids.length ? ` (${summary.outside_reads.ids.join(', ')})` : ''} |`,
+    ...(summary.off_model ? [`| Cases that ran on another model than the pinned one (each is INCONCLUSIVE) | ${summary.off_model.count}${summary.off_model.ids.length ? ` (${summary.off_model.ids.join(', ')})` : ''} |`] : []),
+    `| Fix card words, min / median / max (over ${m.fix_card_words.over} answers with a card, ${m.fix_card_words.no_card} without; a measure, not a pass or fail) | ${m.fix_card_words.over ? `${m.fix_card_words.min} / ${m.fix_card_words.median} / ${m.fix_card_words.max}` : 'n/a'} |`,
     '',
     '## Per platform',
     '',
@@ -150,9 +177,10 @@ function renderMarkdown(summary, meta) {
     '',
     '## Cases',
     '',
-    '| Case | Platform | Verdict | Score | Reasons |',
-    '|---|---|---|---|---|',
-    ...meta.cases.map((r) => `| ${r.id} | ${r.platform} | ${r.verdict} | ${r.total === null ? 'n/a' : `${r.total}/${r.max}`} | ${cell(r.reasons.join('; '))} |`),
+    // Card words: the answer's Fix card word count by the desk's counter, a measure and never a pass or fail (batch 11, task 7)
+    '| Case | Platform | Verdict | Score | Card words | Reasons |',
+    '|---|---|---|---|---|---|',
+    ...meta.cases.map((r) => `| ${r.id} | ${r.platform} | ${r.verdict} | ${r.total === null ? 'n/a' : `${r.total}/${r.max}`} | ${Number.isFinite(r.fix_card_words) ? r.fix_card_words : 'none'} | ${cell(r.reasons.join('; '))} |`),
     '',
   ];
   return lines.join('\n');

@@ -15,6 +15,8 @@ A room shows **offline** when it stops sending heartbeats to Zoom's cloud — al
 
 ## What to check first
 
+**How wide first (R0):** answer-format section 2, "How wide before why". Before the room itself, fix the scope and read Zoom's status together: one room or every room? One site or all? Zoom only, or other internet services in that room too? Zoom's own status page is https://status.zoom.us; it lists Zoom Rooms and Zoom Meetings (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-34). With no Zoom incident, the network and name-resolution path (items 2 to 4 below) come before the room's account or licence.
+
 1. **Room status (R0):** Zoom admin → Room Management → Zoom Rooms → `[DEVICE_NAME]` → read the status and the device list (online / offline, last heartbeat).
 2. **Power and cabling (R0):** is the room computer on, and does its network cable or Wi-Fi show a link? A power-loss alert and a network-loss alert are separate alerts on the room's **Alert** tab.
 3. **Same network (R0):** the controller (tablet) and the room computer must be on the same network segment — a controller moved to the guest Wi-Fi cannot reach the room.

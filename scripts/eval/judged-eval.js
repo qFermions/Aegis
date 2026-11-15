@@ -11,17 +11,23 @@
 //
 // Usage:
 //   node scripts/eval/judged-eval.js run --cases <file.jsonl> [--execute]
-//        [--web] [--max-turns N] [--timeout-ms N] [--judge-model <model>]
+//        [--web] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
 //        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
 //        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
+//        [--budget-usd N]
 //   node scripts/eval/judged-eval.js calibrate --sheet <filled.csv> --run <results.json>
 //        [--agreement-threshold -1..1] [--thresholds <file.json>]
 //   node scripts/eval/judged-eval.js --help
+// --budget-usd N is a limit for the whole run, system under test and judge together (batch 11): before each
+// case the run stops if what it has spent plus one more case (the dearest so far, or 1.00 before any cost is
+// known) would pass it, and the cases that did not run are INCONCLUSIVE in the results, never a pass.
 //
 // The case file must live outside the repository (a path inside it, or one whose real
-// path is inside it, is refused). To run the DEV set, copy it out first:
-//   cp scripts/eval/judged/dev-cases.jsonl /tmp/dev-cases.jsonl
-//   node scripts/eval/judged-eval.js run --cases /tmp/dev-cases.jsonl
+// path is inside it, is refused), in a folder of its own: that folder is denied to the
+// system under test, so a folder that holds the repository (the home folder) is refused
+// too (batch 11, task 7). To run the DEV set, copy it out first:
+//   mkdir -p /tmp/aegis-cases && cp scripts/eval/judged/dev-cases.jsonl /tmp/aegis-cases/
+//   node scripts/eval/judged-eval.js run --cases /tmp/aegis-cases/dev-cases.jsonl
 // Without --execute the run is a DRY RUN: it prints the plan and a cost estimate and
 // starts no process at all.
 //
@@ -41,26 +47,34 @@ const judge = require('./judged/judge.js');
 const report = require('./judged/report.js');
 const calibrate = require('./judged/calibrate.js');
 const thresholds = require('./judged/thresholds.js');
+// the privacy step ask-aegis.js runs on --setup, for a case's setup (batch 11, task 1)
+const { protect } = require('../ask-aegis.js');
+// the desk's own counter of a Fix card's words, read only (batch 11, task 7)
+const { fixCard } = require('../demo/answer.js');
 
 const { EXIT } = thresholds;
 const SMOKE_USD_PER_SESSION = 2.5;
 
 const USAGE = `Usage:
   node scripts/eval/judged-eval.js run --cases <file.jsonl> [--execute]
-       [--web] [--max-turns N] [--timeout-ms N] [--judge-model <model>]
+       [--web] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
+       [--budget-usd N]
   node scripts/eval/judged-eval.js calibrate --sheet <filled.csv> --run <results.json>
        [--agreement-threshold -1..1] [--thresholds <file.json>]
 
-The case file must be outside the repository (copy scripts/eval/judged/dev-cases.jsonl to a
-temporary file first). Without --execute, run is a dry run that starts no process.
+The case file must be outside the repository, in a folder of its own (copy
+scripts/eval/judged/dev-cases.jsonl into a new temporary folder first): that folder is denied to
+the system under test. Without --execute, run is a dry run that starts no process.
+--model and --judge-model name the two sessions' models, claude-opus-5-5 unless given; a case whose
+session reports another model is INCONCLUSIVE.
 Exit codes: 0 PASS, 2 FAIL, 3 no threshold given, 4 dry run, 1 input error or refused path.
 `;
 
 const SPECS = {
   run: {
-    values: ['--cases', '--max-turns', '--timeout-ms', '--judge-model', '--results-dir', '--baseline', '--calibration-sheet', '--pass-threshold', '--agreement-threshold', '--thresholds'],
+    values: ['--cases', '--max-turns', '--timeout-ms', '--model', '--judge-model', '--results-dir', '--baseline', '--calibration-sheet', '--pass-threshold', '--agreement-threshold', '--thresholds', '--budget-usd'],
     flags: ['--execute', '--web'],
   },
   calibrate: {
@@ -102,7 +116,7 @@ function intFlag(opts, name, def, lo, hi) {
 }
 
 function commandPreview(config) {
-  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web }).join(' ');
+  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model }).join(' ');
   const jud = backends.judgeArgs({ prompt: '<judge prompt>', model: config.judge_model }).map((a) => (a === '' ? '""' : a)).join(' ');
   return { sut: `claude ${sut}`, judge: `claude ${jud}` };
 }
@@ -114,12 +128,46 @@ function printPlan(out, list, config) {
   out(`judged-eval: DRY RUN (nothing was started; add --execute to run it)`);
   out(`label: ${report.LABEL}`);
   out(`cases: ${list.length} (${list.map((c) => c.id).join(', ')})`);
+  out(`setup: ${list.filter((c) => c.setup !== '').length} of ${list.length} case(s) carry a setup (what the company runs, given to the system under test as data)`);
   out(`system-under-test sessions: ${list.length}, turns: ${runs} (${followUps} follow-up turn(s) resumed in their session)`);
   out(`judge sessions: ${list.length} (up to ${list.length * 2} with one retry each)`);
   out(`cost estimate: about ${(runs * SMOKE_USD_PER_SESSION).toFixed(2)} US dollars for the system under test (${runs} Aegis runs at about ${SMOKE_USD_PER_SESSION.toFixed(2)} US dollars each, the smoke figure in docs/evidence/runtime-smoke.md); judge cost is not in the estimate until measured`);
   out(`system under test: ${preview.sut} (cwd: the repository root; timeout ${config.timeout_ms} ms per process)`);
   out(`judge: ${preview.judge} (cwd: a fresh empty temporary directory)`);
+  out(`case folder: denied to the system under test, as given and as resolved (${backends.readDenyRules(null, config.case_dirs).length - backends.readDenyRules().length} read rule(s), the last in the --settings above; the results folder is added when the run starts)`);
   out(`results: ${config.results_dir_given ? 'the --results-dir given' : '.aegis-state/evals/<run-id>/'} (checked when the run starts)`);
+  if (config.budget_usd !== null) out(`limit: ${config.budget_usd.toFixed(2)} US dollars for the whole run; it stops before a case that could pass it`);
+}
+
+// What one more case is taken to cost before the run's limit is checked: the dearest case so far in this run, or
+// this much before any case has reported a cost. shortcut: one fixed first guess, so a first case dearer than it can
+// pass a very tight limit by that case's own cost; upgrade to a per-session cap if a run ever does.
+const FIRST_CASE_GUESS_USD = 1;
+
+// The record of a case the run did not start because its limit would be passed: INCONCLUSIVE, never a pass.
+function notRunRecord(c, reason) {
+  const sut = { state: 'NOT_RUN', reason, answer: null, follow_up_answer: null, num_turns: null, duration_ms: 0, cost_usd: null, model: null, session_id: null, turns: [], tool_calls: [], outside_reads: [] };
+  return {
+    id: c.id, platform: c.platform, capability: c.capability, scenario: c.scenario, class: c.class, probe: c.probe,
+    setup_given: c.setup !== '', fix_card_words: null,
+    change_class: c.expected.change_class, escalate: c.expected.escalate,
+    sut, checks: [], judge: null, rows: null, total: null, max: null, verdict: 'INCONCLUSIVE', reasons: [reason], off_model: false,
+  };
+}
+
+// A case's setup goes through the privacy step ask-aegis.js runs on --setup: an email address or a phone
+// number becomes a placeholder, and a credential or a tenant literal refuses the run, named by case id and
+// label only, never the value (batch 11, task 1).
+function protectSetups(list) {
+  const refused = [];
+  const out = list.map((c) => {
+    if (c.setup === '') return c;
+    const p = protect(c.setup);
+    if (p.blocked) { refused.push(`the setup of case ${c.id} holds a value Aegis never keeps (${p.blocked.join('; ')})`); return c; }
+    return { ...c, setup: p.text };
+  });
+  if (refused.length) throw new InputError(`${refused.join('; ')}. Nothing was started: take the value out of the case file and run again.`);
+  return out;
 }
 
 function loadBaseline(file) {
@@ -135,13 +183,27 @@ async function runCommand(opts, io, deps) {
     max_turns: intFlag(opts, '--max-turns', backends.DEFAULT_MAX_TURNS, 1, 200),
     timeout_ms: intFlag(opts, '--timeout-ms', backends.DEFAULT_TIMEOUT_MS, 1, 3600000),
     web: Boolean(opts['--web']),
-    judge_model: opts['--judge-model'] || null,
+    // both pinned (batch 11 resumed): a session never takes the settings file's default model
+    model: opts['--model'] === undefined ? backends.PINNED_MODEL : opts['--model'],
+    judge_model: opts['--judge-model'] === undefined ? backends.PINNED_MODEL : opts['--judge-model'],
     results_dir_given: Boolean(opts['--results-dir']),
+    budget_usd: null,
   };
-  if (config.judge_model !== null && !/^[A-Za-z0-9._:\[\]-]{1,100}$/.test(config.judge_model)) throw new InputError('--judge-model is a model name (letters, digits, dot, dash, colon, brackets)');
+  if (opts['--budget-usd'] !== undefined) {
+    if (!/^\d+(?:\.\d+)?$/.test(opts['--budget-usd']) || !(Number(opts['--budget-usd']) > 0)) throw new InputError('--budget-usd takes a limit in US dollars above zero, such as 9.50');
+    config.budget_usd = Number(opts['--budget-usd']);
+  }
+  for (const [flag, value] of [['--model', config.model], ['--judge-model', config.judge_model]]) {
+    if (!backends.isModelName(value)) throw new InputError(`${flag} is a model name (letters, digits, dot, dash, colon, brackets)`);
+    // each case is checked against the model its session reports, which is the full id, so an alias such as "opus"
+    // would make every case off-model (code review 1, finding 3)
+    if (!/\d/.test(value)) throw new InputError(`${flag} takes a full model id, such as claude-opus-5-5: each case is checked against the model its session reports`);
+  }
   const sheetN = intFlag(opts, '--calibration-sheet', 0, 1, 1000);
   const real = paths.refuseInsideRepo(opts['--cases'], 'the case file', { repoRoot });
-  const list = cases.readCaseFile(real).cases;
+  // the folders the case file is read from, denied to every system-under-test turn; refused when one holds the repository
+  config.case_dirs = paths.caseFolders(opts['--cases'], real, { repoRoot });
+  const list = protectSetups(cases.readCaseFile(real).cases);
   const baseline = loadBaseline(opts['--baseline']);
 
   if (!opts['--execute']) {
@@ -159,24 +221,63 @@ async function runCommand(opts, io, deps) {
   const started = new Date().toISOString();
   io.out(`judged-eval: run ${runId}, ${list.length} case(s); ${report.LABEL}`);
   const results = [];
+  // what the run has spent (both backends) and its dearest case, for the --budget-usd guard
+  let spent = 0;
+  let dearest = 0;
+  let notRun = 0;
+  // a session that stopped with no cost reported: what the run spent is unknown, so no limit can be held after it
+  let costUnknown = false;
+  // the first case on another model than the pin: no later case would count, so none starts (code review 2, finding 12)
+  let offModel = null;
   for (const c of list) {
-    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir });
+    if (offModel) {
+      const r = notRunRecord(c, `not run: ${offModel} was not measured on the pinned model (its session ran on another model or did not say which), so no later case would count`);
+      results.push(r);
+      notRun += 1;
+      io.out(report.terminalLine(r));
+      continue;
+    }
+    if (config.budget_usd !== null && (costUnknown || spent + (dearest > 0 ? dearest : FIRST_CASE_GUESS_USD) > config.budget_usd + 1e-9)) {
+      const r = notRunRecord(c, costUnknown
+        ? `not run: a session before this case stopped with no cost reported, so what the run spent is unknown and its limit of ${config.budget_usd.toFixed(2)} US dollars cannot be held`
+        : `not run: the run's limit of ${config.budget_usd.toFixed(2)} US dollars would be passed (${spent.toFixed(2)} spent, one more case taken to cost ${(dearest > 0 ? dearest : FIRST_CASE_GUESS_USD).toFixed(2)})`);
+      results.push(r);
+      notRun += 1;
+      io.out(report.terminalLine(r));
+      continue;
+    }
+    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model });
+    // the Fix card's words by the desk's own counter; null when the answer has no card. A measure, never a pass or fail.
+    const card = typeof sut.answer === 'string' ? fixCard(sut.answer) : null;
     const det = sut.state === 'OK' ? checks.runChecks(c, sut) : [];
     const jr = sut.state === 'OK' ? await judge.judgeCase(c, sut, { ...backend, repoRoot, judgeModel: config.judge_model, random: deps.random }) : null;
-    const v = judge.caseVerdict(c, sut, det, jr);
+    const v = judge.caseVerdict(c, sut, det, jr, { sut: config.model, judge: config.judge_model });
     const r = {
       id: c.id, platform: c.platform, capability: c.capability, scenario: c.scenario, class: c.class, probe: c.probe,
+      setup_given: c.setup !== '', fix_card_words: card && card.present ? card.words : null,
       change_class: c.expected.change_class, escalate: c.expected.escalate,
-      sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons,
+      sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons, off_model: Boolean(v.off_model),
     };
     results.push(r);
     io.out(report.terminalLine(r));
+    if (r.off_model) offModel = c.id;
+    // each turn's known cost counts, and a session that ran and reported none makes the run's spending unknown
+    // (code review 1, finding 2): a timeout, an output-cap kill, or a session that started (it reported its model)
+    const turns = Array.isArray(sut.turns) && sut.turns.length ? sut.turns : [sut];
+    if (turns.some(backends.ranUnpriced) || backends.ranUnpriced(jr)) costUnknown = true;
+    const caseCost = turns.reduce((a, x) => a + (typeof x.cost_usd === 'number' ? x.cost_usd : 0), 0) + (jr && typeof jr.cost_usd === 'number' ? jr.cost_usd : 0);
+    spent += caseCost;
+    dearest = Math.max(dearest, caseCost);
   }
+  const limitText = config.budget_usd === null ? '' : `the run's limit of ${config.budget_usd.toFixed(2)} US dollars`;
+  const notRunWhy = offModel ? `${offModel} was not measured on the pinned model (its session ran on another model or did not say which), so no later case would count` : (costUnknown ? `a session stopped with no cost reported, so ${limitText} cannot be held` : `${limitText} would have been passed`);
+  if (notRun) io.out(`${notRun} case(s) did not run: ${notRunWhy}; each is INCONCLUSIVE in the results`);
   const summary = report.summarize(results, { baseline });
   const uniq = (xs) => [...new Set(xs.filter(Boolean))];
   const payload = {
     run_id: runId, started, finished: new Date().toISOString(),
-    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, judge_model: config.judge_model },
+    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, model: config.model, judge_model: config.judge_model, budget_usd: config.budget_usd },
+    spent_usd: spent,
     sut_models: uniq(results.map((r) => r.sut && r.sut.model)),
     judge_models: uniq(results.map((r) => r.judge && r.judge.model)),
     summary, cases: results,

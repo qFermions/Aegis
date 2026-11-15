@@ -94,6 +94,7 @@ gh api repos/[@Aegion_GITHUB_ORG]/[REPO_NAME]/dependabot/alerts/[ALERT_NUMBER]
 1. Name the issuer and its owner in the ticket, from the secret type in Phase A.
 2. The owner rotates the credential (a new one, put into every system that uses it) or revokes it, in the issuer's own console.
 3. Read the issuer's access log for use of the credential between the commit time and the revocation. Any use nobody can explain is a security incident: `/security-alert-triage`, then `/incident-report`.
+4. Who else could have read it (answer-format section 2, "Who else, and what left"): whether `[REPO_NAME]` is public or private, who can read it (`/github-repo-access` Phase A), and whether it has forks. Every reader is someone the secret reached. Until step 3 and this step are in the ticket, the answer says "secret revoked, use not yet reviewed" and names no severity.
 
 **WAIT UNTIL** the issuer's console or audit log shows the credential revoked or deleted, and its time is written in the ticket. No issuer proof, no close.
 

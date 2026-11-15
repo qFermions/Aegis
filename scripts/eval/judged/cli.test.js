@@ -29,13 +29,16 @@ const { REPO_ROOT } = require('./paths.js');
 const CLI = path.join(__dirname, '..', 'judged-eval.js');
 const DEV = path.join(__dirname, 'dev-cases.jsonl');
 const FAKE = path.join(__dirname, 'fixtures', 'fake-claude.js');
-const DEV_CASES = cases.readCaseFile(DEV).cases;
+// Batch 11 grew the DEV set to 24 cases. This file's counts were written against the eight cases of batch G4
+// (DEV01 to DEV08), so it keeps those eight, the file's first eight lines, as its fixture.
+const G4_TEXT = `${fs.readFileSync(DEV, 'utf8').split('\n').slice(0, 8).join('\n')}\n`;
+const DEV_CASES = cases.parseCases(G4_TEXT).cases;
 
 function setup(t, fakeConfig = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-judged-cli-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const copy = path.join(dir, 'dev-cases.jsonl');
-  fs.copyFileSync(DEV, copy);
+  fs.writeFileSync(copy, G4_TEXT);
   const cfg = path.join(dir, 'fake.json');
   const log = path.join(dir, 'calls.jsonl');
   fs.writeFileSync(cfg, JSON.stringify({ log, ...fakeConfig }));
@@ -98,7 +101,7 @@ test('the real CLI refuses the DEV file in the repository and a symlink into it 
 
 test('the DEV set runs through the runner with the fake backends and produces the report; no threshold gives NO VERDICT (exit 3)', async (t) => {
   const s = setup(t);
-  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results, '--calibration-sheet', '3', '--judge-model', 'judge-x'], s.io, s.deps);
+  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results, '--calibration-sheet', '3', '--judge-model', 'judge-x-1'], s.io, s.deps);
   assert.equal(code, 3, `${s.out.join('\n')}\n${s.err.join('\n')}`);
   const lines = s.out.filter((l) => /^DEV\d\d /.test(l));
   assert.deepEqual(lines.map((l) => l.split(' ')[0]), DEV_CASES.map((c) => c.id));
@@ -110,8 +113,9 @@ test('the DEV set runs through the runner with the fake backends and produces th
   assert.equal(json.label, 'simulated: model-judged on a case file, no real tenant');
   assert.equal(json.cases.length, 8);
   assert.equal(json.summary.measures.pass_rate.denominator, 8, 'all 8 judged');
-  assert.deepEqual(json.judge_models, ['fake-judge-model']);
-  assert.equal(json.config.judge_model, 'judge-x');
+  // the fake reports the --model it was given, as the real CLI does (batch 11 resumed)
+  assert.deepEqual(json.judge_models, ['judge-x-1']);
+  assert.equal(json.config.judge_model, 'judge-x-1');
   assert.ok(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8').includes(json.label));
   const sheet = calibrate.parseCsv(fs.readFileSync(path.join(s.results, 'calibration-sheet.csv'), 'utf8'));
   assert.equal(sheet.length, 4);
@@ -209,5 +213,27 @@ test('a custom --results-dir is denied to every system-under-test turn, the foll
   for (const call of sut) {
     const settings = JSON.parse(call.args[call.args.indexOf('--settings') + 1]);
     assert.ok(settings.permissions.deny.includes(rule), `${call.resume ? 'the follow-up' : 'a first'} turn denies the results folder: ${rule}`);
+  }
+});
+
+// Code review round 1, finding 11: the tests above keep batch G4's eight cases as their fixture, so batch 11's sixteen
+// cases, both setup cases among them, never ran through the runner end to end. This one runs the whole DEV file. Wrong
+// implementations it catches: a runner that drops a case's setup on the way to the session, or that cannot run one of
+// the new cases (each must answer, be judged and reach results.json).
+test('code review 1: the whole DEV file runs through the runner; the two setup cases reach the session with their setup', async (t) => {
+  const s = setup(t);
+  fs.writeFileSync(s.copy, fs.readFileSync(DEV, 'utf8'));
+  const all = cases.parseCases(fs.readFileSync(DEV, 'utf8')).cases;
+  const code = await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  assert.equal(code, 3, s.err.join('\n'));
+  const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  assert.deepEqual(json.cases.map((c) => c.id), all.map((c) => c.id));
+  assert.ok(json.cases.every((c) => c.sut.state === 'OK' && c.judge && c.judge.state === 'OK'), json.cases.filter((c) => c.sut.state !== 'OK').map((c) => c.id).join(', '));
+  const withSetup = all.filter((c) => c.setup !== '');
+  assert.deepEqual(json.cases.filter((c) => c.setup_given).map((c) => c.id), withSetup.map((c) => c.id));
+  const sut = s.calls().filter((c) => c.role === 'sut' && !c.resume);
+  for (const c of withSetup) {
+    const call = sut.find((x) => x.prompt.includes(c.ticket.slice(0, 40)));
+    assert.ok(call && call.prompt.includes('--- What the company runs ---') && call.prompt.includes(c.setup.slice(0, 30)), `${c.id} reached the session with its setup`);
   }
 });

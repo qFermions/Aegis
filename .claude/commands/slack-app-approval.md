@@ -129,6 +129,8 @@ node scripts/adapters/slack-client.js verify-app-restricted --app-id [APP_ID] --
 
 **Verification checkpoint:** [ ] the GUI shows the decision · [ ] on Enterprise, the matching `verify-*` read exit 0 and the request is no longer pending.
 
+**When an app is restricted because it should never have had access: who else, and what left (R0).** After the restriction is read back, the next step is a read, before anyone says how serious it was (answer-format section 2, "Who else, and what left"). Who else: the Phase A read of who installed or requested `[APP_NAME]`, and whether a copy already installed still holds its token (the gate's Scope line says this was not confirmed in the sources read, so read the app's page for its installations and ask the Workspace Owner). What left: the Phase B scope review says what the app could read and post (channels, messages, files, the member list); a scope that reads message history or files means that content was within the app's reach for as long as it was installed. Until those two reads are in the ticket, the answer says "app restricted, use not yet reviewed" and names no severity.
+
 ## Phase D: Require approval for every app (R3)
 
 **Purpose:** make the next app wait for a review instead of being installed first and reviewed later.
@@ -218,6 +220,7 @@ node scripts/adapters/slack-client.js apps-approved --execute
 - [ ] Restricted: the app's page shows it restricted; on Enterprise `verify-app-restricted --app-id [APP_ID]` exit 0.
 - [ ] Require approved apps: Slack admin → Slack Marketplace → App Management Settings shows it on, with the request policy and the request managers unchanged from Phase A.
 - [ ] Request management: App Management Settings lists the request managers the ticket expects, and a grant has the request-management approver's sign-off in the ticket.
+- [ ] If the app should never have had access: who else installed it, whether an installed copy still holds a token, and what its scopes could read are in the ticket before any severity is stated.
 
 ## 📝 Linear-ready note
 

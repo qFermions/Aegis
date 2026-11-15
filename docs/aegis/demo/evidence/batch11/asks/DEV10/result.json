@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 40093,
+  "stop_reason": "end_turn",
+  "session_id": "36c4a500-2a25-4bd9-a8f2-244bbf03784d",
+  "total_cost_usd": 0.35453619999999997,
+  "usage": {
+    "input_tokens": 6,
+    "cache_creation_input_tokens": 32694,
+    "cache_read_input_tokens": 47701,
+    "output_tokens": 4171,
+    "output_tokens_details": {
+      "thinking_tokens": 2120
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 32694,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 3878,
+        "cache_read_input_tokens": 24458,
+        "cache_creation_input_tokens": 14238,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 14238
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 6,
+      "outputTokens": 4171,
+      "cacheReadInputTokens": 47701,
+      "cacheCreationInputTokens": 32694,
+      "webSearchRequests": 0,
+      "costUSD": 0.35453619999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2120,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 32694,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 4,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Fix\n**What's wrong:** [FIRST_NAME]'s Okta Verify is still tied to the old phone, which has gone back to the shop. So the new phone can't approve any Okta sign-in.\n\n**Do this:**\n1. In Okta Admin Console → Directory → People → [UPN], check that the status is Active. Then in Reports → System Log, search [UPN] for activity since the swap. Only failed Okta Verify prompts means the old phone's link is just out of date. Sign-ins or pushes they didn't make means stop.\n2. Prove it's them: call a number on file that isn't the phone (a desk line or second number), or have the manager confirm in person.\n3. Signed in with the admin role that holds \"Manage user's temporary access code\", go to More Actions → Create Temporary Access Code. Set the shortest validity and read the code out on that call.\n4. Last resort, once the code is proven: More Actions → Reset Authenticators → tick only Okta Verify. On the same call, [FIRST_NAME] sets up Okta Verify on the new phone.\n\n**Done when:** the new phone's Okta Verify is listed and the old one is gone. Aegis then checks both and confirms the code has expired.\n\n**Stop if:** the System Log shows sign-ins or pushes [FIRST_NAME] didn't make. That makes it a security incident.\n\n**Tell the user now:** IT will call you on a number we have on file to confirm it's you. Please keep your new phone with you and charged.\n\n**Tell the user when done:** Okta Verify is set up on your new phone and the old phone's link is removed. You can sign in to everything as usual.\n\nChanges, gates and fallbacks: see Details.\n\n## Details\n- **Verdict:** a lost or replaced phone, so the order is \"a new way in before the old way out\" (`.claude/commands/okta-mfa-reset.md` Phase B). No replay lookup was run and there was no shell. These steps come from the runbook, not from a live read.\n- **Lighter fixes:** none applies. Clearing sessions or signing in again can't move an enrollment that sits on a phone that's gone.\n- **Why the reset comes before the new phone is set up:** the runbook does it this way on purpose. The reset's double-check only passes while no Okta Verify push enrollment is listed. The code is what keeps the verified person able to sign in between the two.\n- **Gaps in the org setup:**\n  - The identity check [@Aegion] requires isn't written down yet.\n  - It's not confirmed that the Temporary Access Code authenticator is turned on, which role holds the permission, or who may receive a code.\n  - If no code can be issued, do the reset with the user on the verified call, and stay on until the new phone is set up. Write \"no code available\" in the ticket.\n- **Unconfirmed (vendor):** whether the code alone is enough to set up Okta Verify depends on this org's sign-in policy. If Okta refuses, stop and take it to the Okta administrator.\n- **Changes, in order:**\n  - Step 3 (create the temporary code): R1. Double-check: the user's More Actions menu lists \"View active Temporary Access Code details\". Undo: Expire code.\n  - Step 4 (reset Okta Verify only): R2. Double-check: Aegis reads that no Okta Verify push enrollment remains, before the new phone is set up. After that, Aegis reads that a new one is listed with a later created time.\n  - Step 4 runs only after step 3's code is proven on the verified call. Its gate is `okta-mfa-reset-selected-portal`, and it opens a change record first.\n- **Risk:** the reset can't be undone. Expire the code once the new phone is set up. Okta and Google 2-Step Verification are separate, so leave Google untouched.\n- **Jira note:** Okta Verify replaced after a warranty phone swap for [UPN]. Identity verified by [channel]. Temporary code issued and read out on [channel], proven, expired at [timestamp]. Okta Verify reset at [timestamp], read-back passed. New phone set up, sign-in at [timestamp]. Compromise indicators: [none / JIRA-###].\n\n```asker-reply\nYour new phone isn't connected to your Okta account yet. Okta still links your sign-in approvals to the old phone, and that phone has gone back to the shop, so nothing can approve your sign-ins. I've only read what you wrote in your request. I haven't looked at your account, so I can't yet confirm that nothing else is involved.\n\nMeanwhile, you can install the Okta Verify app on your new phone from the app store. Don't try to add your account until a technician is on the phone with you.\n\nA technician will call you on a number already on file to confirm it's you. They will then give you a one-time way to sign in and help you set up Okta Verify on the new phone during that call.\n```\n\n```aegis-desk\nRead: node scripts/adapters/okta-client.js user --user [OKTA_USER_ID] --execute\nRead: node scripts/adapters/okta-client.js factors --user [OKTA_USER_ID] --execute\nGate: okta-mfa-reset-tac-portal\nPhrase: CREATE TEMPORARY ACCESS CODE FOR [UPN]\nChange record: none (R1)\nRead-back: none (R1: no change record); proof is the \"View active Temporary Access Code details\" entry in the user's More Actions menu\n```",
+  "ttft_ms": 1236,
+  "type": "result",
+  "duration_ms": 40457,
+  "uuid": "217eabdb-2266-4ca7-adeb-510f418bdfe0",
+  "ttft_stream_ms": 726,
+  "time_to_request_ms": 104,
+  "first_content_frame_ms": 726,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 6,
+      "outputTokens": 4171,
+      "cacheReadInputTokens": 47701,
+      "cacheCreationInputTokens": 32694,
+      "webSearchRequests": 0,
+      "costUSD": 0.35453619999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 2120,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 32694,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-12-03T09:34:14.654Z"
+}

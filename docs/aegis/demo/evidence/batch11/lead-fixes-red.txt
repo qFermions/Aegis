@@ -1,0 +1,61 @@
+$ node --test scripts/eval/judged/exam-wall.test.js scripts/ask-aegis.test.js   (red: the per-case card words column and the setup marker guard, before their code, at b0a9382; passing test lines left out)
+✖ batch 11: a setup that holds a marker line cannot close its own data block (0.364375ms)
+✖ report.md lists each case's Fix card word count in its Cases table, and "none" for an answer with no card (0.329208ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 33
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1693.654542
+
+✖ failing tests:
+
+test at scripts/ask-aegis.test.js:498:1
+✖ batch 11: a setup that holds a marker line cannot close its own data block (0.364375ms)
+  AssertionError [ERR_ASSERTION]: one opening marker: the block's own
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/ask-aegis.test.js:502:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/exam-wall.test.js:397:1
+✖ report.md lists each case's Fix card word count in its Cases table, and "none" for an answer with no card (0.329208ms)
+  AssertionError [ERR_ASSERTION]: ## Cases
+  
+  | Case | Platform | Verdict | Score | Reasons |
+  |---|---|---|---|---|
+  | A1 | p | INCONCLUSIVE | n/a |  |
+  | A2 | p | INCONCLUSIVE | n/a |  |
+  | A3 | p | INCONCLUSIVE | n/a |  |
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/exam-wall.test.js:401:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

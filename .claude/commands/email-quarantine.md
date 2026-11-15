@@ -39,6 +39,7 @@ Click the message → review the details pane:
 - **Spam confidence level (SCL):** 5–6 = spam, 7–9 = high-confidence spam, -1 = bypassed
 - **Phish confidence level (PCL)** — shown for phish verdicts
 - **Authentication results** — check SPF / DKIM / DMARC pass/fail
+- **When an outside sender's mail failed SPF, DKIM or DMARC:** the fix is on the sender's side, in their DNS, and the answer says which record they must fix (`/email-to-spam` Step 3 C has the wording for each result). Releasing the one message is a decision about that message. Allowing the sender's whole domain is never the first fix (answer-format section 2, the mail rule; `docs/aegis/batch11/vendor-facts-microsoft.md` MB-41, MB-46).
 
 Decision guide:
 > **PREVIEW ONLY [quarantine-disposition-guide]:** This table is triage guidance only. Release, deletion, submission, and allow/block changes are separate actions; use their own reviewed gates.
@@ -109,9 +110,9 @@ To prevent future quarantine of mail from the same sender:
 
 `Defender portal (security.microsoft.com) → Email & collaboration → Policies & rules → Threat policies → Tenant Allow/Block Lists → Senders tab → + Add`
 
-- **Sender:** `[SENDER]` or `*@[DOMAIN]` for a whole domain
+- **Sender:** `[SENDER]`, the one address. A whole domain (`*@[DOMAIN]`) is never the first fix, and never the fix for mail that fails SPF, DKIM or DMARC: the sender repairs their records, and the entry stays scoped to the address
 - **Action:** Allow
-- **Expiry:** set a sensible expiry (30–90 days recommended; review before renewing)
+- **Expiry:** keep one. By default the entry is removed 45 days after it was last used; a fixed date can be at most 30 days ahead (MB-48). Review before renewing
 - **Note/Reason:** document why you added it
 
 This is the safest allow method — scoped, auditable, time-limited, and reversible.

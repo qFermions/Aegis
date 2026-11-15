@@ -10,8 +10,9 @@ disable-model-invocation: true
 **Verdict:** Most Teams desktop issues resolve with a cache clear or app reset. Policy-related issues (can't share screen, missing meeting features) require an admin center check. Always confirm whether the user is on new Teams (default 2024+) or classic Teams — cache paths and reset steps differ.
 
 ## What to check first
+- **How wide first** (answer-format section 2, "How wide before why"): when Teams is reported down or unreachable, the first step fixes the scope and reads Microsoft's status together. One person or everyone? One site or all? Teams only, or other internet services too (does a public website open on the same machine)? Then Microsoft 365 admin center → Health → Service health for Teams, and its **Issue history** tab for an incident that has just closed; when the admin center itself does not load, https://status.cloud.microsoft (`docs/aegis/batch11/vendor-facts-microsoft.md` MB-30 to MB-32).
+- With no Microsoft incident, the network and name-resolution path come before any account-level cause: the same sign-in on another network (a phone hotspot), then `nslookup` on the address the error names from the affected machine. Works elsewhere, or the name does not resolve: it is `/lan-wan` or DNS, not the account. Only after that read the sign-in logs and the licence.
 - New Teams or classic Teams? New Teams shows a toggle in the top-right. New Teams uses different cache paths and has no `/reset` flag.
-- Is it affecting one user or everyone? Multiple users → check M365 Service Health: admin.microsoft.com → Health → Service health → Teams.
 - Is the device compliant in Intune? A non-compliant device can silently break Teams features if a Conditional Access policy is enforcing device compliance.
 
 ## Step-by-step fix

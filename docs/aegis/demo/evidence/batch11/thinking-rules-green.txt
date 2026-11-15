@@ -1,0 +1,18 @@
+$ node --test scripts/demo/thinking-rules.test.js   (green: the tests against senior-rules.js and answer.js as committed with this file)
+✔ task 5a (Google): a new way in before the old way out passes; the old way out first, with a code by email, fails (6.611833ms)
+✔ task 5a (Okta): the same order passes; a code sent by chat with no verified channel fails, and so does a missing role or a thin "Done when" (0.356833ms)
+✔ task 5a: the row does not apply to a ticket that is not about a lost or replaced sign-in device (0.076084ms)
+✔ task 5b (Google): close the path, then read the audit log for who else and what left; no severity before that read (2.431708ms)
+✔ task 5b (Microsoft): the same rule on a SharePoint site; a log read for the one person only fails (0.679167ms)
+✔ task 5c (Google): step 1 fixes the scope with the status page, then the network before the account (4.789542ms)
+✔ task 5c (Microsoft): a status page with no scope in step 1 fails, and so does an account cause before the network (0.226458ms)
+✔ task 5d (Microsoft): a plan with several changes lists each with its class and double-check, or no gate and a proof (4.997917ms)
+✔ task 5d (Google): one change short of its double-check fails; a single change does not need the list (2.0475ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 92.202667

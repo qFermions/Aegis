@@ -1,0 +1,42 @@
+Each mutation below was applied to the named file, the named tests were run, and the file was restored (scratch tool mutate.js; commit base 6d836cc plus the working copy). "caught by" lists the failing test names; a name appears twice because node prints it in the run and again in its summary.
+
+MUTATION t6-a the done-claim logic is not reused
+  file: scripts/demo/senior-rules.js
+  change: replyProblems no longer runs the user-message-now logic
+  $ node --test scripts/demo/asker-reply.test.js
+  ℹ tests 5 ℹ pass 3 ℹ fail 2
+  caught by: ✖ task 6: eight pairs: the reply passes, and the same reply with one fault fails for that fault | ✖ task 6: a time only when the ticket or the setup sets it; a check only when it is about what the asker sent | ✖ task 6: eight pairs: the reply passes, and the same reply with one fault fails for that fault | ✖ task 6: a time only when the ticket or the setup sets it; a check only when it is about what the asker sent
+  file restored: true
+
+MUTATION t6-b the reply is read from any fenced block
+  file: scripts/demo/senior-rules.js
+  change: askerReply takes any labeled fenced block for the reply
+  $ node --test scripts/demo/asker-reply.test.js
+  ℹ tests 5 ℹ pass 4 ℹ fail 1
+  caught by: ✖ task 6: the reply is read from the asker-reply block before the aegis-desk block, or is the one question of an ask-first answer | ✖ task 6: the reply is read from the asker-reply block before the aegis-desk block, or is the one question of an ask-first answer
+  file restored: true
+
+MUTATION t6-c the flag changes every prompt
+  file: scripts/ask-aegis.js
+  change: buildPrompt asks every session for the reply, flag or not
+  $ node --test scripts/ask-aegis.test.js
+  ℹ tests 23 ℹ pass 22 ℹ fail 1
+  caught by: ✖ batch 11, task 6: --reply-to takes asker and nothing else; without it the prompt is byte for byte today's | ✖ batch 11, task 6: --reply-to takes asker and nothing else; without it the prompt is byte for byte today's
+  file restored: true
+
+MUTATION t6-d a failing reply is printed as ready
+  file: scripts/ask-aegis.js
+  change: printReply ignores the check's result
+  $ node --test scripts/ask-aegis.test.js
+  ℹ tests 23 ℹ pass 22 ℹ fail 1
+  caught by: ✖ batch 11, task 6: a reply that fails its check is printed with the reasons and exit 3; no reply at all is exit 3 with the answer saved | ✖ batch 11, task 6: a reply that fails its check is printed with the reasons and exit 3; no reply at all is exit 3 with the answer saved
+  file restored: true
+
+MUTATION t6-e the chat voice replaces the setup
+  file: scripts/aegis-chat.js
+  change: chatArgs drops the setup when the voice is asked for
+  $ node --test scripts/aegis-chat.test.js
+  ℹ tests 7 ℹ pass 6 ℹ fail 1
+  caught by: ✖ batch 11, task 6: chatArgs with the voice is one appended prompt; without it the arguments are today's | ✖ batch 11, task 6: chatArgs with the voice is one appended prompt; without it the arguments are today's
+  file restored: true
+

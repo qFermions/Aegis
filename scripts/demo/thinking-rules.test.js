@@ -391,3 +391,17 @@ test('code review 2: "nobody <at a place> can get into" is an outage; "nobody el
     assert.equal(howWideBeforeWhy(plain, { ticket: not }).applies, false, not);
   }
 });
+
+// Code review round 2, finding 13: "should not have" and "should never have" also open complaints that are not about
+// access ("should not have had to wait", "should never have been pushed"). After "have been" only an access word
+// counts now (able, given, granted, added, shared, invited, allowed, let in). Wrong implementation it catches: one that
+// excludes only "have to".
+test('code review 2: "should not have had to wait" is not unwanted access; "should never have been given access" is', () => {
+  const plain = '## Fix\n**What\'s wrong:** x\n**Do this:**\n1. Ask what happens.\n**Done when:** y\n';
+  for (const not of ['I should not have had to wait two days for a laptop.', 'That update should never have been pushed to every laptop.', 'This ticket should not have been closed.']) {
+    assert.equal(whoElseWhatLeft(plain, { ticket: not }).applies, false, not);
+  }
+  for (const yes of ['She should never have been given access to the HR site.', 'Sales should never have had that site.', "He shouldn't have access to payroll.", 'The intern should not have been able to open the board folder.']) {
+    assert.equal(whoElseWhatLeft(plain, { ticket: yes }).applies, true, yes);
+  }
+});

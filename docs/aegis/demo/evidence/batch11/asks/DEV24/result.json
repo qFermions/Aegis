@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 54283,
+  "stop_reason": "end_turn",
+  "session_id": "f1a72dca-78e7-4e6a-a0f2-b92042fd09b7",
+  "total_cost_usd": 0.45037,
+  "usage": {
+    "input_tokens": 10,
+    "cache_creation_input_tokens": 38652,
+    "cache_read_input_tokens": 116470,
+    "output_tokens": 5891,
+    "output_tokens_details": {
+      "thinking_tokens": 3285
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 38652,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 5011,
+        "cache_read_input_tokens": 43647,
+        "cache_creation_input_tokens": 1007,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1007
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 10,
+      "outputTokens": 5891,
+      "cacheReadInputTokens": 116470,
+      "cacheCreationInputTokens": 38652,
+      "webSearchRequests": 0,
+      "costUSD": 0.45037,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3285,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 38652,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 7,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Fix\n**What's wrong:** [FIRST_NAME]'s Mac is lost, and whoever has it could use it.\n**Do this:**\n1. Jamf Pro → Computers → Search inventory → [SERIAL_NUMBER]. Read the last check-in and FileVault. A check-in since last night means someone switched it on. FileVault off means the disk can be read.\n2. Okta → Reports → System Log, [UPN], since last night. A sign-in from an unknown device or place means someone is using the account.\n3. Okta → Directory → People → [UPN] → More Actions → Clear User Sessions.\n4. Save a six-digit PIN in the password manager. Then Jamf Pro → the Mac → Management → Lock Computer.\n5. Last resort, only if the Mac is judged stolen: Wipe Computer.\n\n**Done when:** Okta shows the sessions ended, and Jamf History shows the lock completed. Aegis then checks both.\n**Stop if:** the System Log shows sign-ins nobody can explain. Then this is a security incident.\n**Tell the user now:** IT is checking the laptop and your account. Please work from another device, and tell us if the taxi firm finds it.\n**Tell the user when done:** Your laptop is locked and your old sign-ins have ended. Please sign in again on your other devices.\n\nSteps, risks and the wipe condition are in Details.\n\n## Details\n**Runbooks:** `/jamf-lock-erase` (Phase A read, Phase B lock, Phase C wipe) and `/okta-user-lifecycle` (Phase C clear sessions). No replay lookup was run.\n\n**Changes, in step order:**\n- Step 3 (clear Okta sessions): R1. Double-check: Aegis reads the System Log for a session-clear event for [UPN] made after the time written before the click.\n- Step 4 (lock the Mac): R2, because the PIN is the pre-state. Double-check: Aegis reads Jamf's command history for a lock acknowledged after approval.\n- Step 5, only if the Mac is judged stolen with sensitive data and the lock is not enough: gate `jamf-lock-erase-wipe-portal` (R3, cannot be undone). It needs an independent review first, and it is not in the block below.\n\n**Risks:**\n- Jamf commands only run when the Mac next goes online. A Mac that stays offline never gets the lock or the wipe. Until then, FileVault and Activation Lock are what protect the data.\n- On Apple silicon with macOS 11.4 or earlier, the lock does not set a PIN. The Mac boots to the Recovery Activation screen instead. Step 1 shows which case applies.\n- Clear User Sessions ends Okta sessions only. Sessions already open inside apps, including Slack, stay open. No runbook here covers Slack's own sign-out, so this is reasoning, not a known fix.\n- If Okta Verify was set up on the Mac, follow `/okta-mfa-reset` after this. [FIRST_NAME] keeps or registers a method on another device before the Mac's factor is removed.\n- **[org gap]:** which password-manager vault holds [LOCK_PIN], and who may read it.\n\n**Verification checklist:** [ ] last check-in and FileVault state are in the ticket · [ ] the System Log has been read since the loss · [ ] the session clear shows in the System Log · [ ] Jamf History shows Lock Computer completed · [ ] [LOCK_PIN] is stored in the password manager only.\n\n**Jira note (partial-state until every read-back passes):** Mac [SERIAL_NUMBER] reported lost in a taxi on [DATE]. Last check-in [time]. FileVault [on/off]. System Log since the loss: [findings]. Okta sessions cleared [time]. Lock Computer sent [time]: [pending/completed]. PIN stored in [vault entry]. Wipe not sent. Next owner: [ADMIN_NAME].\n\n```asker-reply\nThe laptop is still missing, so for now IT treats it as a device someone else might use. So far I have only read what you wrote in the ticket. I haven't checked the laptop's record or his account activity yet, so I can't say whether anyone has tried to use them.\n\nMeanwhile he should work from another device and avoid signing in on any computer he does not know. If the taxi firm finds the laptop, please tell IT straight away.\n\nA technician will check the laptop's last contact and his recent sign-ins next. They will then decide whether to sign him out everywhere and lock the laptop remotely.\n```\n\n```aegis-desk\nGate: okta-user-lifecycle-clear-sessions-portal\nPhrase: CLEAR OKTA SESSIONS FOR [UPN]\nChange record: R1, none\nRead-back: node scripts/adapters/okta-client.js verify-sessions-cleared --user [OKTA_USER_ID] --not-before [NOT_BEFORE] --execute\nGate: jamf-lock-erase-lock-portal\nPhrase: LOCK MAC [SERIAL_NUMBER]\nChange record: R2, read-back jamf:verify-command --not-before --type DEVICE_LOCK\nRead-back: jamf-client.js verify-command --management-id [DEVICE_ID] --type DEVICE_LOCK --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute\n```",
+  "ttft_ms": 1396,
+  "type": "result",
+  "duration_ms": 54594,
+  "uuid": "64f2cd39-1f3c-464c-a93d-e6517fcd1d33",
+  "ttft_stream_ms": 838,
+  "time_to_request_ms": 190,
+  "first_content_frame_ms": 839,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 10,
+      "outputTokens": 5891,
+      "cacheReadInputTokens": 116470,
+      "cacheCreationInputTokens": 38652,
+      "webSearchRequests": 0,
+      "costUSD": 0.45037,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 3285,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 38652,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-12-03T09:34:14.654Z"
+}

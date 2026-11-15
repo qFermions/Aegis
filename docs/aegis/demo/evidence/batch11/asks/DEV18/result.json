@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 40600,
+  "stop_reason": "end_turn",
+  "session_id": "d15f3e82-9904-4913-8d6a-b43e6cefaab1",
+  "total_cost_usd": 0.32989939999999995,
+  "usage": {
+    "input_tokens": 10,
+    "cache_creation_input_tokens": 28936,
+    "cache_read_input_tokens": 97257,
+    "output_tokens": 3946,
+    "output_tokens_details": {
+      "thinking_tokens": 1693
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 28936,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 3319,
+        "cache_read_input_tokens": 24930,
+        "cache_creation_input_tokens": 10008,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 10008
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 10,
+      "outputTokens": 3946,
+      "cacheReadInputTokens": 97257,
+      "cacheCreationInputTokens": 28936,
+      "webSearchRequests": 0,
+      "costUSD": 0.32989939999999995,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1693,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 28936,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Fix\n**What's wrong:** Gmail turned the supplier's mail away because it passed neither SPF nor DKIM for their own sending domain. The fix is on their side, not ours.\n**Do this:**\n1. Go to Admin console → Reporting → Email Log Search. Search with sender = the supplier's address and the bounce date, then read the status. Rejected confirms this bounce. No row means the mail never reached Google. Delivered means it's a different problem.\n2. Send the supplier's IT contact the note in Details. It asks them to add their sending server to the SPF record of their sending domain and to turn on DKIM signing for that service.\n3. Ask them to send one test message once they've made the fix.\n4. Go to Email Log Search and check that the test message shows as delivered. Don't allow their domain.\n**Done when:** a new message from the supplier shows as delivered, and no domain was allowed on our side.\n**Stop if:** Email Log Search shows a different rejection reason, or our own outgoing mail also bounces.\n**Tell the user now:** The bounce message shows the supplier's mail failed a sender check that their own setup controls. IT is sending their technical contact what to change.\n**Tell the user when done:** The supplier's mail reaches you again.\n\nDetails below: the note to the supplier and why we don't allowlist.\n\n## Details\n**Verdict:** this is Phase 3 of the `/gws-gmail-delivery` runbook: an outside sender's mail fails SPF or DKIM. Code `550-5.7.26` is Gmail's rule that every sender must pass SPF or DKIM. The bounce says both failed. The SPF check ran for `deliveries.supplier.example` from `198.51.100.23`. That record belongs to the supplier, so the supplier's claim that \"the fault is on our side\" doesn't fit the evidence. I've only read the pasted bounce text. I haven't confirmed the rejection in Email Log Search.\n\n**Note to the supplier's IT contact** (the user forwards it):\n> Our mail system rejected your messages with 550-5.7.26 because they failed both sender checks.\n> - **SPF:** the server 198.51.100.23 is not authorized in the SPF record of deliveries.supplier.example. Please add that sending service to the record.\n> - **DKIM:** your messages carry no valid DKIM signature. Please turn on DKIM signing for that sending service and publish its key in your DNS.\n> One of the two passing is enough for delivery. Please send a test message once it's done.\n\n**Why not allowlist the domain:**\n- Allowing a whole domain is never the first fix. It switches off spam filtering for every message that claims to come from that domain, forged ones included.\n- Google's own advice is: \"Do not include domains in your approved sender list.\"\n- Gmail can still reject or quarantine a suspicious message even when its sender is on the list.\n- If the business can't wait for the supplier's fix, the narrowest option is one address, not the domain:\n  - put it on an approved senders list that still requires sender authentication;\n  - give it an end date and an owner;\n  - handle it as a separate ticket with this bounce as evidence.\n\n  This runbook reads the spam settings and doesn't edit them.\n\n**Changes:** none on our side. Steps 1 and 4 are reads, and step 2 is a message.\n\n**Verification checklist**\n- [ ] The Email Log Search result for the bounced message is in the ticket.\n- [ ] The ticket names the failed checks (SPF and DKIM) and the domain they failed for (`deliveries.supplier.example`).\n- [ ] The note was sent to the supplier.\n- [ ] A new test message from the supplier shows as delivered.\n- [ ] No domain was allowed on our side.\n\n**Jira-ready note:**\n> Inbound mail from the supplier was rejected by Gmail with 550-5.7.26. SPF failed for `deliveries.supplier.example` from `198.51.100.23`, and DKIM did not pass. Cause: the supplier's own sender authentication. The supplier was told to fix SPF and enable DKIM. Nothing was allowed on our side. Verified: [Email Log Search shows a new message delivered]. Time spent: [X] min.\n\n```asker-reply\nNo, this isn't a fault on our side, and allowlisting their domain isn't the right fix. The bounce they sent shows their own mail setup failed both of the sender checks our mail system requires.\n\nI've only read the bounce text you passed on. It says their sending server isn't listed in their own records and their messages aren't signed. That's why their theory doesn't fit: those records sit with them, not with us. I haven't yet confirmed the rejection in our own mail logs. Allowing their whole domain would also let through fake mail pretending to be from them.\n\nThere's nothing you need to change. Please ask them to call you for anything urgent in the meantime. A technician will check our mail logs next and send their IT contact the exact fix. Once they've made it and a test message arrives, we'll let you know.\n```\n\n```aegis-desk\nGate: none\n```",
+  "ttft_ms": 1446,
+  "type": "result",
+  "duration_ms": 40898,
+  "uuid": "df393ec6-374b-455f-8622-aa803e326ab8",
+  "ttft_stream_ms": 897,
+  "time_to_request_ms": 196,
+  "first_content_frame_ms": 897,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 10,
+      "outputTokens": 3946,
+      "cacheReadInputTokens": 97257,
+      "cacheCreationInputTokens": 28936,
+      "webSearchRequests": 0,
+      "costUSD": 0.32989939999999995,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 1693,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 28936,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-12-03T09:34:14.654Z"
+}

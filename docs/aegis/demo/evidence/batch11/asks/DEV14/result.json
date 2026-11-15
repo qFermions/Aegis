@@ -1,0 +1,120 @@
+{
+  "duration_api_ms": 23370,
+  "stop_reason": "end_turn",
+  "session_id": "de416a47-8758-47af-a06f-5e45f3dc3356",
+  "total_cost_usd": 0.23026119999999997,
+  "usage": {
+    "input_tokens": 8,
+    "cache_creation_input_tokens": 21141,
+    "cache_read_input_tokens": 73306,
+    "output_tokens": 2322,
+    "output_tokens_details": {
+      "thinking_tokens": 313
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 21141,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1534,
+        "cache_read_input_tokens": 25603,
+        "cache_creation_input_tokens": 1540,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1540
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 8,
+      "outputTokens": 2322,
+      "cacheReadInputTokens": 73306,
+      "cacheCreationInputTokens": 21141,
+      "webSearchRequests": 0,
+      "costUSD": 0.23026119999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 313,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 21141,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 6,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## Fix\n**What's wrong:** Since about 10 this morning, Outlook and Teams fail for everyone at [@Aegion_SITE_2] while head office works. That points to the site's connection first, not to anyone's account.\n**Do this:**\n1. Find out how wide it is. Do websites load at [@Aegion_SITE_2]? Does Outlook on the web fail too? Check the Microsoft 365 service health page (admin.microsoft.com → Health → Service health).\n2. With no Microsoft incident, open the Meraki dashboard → [@Aegion_SITE_2] network → Appliance status. Read the uplink status and loss since 10:00, and the [@Aegion_WAN]/VPN tunnel to main.\n3. On one PC there, check whether outlook.office365.com and teams.microsoft.com resolve by name.\n4. Only if the network is clean, open Entra → Sign-in logs, filtered to [@Aegion_SITE_2]'s public IP, and read the failure reason.\n\n**Done when:** a user at [@Aegion_SITE_2] opens Outlook and Teams.\n**Stop if:** the internet is down at the site. Then it is an ISP outage (network runbook).\n**Tell the user now:** IT is checking the connection at your office. Meanwhile, use Teams or Outlook on a phone with Wi-Fi switched off.\n**Tell the user when done:** Outlook and Teams are working at your office again.\n\nSee Details for what each result means.\n\n## Details\n**No runbook covers this exact symptom.** These steps come from reasoning, built on the site-specific network tree (`modules/it_support/troubleshooting.md` T-05) and the site internet-loss steps (`modules/systems/network_ops.md`, around line 164). The rule applied is \"how wide before why\": scope and vendor status first, then network and name resolution, then accounts.\n\n**What each result means**\n- **Microsoft incident listed:** wait it out. But an incident that hits only one site is unlikely.\n- **Other websites fail too:** the site's internet or ISP is down. Follow the site internet-loss steps. Contacting the ISP needs separate sign-off from the operator.\n- **Websites load, but Microsoft 365 fails:** check, in this order:\n  - DNS at the site\n  - a firewall or content-filter change on the site's Meraki MX\n  - the tunnel back to main, if [@Aegion_SITE_2] routes internet traffic through head office\n- **Sign-in logs show Conditional Access blocks from that IP:** the site's public IP may have changed and dropped out of a trusted named location. Changing Conditional Access is R3 and needs its own plan.\n\n**Watch for:** [@Aegion_SITE_2] is mid-migration from [@Aegion_WAN] to Meraki site-to-site VPN, and its VoIP migration is also in progress. Ask whether [@Aegion_NETPARTNER] did any work there this morning (`docs/aegis/operator-context.md`).\n\n**Changes advised:** none. Every step is a read (R0).\n\n**Jira note:** [@Aegion_SITE_2]: all users can't use Outlook or Teams since about 10:00; head office unaffected. Checked scope, M365 service health, Meraki uplink and tunnel, DNS. Cause: [PENDING]. No changes made.\n\n```asker-reply\nSomething at your office seems to be blocking Outlook and Teams. It doesn't look like a problem with anyone's account, because head office is working normally.\n\nSo far I've only read your message. I haven't confirmed the cause yet: it could be your office's internet connection, its link to head office, or a network setting.\n\nFor now, you can use Teams or Outlook on a phone with Wi-Fi switched off, or call colleagues directly. A technician will check your office's network connection next and will tell you once things work again.\n```\n\n```aegis-desk\nGate: none\n```",
+  "ttft_ms": 1527,
+  "type": "result",
+  "duration_ms": 23666,
+  "uuid": "b859f6a3-1239-4dc9-8677-75e2c23470fc",
+  "ttft_stream_ms": 908,
+  "time_to_request_ms": 201,
+  "first_content_frame_ms": 908,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 8,
+      "outputTokens": 2322,
+      "cacheReadInputTokens": 73306,
+      "cacheCreationInputTokens": 21141,
+      "webSearchRequests": 0,
+      "costUSD": 0.23026119999999997,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 313,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 21141,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "credential_expires_at": "2026-12-03T09:34:14.654Z"
+}

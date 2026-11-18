@@ -84,8 +84,8 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
     // of batch 12, class D); one that made lookups keeps its audit file
     const tidy = () => {
       if (!auditFile) return;
-      let size = -1;
-      try { size = fs.statSync(auditFile).size; } catch { size = 0; }
+      let size = 0;
+      try { size = fs.statSync(auditFile).size; } catch { /* never written */ }
       if (size !== 0) return;
       try { fs.unlinkSync(auditFile); } catch { /* never written */ }
       try { fs.rmdirSync(path.dirname(auditFile)); } catch { /* not empty or gone: left as it is */ }

@@ -137,7 +137,10 @@ test('the saved file is outside the repository, mode 0600 in a 0700 folder; a ho
   const home = tempHome(t);
   const env = { HOME: home, USERPROFILE: home };
   assert.equal(start.savePath(env), path.join(home, '.aegis', 'company-setup.txt'));
-  assert.ok(path.relative(REPO_ROOT, start.savePath(env)).startsWith('..'), 'outside the repository');
+  // outside: up and out of the repository, or on another drive, where Windows gives an absolute relative path (the
+  // Windows CI runner keeps the repository on D: and the temporary folder on C:)
+  const rel = path.relative(REPO_ROOT, start.savePath(env));
+  assert.ok(rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel), 'outside the repository');
   const r = await run({ home, answers: ['Okta'] });
   assert.equal(r.code, 0, r.err);
   if (POSIX) {

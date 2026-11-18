@@ -1,0 +1,45 @@
+✖ batch 12, code review 1: winget aliases, assigned force pushes, option values, double-dash terraform flags and git global options (2.689541ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 899.898791
+
+✖ failing tests:
+
+test at scripts/command-safety-gates.test.js:3133:1
+✖ batch 12, code review 1: winget aliases, assigned force pushes, option values, double-dash terraform flags and git global options (2.689541ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'powershell: winget update --all',
+  +   'powershell: winget rm Fixture.Tool',
+  +   'powershell: $r = git push --force origin main',
+  +   'bash: helm -n list uninstall web',
+  +   'bash: helm --kube-context get upgrade web ./chart',
+  +   'bash: terraform init --migrate-state',
+  +   'bash: terraform init --force-copy',
+  +   'bash: kubectl --as-uid get delete pod x',
+  +   'bash: kubectl --flag-not-listed get delete pod x',
+  +   'bash: git --git-dir /x/.git push --force origin main',
+  +   'bash: git -C /srv/app commit -m fix',
+  +   'bash: git --work-tree /srv/app push origin main'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/command-safety-gates.test.js:3141:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'powershell: winget update --all', 'powershell: winget rm Fixture.Tool', 'powershell: $r = git push --force origin main', 'bash: helm -n list uninstall web', 'bash: helm --kube-context get upgrade web ./chart', 'bash: terraform init --migrate-state', 'bash: terraform init --force-copy', 'bash: kubectl --as-uid get delete pod x', 'bash: kubectl --flag-not-listed get delete pod x', 'bash: git --git-dir /x/.git push --force origin main', 'bash: git -C /srv/app commit -m fix', 'bash: git --work-tree /srv/app push origin main' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

@@ -393,12 +393,15 @@ function terraformWrites(args) {
   if (!sub) return !tokens.every((t) => /^-(?:-?help|-?version|chdir=\S+)$/.test(t));
   if (sub === 'state') return !['list', 'show', 'pull'].includes(next || '');
   if (sub === 'workspace') return !['list', 'show'].includes(next || '');
-  if (sub === 'init') return tokens.some((t) => /^-(?:migrate-state|force-copy)\b/.test(t));
+  // one dash or two: terraform's flag parser takes both (code review 1 of batch 12)
+  if (sub === 'init') return tokens.some((t) => /^--?(?:migrate-state|force-copy)\b/.test(t));
   return !TERRAFORM_READ.has(sub);
 }
 const KUBECTL_READ = new Set(['get', 'describe', 'logs', 'top', 'events', 'explain', 'api-resources', 'api-versions', 'version', 'cluster-info', 'diff', 'auth', 'wait', 'port-forward', 'proxy', 'completion', 'kustomize', 'plugin', 'config']);
 // options that take a separate value: the value is never the verb (security review 1 of batch 12: kubectl -n logs delete)
-const KUBECTL_VALUE_OPTIONS = new Set(['-n', '--namespace', '--context', '--cluster', '--user', '--kubeconfig', '-s', '--server', '--token', '--as', '--as-group', '-l', '--selector', '-o', '--output', '-c', '--container', '-f', '--filename', '--request-timeout', '--certificate-authority', '--client-certificate', '--client-key', '--tls-server-name', '--field-selector', '-L', '--label-columns']);
+const KUBECTL_VALUE_OPTIONS = new Set(['-n', '--namespace', '--context', '--cluster', '--user', '--kubeconfig', '-s', '--server', '--token', '--as', '--as-group', '-l', '--selector', '-o', '--output', '-c', '--container', '-f', '--filename', '--request-timeout', '--certificate-authority', '--client-certificate', '--client-key', '--tls-server-name', '--field-selector', '-L', '--label-columns',
+  // code review 1 of batch 12: more options that take a value
+  '--as-uid', '--cache-dir', '--username', '--password', '--profile', '--profile-output', '-v', '--v', '--log-file', '--log-dir', '--vmodule']);
 const KUBECTL_WRITE = new Set(['apply', 'delete', 'scale', 'rollout', 'patch', 'edit', 'drain', 'cordon', 'uncordon', 'taint', 'label', 'annotate', 'create', 'replace', 'set', 'expose', 'autoscale', 'run', 'exec', 'cp', 'debug', 'attach', 'certificate']);
 function kubectlWrites(args) {
   const tokens = cliTokens(args).map((t) => t.toLowerCase()).filter((t, i, all) => !KUBECTL_VALUE_OPTIONS.has(all[i - 1] || ''));
@@ -409,12 +412,21 @@ function kubectlWrites(args) {
   if (tokens[at] === 'auth') return !['can-i', 'whoami'].includes(tokens[at + 1] || '');
   // config only reads with view, get-contexts, current-context or get-clusters
   if (tokens[at] === 'config') return !['view', 'get-contexts', 'current-context', 'get-clusters'].includes(tokens[at + 1] || '');
-  return KUBECTL_WRITE.has(tokens[at]);
+  // fail-closed (code review 1 of batch 12): a read verb right after an option this list does not know may be that
+  // option's value, so the next word decides (kubectl --some-opt get delete pod x is a delete); a resource named like a
+  // verb after a real read (kubectl describe certificate) stays a read
+  const prev = tokens[at - 1] || '';
+  const maybeValue = prev.startsWith('-') && !prev.includes('=');
+  return KUBECTL_WRITE.has(tokens[at]) || (maybeValue && KUBECTL_WRITE.has(tokens[at + 1] || ''));
 }
 const HELM_READ = new Set(['list', 'ls', 'status', 'get', 'history', 'show', 'inspect', 'template', 'search', 'version', 'lint', 'env', 'verify']);
+// options that take a value, and the subcommands that change a release (code review 1 of batch 12: helm -n list uninstall)
+const HELM_VALUE_OPTIONS = new Set(['-n', '--namespace', '--kube-context', '--kubeconfig', '-f', '--values', '--set', '--set-string', '--set-file', '--set-json', '--version', '-o', '--output', '--repo', '--timeout', '--registry-config', '--repository-config', '--repository-cache', '--post-renderer', '--kube-apiserver', '--kube-as-user', '--kube-as-group', '--kube-token', '--kube-ca-file', '--burst-limit']);
+const HELM_WRITE = new Set(['install', 'upgrade', 'uninstall', 'delete', 'del', 'un', 'rollback', 'push', 'test']);
 function helmWrites(args) {
-  const positional = cliTokens(args).filter((t) => !t.startsWith('-')).map((t) => t.toLowerCase());
-  return !HELM_READ.has(positional[0] || '');
+  const tokens = cliTokens(args).map((t) => t.toLowerCase());
+  const positional = tokens.filter((t, i) => !t.startsWith('-') && !HELM_VALUE_OPTIONS.has(tokens[i - 1] || ''));
+  return !HELM_READ.has(positional[0] || '') || positional.some((t) => HELM_WRITE.has(t));
 }
 // aws: the service and the operation, past the global options and their values
 const AWS_FLAGS_WITHOUT_VALUE = new Set(['--dry-run', '--no-dry-run', '--debug', '--no-cli-pager', '--no-paginate', '--no-verify-ssl', '--no-sign-request', '--recursive', '--force', '--quiet', '--human-readable', '--summarize', '--cli-auto-prompt', '--no-cli-auto-prompt']);
@@ -466,7 +478,9 @@ const B12_CLI_SINKS = [
 ];
 const B12_REMOTE_SINKS = new Set(['service-write', 'terraform-write', 'kubectl-write', 'helm-write', 'aws-write', 'az-write', 'git-force-push']);
 // a forced push rewrites a remote branch: --force, -f (alone or in a cluster), --force-with-lease, --force-if-includes or a + refspec
-const FORCE_PUSH = String.raw`git\s+(?:(?:-[A-Za-z]\s+\S+|--[\w-]+(?:=\S+)?)\s+)*push\b[^;|&\n]*?(?:\s--force(?:-with-lease|-if-includes)?\b|\s-[A-Za-z]*f[A-Za-z]*(?=\s|$)|\s\+[\w./:-]+)`;
+// git's global options, some with a separate value (-C <dir>, --git-dir <path>): code review 1 of batch 12
+const GIT_GLOBALS = String.raw`(?:(?:(?:-C|-c|--git-dir|--work-tree|--namespace|--super-prefix|--config-env|--exec-path)(?:=\S+|\s+\S+)|-[A-Za-z]|--[\w-]+(?:=\S+)?)\s+)*`;
+const FORCE_PUSH = String.raw`git\s+${GIT_GLOBALS}push\b[^;|&\n]*?(?:\s--force(?:-with-lease|-if-includes)?\b|\s-[A-Za-z]*f[A-Za-z]*(?=\s|$)|\s\+[\w./:-]+)`;
 function b12CliHits(statement) {
   const hits = [];
   for (const [label, name, isWrite] of B12_CLI_SINKS) {
@@ -516,7 +530,7 @@ function commandsIn(statement, language) {
     // a wrapper (sudo, env, xargs, time, …) in front of a native sink hides nothing
     const boundary = `(?:^|${SHELL_PROMPT}|[;|{}=:&])\\s*${CLI_WRAPPER}`;
     const nativePatterns = [
-      [new RegExp(`${boundary}git\\s+(?:add|branch|checkout|clean|clone|commit|fetch|init|merge|mv|push|rebase|reset|restore|rm|switch|tag)\\b`, 'i'), 'git-write'],
+      [new RegExp(`${boundary}git\\s+${GIT_GLOBALS}(?:add|branch|checkout|clean|clone|commit|fetch|init|merge|mv|push|rebase|reset|restore|rm|switch|tag)\\b`, 'i'), 'git-write'],
       [new RegExp(`${boundary}scp\\s+`, 'i'), 'scp'],
       [new RegExp(`${boundary}rsync\\s+`, 'i'), 'rsync'],
       [new RegExp(`${boundary}(?:cp|install|mkdir|mv|rm|tee|touch)\\s+`, 'i'), 'file-write'],
@@ -535,8 +549,8 @@ function commandsIn(statement, language) {
     // batch 12, task 12: indirect execution and package installs in PowerShell, and a forced git push
     // an assignment, a dot-source or a command lookup cannot hide it either (security review 1 of batch 12)
     if (/(?:^|[;{}(|=.])\s*&?\s*(?:iex|Invoke-Expression)\b/i.test(statement) || /\b(?:gcm|Get-Command)\s+(?:iex|Invoke-Expression)\b/i.test(statement)) hits.push('indirect-exec');
-    if (/(?:^|[;{}(|=.])\s*&?\s*winget(?:\.exe)?\s+(?:install|upgrade|uninstall|remove|import|configure|add)\b/i.test(statement)) hits.push('package-write');
-    if (new RegExp(`(?:^|[;{}(|])\\s*&?\\s*${FORCE_PUSH}`, 'i').test(statement)) hits.push('git-force-push');
+    if (/(?:^|[;{}(|=.])\s*&?\s*winget(?:\.exe)?\s+(?:install|upgrade|update|uninstall|remove|rm|import|configure|add)\b/i.test(statement)) hits.push('package-write');
+    if (new RegExp(`(?:^|[;{}(|=.])\\s*&?\\s*${FORCE_PUSH}`, 'i').test(statement)) hits.push('git-force-push');
   }
   return [...new Set(hits)];
 }
@@ -3122,6 +3136,23 @@ test('batch 12, security review 1: an assignment, a dot-source or gcm cannot hid
     if (!commandsIn(line, 'bash').includes(label)) missed.push(`bash: ${line}`);
   }
   assert.deepEqual(missed, []);
-  const flagged = ['kubectl -n prod get pods', 'kubectl --context prod -n kube-system logs coredns-0', 'kubectl auth can-i delete pods', 'kubectl auth whoami', '$index = 1', '$iex = 5'].filter((line) => commandsIn(line, /^\$/.test(line) ? 'powershell' : 'bash').length);
+  const flagged = ['kubectl -n prod get pods', 'kubectl --context prod -n kube-system logs coredns-0', 'kubectl auth can-i delete pods', 'kubectl describe certificate -n prod', 'kubectl auth whoami', '$index = 1', '$iex = 5'].filter((line) => commandsIn(line, /^\$/.test(line) ? 'powershell' : 'bash').length);
+  assert.deepEqual(flagged, []);
+});
+
+// Code review 1 of batch 12, class E: more mutating forms the widened scanner read as reads (the reviewer's probes).
+// Wrong implementations: winget's own aliases (update, rm) missed; a PowerShell force push after an assignment missed;
+// helm and kubectl taking an option's value as the subcommand; terraform's double-dash flags missed; git global options
+// with a separate value (--git-dir <path>, -C <dir>) hiding a push or a commit.
+test('batch 12, code review 1: winget aliases, assigned force pushes, option values, double-dash terraform flags and git global options', () => {
+  const missed = [];
+  for (const [line, label] of [['winget update --all', 'package-write'], ['winget rm Fixture.Tool', 'package-write'], ['$r = git push --force origin main', 'git-force-push']]) {
+    if (!commandsIn(line, 'powershell').includes(label)) missed.push(`powershell: ${line}`);
+  }
+  for (const [line, label] of [['helm -n list uninstall web', 'helm-write'], ['helm --kube-context get upgrade web ./chart', 'helm-write'], ['terraform init --migrate-state', 'terraform-write'], ['terraform init --force-copy', 'terraform-write'], ['kubectl --as-uid get delete pod x', 'kubectl-write'], ['kubectl --profile list scale deploy/web --replicas=0', 'kubectl-write'], ['kubectl --flag-not-listed get delete pod x', 'kubectl-write'], ['git --git-dir /x/.git push --force origin main', 'git-force-push'], ['git -C /srv/app commit -m fix', 'git-write'], ['git --work-tree /srv/app push origin main', 'git-write']]) {
+    if (!commandsIn(line, 'bash').includes(label)) missed.push(`bash: ${line}`);
+  }
+  assert.deepEqual(missed, []);
+  const flagged = ['helm -n prod list', 'helm --kube-context prod status web', 'kubectl --as-uid 1000 get pods', 'kubectl rollout status deploy/web', 'kubectl auth can-i delete pods', 'terraform init -backend-config=prod.hcl', 'git -C /srv/app log --oneline', 'git --git-dir /x/.git status'].filter((line) => commandsIn(line, 'bash').length);
   assert.deepEqual(flagged, []);
 });

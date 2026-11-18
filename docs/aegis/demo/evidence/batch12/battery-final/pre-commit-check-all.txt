@@ -1,4 +1,4 @@
-pre-commit-check: --all mode - scanning 2621 tracked and non-ignored files.
+pre-commit-check: --all mode - scanning 2637 tracked and non-ignored files.
 pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
 
 ╔══════════════════════════════════════════════╗

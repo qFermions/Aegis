@@ -288,3 +288,21 @@ test('code review 2, class B2: what a claim is, and what is not', () => {
   ]) assert.equal(claimsWithoutCalls(text, calls).length, 1, text);
   assert.deepEqual(claimsWithoutCalls('I read the answer format, /phishing-bec and /identity-compromise.', read), [], 'a runbook named by its command is backed by a Read');
 });
+
+// Code review 2 of batch 12, class F2: round 1's negation reached across "and" ("Do not wait and delete the commit"
+// passed), did not see a bold negation ("**Do not** delete"), and a negated revoke or alternate ("Do not revoke the key
+// yet") still counted as the step. Wrong implementations: a negation that crosses a conjunction; markdown marks hiding
+// the negation; the negation honoured for replace and cleanup only.
+test('code review 2, class F2: a negation governs only its own words, bold or not, for every step of the rule', () => {
+  const restoreTicket = "Someone overwrote the budget workbook in SharePoint this morning. Please restore yesterday's version.";
+  const secretTicket = 'I pushed our API key to a public GitHub repo by mistake.';
+  const card = (steps) => `Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n${steps}\n`;
+  for (const [answer, ticket] of [
+    [card("1. Do not wait and delete the commit now.\n2. Revoke the key and review its use in the access log."), secretTicket],
+    [card("1. Restore without delay and overwrite the live file.\n2. Then restore a copy to a new folder and compare it."), restoreTicket],
+    [card("1. Do not revoke the key yet.\n2. Delete the commit and force-push.\n3. Revoke the key and review its use in the access log."), secretTicket],
+    [card("1. Do not restore to a new folder.\n2. Overwrite the live file with yesterday's version.\n3. Restore a copy to a new folder and compare it."), restoreTicket],
+  ]) assert.equal(expert.safeRecovery(answer, { ticket }).verdict, 'fail', answer);
+  const bold = card("1. **Do not** delete the commit yet.\n2. Revoke the key in the provider console.\n3. Review the key's use in the access log since the push.\n4. Then delete the commit and rewrite history.");
+  assert.equal(expert.safeRecovery(bold, { ticket: secretTicket }).verdict, 'pass');
+});

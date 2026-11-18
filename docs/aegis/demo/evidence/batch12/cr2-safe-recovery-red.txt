@@ -1,0 +1,37 @@
+✖ code review 2, class F2: a negation governs only its own words, bold or not, for every step of the rule (1.691792ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.621291
+
+✖ failing tests:
+
+test at scripts/demo/expert-rules.test.js:296:1
+✖ code review 2, class F2: a negation governs only its own words, bold or not, for every step of the rule (1.691792ms)
+  AssertionError [ERR_ASSERTION]: Mode: Fix card
+  
+  ## Fix
+  **What's wrong:** x.
+  **Do this:**
+  1. Do not wait and delete the commit now.
+  2. Revoke the key and review its use in the access log.
+  
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:305:13)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

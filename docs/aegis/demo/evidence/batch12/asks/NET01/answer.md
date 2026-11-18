@@ -1,0 +1,42 @@
+Mode: Engineer answer
+## Engineer answer
+**Evidence read:** the dig you pasted and the networking runbooks (reading-evidence, decision-trees, safe-changes). The office resolver 192.0.2.53 returned NXDOMAIN with `ra` set and no `aa` flag, so it answered from its cache rather than as the zone's authoritative server. The SOA TTL reads 3412. The zone's negative TTL is 3600 (lower of the SOA TTL and the SOA minimum). So the resolver cached "no such name" about 3 minutes before your dig, and that answer stays for about 57 more minutes. The cached SOA serial is 2026111402, which is dated the 14th, so the server the resolver asked may not have had today's edit. Your phone uses the carrier's resolver, which never cached the miss.
+
+**Hypotheses:**
+1. **The office resolver is holding a cached NXDOMAIN.** Test: ask the authoritative servers directly (below). If they return the A record, this is the cause.
+2. **The record isn't on every authoritative server.** The serial may not have been bumped, or a secondary hasn't pulled the change. When the cache expires, the resolver can get NXDOMAIN again. Test: compare the SOA serial on each NS.
+3. **Split horizon.** The office DNS server hosts or forwards its own internal copy of `example.com`, and the record was added only to the public zone. Test: check whether `example.com` is a local zone or a conditional forwarder on 192.0.2.53.
+
+**Recommendation:** don't restart the DNS server. A restart cuts off name resolution for the whole office, and it fixes neither hypothesis 2 nor 3. First run these read-only checks:
+```
+dig portal.example.com A @ns1.example.com +norecurse
+dig example.com SOA @ns1.example.com +norecurse   # repeat for each NS
+dig example.com NS
+```
+If every NS returns the record with the same new serial, either wait the ~57 minutes or have the DNS owner remove just this one name from the server's cache. If a secondary lags, bump the serial and re-sync it. If it's split horizon, add the record to the internal zone.
+
+**Blast radius:** removing the one cached name touches only that name. Rollback isn't needed because the resolver just looks it up again. Stop if the authoritative servers also return NXDOMAIN, because then the record itself is missing or misspelled.
+
+**Verify:** `dig portal.example.com A` from an office machine returns NOERROR with the expected address, then the site opens in a browser.
+
+**Ask next:** is the office DNS server Windows DNS that also hosts an internal `example.com` zone?
+
+## Details
+- No runbook covers removing one entry from a DNS server's cache. The DNS owner does it through their change process (R1, single entry).
+- Later step, only if office machines still fail after the server answers correctly: a local cache flush on each affected device, gate `net-safe-dns-cache-flush-windows`.
+- If hypothesis 2 or 3 holds, the record change follows `net-safe-dns-record-change`: export the zone first.
+
+```asker-reply
+No, the DNS server shouldn't need a restart. The office DNS server most likely asked about the new name just before it existed everywhere, remembered "no such name", and will keep giving that answer for up to about an hour.
+
+The dig output you sent supports that: the answer came from the server's memory, not from the zone itself. It also hints that one of your DNS servers may not have picked up today's change yet. I haven't confirmed that.
+
+For now, you can keep testing on your phone's mobile data. Your DNS administrator should next ask each of your DNS servers directly whether they have the new record, and then clear just that one remembered answer instead of restarting anything.
+```
+
+```aegis-desk
+Gate: none
+Note: the advised server-side single-entry cache removal has no runbook gate; DNS owner's change process, R1.
+Later rung (not now): net-safe-dns-cache-flush-windows, only if clients still fail after the resolver answers NOERROR.
+Read-back: dig portal.example.com A @192.0.2.53 → status NOERROR, expected A record
+```

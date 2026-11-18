@@ -1,0 +1,11 @@
+Mode: Ask first
+
+What does the push-protection message say when it blocks a deploy push: which kind of secret it found, in which repository and file, and is the deploy tooling meant to push that value or is it a real credential that got into the code by mistake?
+
+```asker-reply
+What does the push-protection message say when it blocks a deploy push: which kind of secret it found, in which repository and file, and is the deploy tooling meant to push that value or is it a real credential that got into the code by mistake?
+```
+
+```aegis-desk
+Gate: none
+```

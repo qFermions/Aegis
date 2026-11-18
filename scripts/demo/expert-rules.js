@@ -211,6 +211,16 @@ const REVOKE = /\b(?:revok\w+|rotat\w+|deactivat\w+|disabl\w+|invalidat\w+|regen
 const CLEANUP = /\b(?:rewrit\w+ (?:the )?(?:git )?history|filter-repo|filter-branch|BFG|force[- ]push\w*|delet\w+ (?:the )?(?:commit|file|message|post|gist|line|repo)s?|remov\w+ (?:it |the \w+ )?from (?:the )?(?:repo|repository|history|code|file|channel|commit)|purg\w+|scrub\w*|redact\w*)\b/i;
 const USAGE = /\b(?:audit logs?|access logs?|usage|CloudTrail|last used|who used|was (?:it )?used|activity|sign[- ]in logs?|API logs?|request logs?)\b/i;
 const indexOf = (re, text) => { const m = re.exec(text); return m ? m.index : -1; };
+// the first match that is not under a negation right before it ("do not overwrite", "never delete the commit"): code
+// review 1 of batch 12, class F; a negation in another clause ("Do not wait: delete the commit") does not count
+const NEGATED = /\b(?:do not|don't|never|not yet|without|avoid|instead of|rather than)\s+(?:\w+\s+){0,2}$/i;
+const firstStep = (re, text) => {
+  for (const m of text.matchAll(new RegExp(re.source, re.flags.includes('g') ? re.flags : `${re.flags}g`))) {
+    const line = text.slice(text.lastIndexOf('\n', m.index) + 1, m.index);
+    if (!NEGATED.test(line.slice(-40))) return m.index;
+  }
+  return -1;
+};
 
 function safeRecovery(answer, { ticket = '', evidence = '' } = {}) {
   const plain = 'A restore goes to an alternate location and is checked before it replaces live data; a secret is revoked before any cleanup';
@@ -223,14 +233,14 @@ function safeRecovery(answer, { ticket = '', evidence = '' } = {}) {
   if (restore) {
     const alt = indexOf(ALTERNATE, body);
     const checked = alt < 0 ? -1 : indexOf(VERIFY, body.slice(alt));
-    const replaced = indexOf(REPLACE, body);
+    const replaced = firstStep(REPLACE, body);
     if (alt < 0) out.push('the restore does not go to an alternate location (a copy, a new folder, database or instance)');
     else if (checked < 0) out.push('nothing checks the restored copy');
     else if (replaced >= 0 && alt + checked > replaced) out.push('it replaces live data before the copy is checked');
   }
   if (secret) {
     const revoke = indexOf(REVOKE, body);
-    const cleanup = indexOf(CLEANUP, body);
+    const cleanup = firstStep(CLEANUP, body);
     if (revoke < 0) out.push('the exposed secret is never revoked or rotated');
     else if (cleanup >= 0 && cleanup < revoke) out.push('it cleans up (deletes the message or rewrites history) before the secret is revoked');
     if (!USAGE.test(body)) out.push("nothing reviews the secret's use");

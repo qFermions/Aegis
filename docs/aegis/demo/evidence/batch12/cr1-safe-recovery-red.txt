@@ -1,0 +1,38 @@
+✖ code review 1, class F: a negated replace or cleanup is not the step; a real unsafe order still fails (1.3515ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43.253041
+
+✖ failing tests:
+
+test at scripts/demo/expert-rules.test.js:227:1
+✖ code review 1, class F: a negated replace or cleanup is not the step; a real unsafe order still fails (1.3515ms)
+  AssertionError [ERR_ASSERTION]: Mode: Fix card
+  
+  ## Fix
+  **What's wrong:** x.
+  **Do this:**
+  1. Do not overwrite the live file yet.
+  2. Restore yesterday's version to a new folder.
+  3. Compare it with the owner, then move it back.
+  
+  
+  'fail' !== 'pass'
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:235:47)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'fail',
+    expected: 'pass',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

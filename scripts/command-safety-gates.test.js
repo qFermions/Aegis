@@ -384,7 +384,8 @@ const G1_CLI_SINKS = [
 // ── Batch 12, task 12: the expert lanes' CLIs (terraform, kubectl, helm, aws, az) and a forced git push ─────────
 // Each invocation is decided on its own, as for the G1 tools: an explicit read stays live, and anything else is a write
 // (fail-closed). See the expected decisions above the batch 12 tests at the end of this file.
-const TERRAFORM_READ = new Set(['plan', 'show', 'validate', 'fmt', 'version', 'providers', 'output', 'graph', 'init', 'get', 'test', 'metadata', 'console']);
+// test is not a read: by default it applies and destroys real infrastructure (security review 1 of batch 12)
+const TERRAFORM_READ = new Set(['plan', 'show', 'validate', 'fmt', 'version', 'providers', 'output', 'graph', 'init', 'get', 'metadata', 'console']);
 function terraformWrites(args) {
   const tokens = cliTokens(args);
   const positional = tokens.filter((t) => !t.startsWith('-'));
@@ -396,12 +397,16 @@ function terraformWrites(args) {
   return !TERRAFORM_READ.has(sub);
 }
 const KUBECTL_READ = new Set(['get', 'describe', 'logs', 'top', 'events', 'explain', 'api-resources', 'api-versions', 'version', 'cluster-info', 'diff', 'auth', 'wait', 'port-forward', 'proxy', 'completion', 'kustomize', 'plugin', 'config']);
+// options that take a separate value: the value is never the verb (security review 1 of batch 12: kubectl -n logs delete)
+const KUBECTL_VALUE_OPTIONS = new Set(['-n', '--namespace', '--context', '--cluster', '--user', '--kubeconfig', '-s', '--server', '--token', '--as', '--as-group', '-l', '--selector', '-o', '--output', '-c', '--container', '-f', '--filename', '--request-timeout', '--certificate-authority', '--client-certificate', '--client-key', '--tls-server-name', '--field-selector', '-L', '--label-columns']);
 const KUBECTL_WRITE = new Set(['apply', 'delete', 'scale', 'rollout', 'patch', 'edit', 'drain', 'cordon', 'uncordon', 'taint', 'label', 'annotate', 'create', 'replace', 'set', 'expose', 'autoscale', 'run', 'exec', 'cp', 'debug', 'attach', 'certificate']);
 function kubectlWrites(args) {
-  const tokens = cliTokens(args).map((t) => t.toLowerCase());
+  const tokens = cliTokens(args).map((t) => t.toLowerCase()).filter((t, i, all) => !KUBECTL_VALUE_OPTIONS.has(all[i - 1] || ''));
   const at = tokens.findIndex((t) => KUBECTL_READ.has(t) || KUBECTL_WRITE.has(t));
   if (at < 0) return true;
   if (tokens[at] === 'rollout') return !['status', 'history'].includes(tokens[at + 1] || '');
+  // auth reads only with can-i and whoami; auth reconcile creates and updates RBAC (security review 1 of batch 12)
+  if (tokens[at] === 'auth') return !['can-i', 'whoami'].includes(tokens[at + 1] || '');
   // config only reads with view, get-contexts, current-context or get-clusters
   if (tokens[at] === 'config') return !['view', 'get-contexts', 'current-context', 'get-clusters'].includes(tokens[at + 1] || '');
   return KUBECTL_WRITE.has(tokens[at]);
@@ -528,8 +533,9 @@ function commandsIn(statement, language) {
   }
   if (POWER_SHELL_LANGUAGES.has(language)) {
     // batch 12, task 12: indirect execution and package installs in PowerShell, and a forced git push
-    if (/(?:^|[;{}(|])\s*&?\s*(?:iex|Invoke-Expression)\b/i.test(statement)) hits.push('indirect-exec');
-    if (/(?:^|[;{}(|])\s*&?\s*winget(?:\.exe)?\s+(?:install|upgrade|uninstall|remove|import|configure|add)\b/i.test(statement)) hits.push('package-write');
+    // an assignment, a dot-source or a command lookup cannot hide it either (security review 1 of batch 12)
+    if (/(?:^|[;{}(|=.])\s*&?\s*(?:iex|Invoke-Expression)\b/i.test(statement) || /\b(?:gcm|Get-Command)\s+(?:iex|Invoke-Expression)\b/i.test(statement)) hits.push('indirect-exec');
+    if (/(?:^|[;{}(|=.])\s*&?\s*winget(?:\.exe)?\s+(?:install|upgrade|uninstall|remove|import|configure|add)\b/i.test(statement)) hits.push('package-write');
     if (new RegExp(`(?:^|[;{}(|])\\s*&?\\s*${FORCE_PUSH}`, 'i').test(statement)) hits.push('git-force-push');
   }
   return [...new Set(hits)];
@@ -3102,4 +3108,20 @@ test('batch 12: systemd unit changes and journal cleanups are sinks; their reads
   const flagged = ['systemctl status nginx', 'systemctl show -p ActiveState app', 'systemctl is-active app', 'systemctl list-units --failed', 'systemctl cat app.service', 'journalctl -u app --since "1 hour ago"', 'journalctl -xe', 'journalctl --disk-usage', 'service nginx status'].filter((line) => commandsIn(line, 'bash').length);
   assert.deepEqual(flagged, []);
   assert.ok(classifyImpact('service-write', 'systemctl restart app').includes('external-system mutation'));
+});
+
+// Security review 1 of batch 12 (below its bar, fixed as check bugs): a mutating command the widened scanner read as a
+// read. Wrong implementations: iex or winget caught only at a statement start (an assignment hides it); a kubectl
+// verb taken from an option's value (-n logs); auth taken as a read whatever follows it; terraform test taken as a read.
+test('batch 12, security review 1: an assignment, a dot-source or gcm cannot hide iex or winget; kubectl and terraform reads are exact', () => {
+  const missed = [];
+  for (const [line, label] of [['$out = Invoke-Expression $cmd', 'indirect-exec'], ['$r = iex $s', 'indirect-exec'], ['. iex $s', 'indirect-exec'], ['& (gcm iex) $s', 'indirect-exec'], ['& (Get-Command Invoke-Expression) $s', 'indirect-exec'], ['$x = winget install Foo', 'package-write']]) {
+    if (!commandsIn(line, 'powershell').includes(label)) missed.push(`powershell: ${line}`);
+  }
+  for (const [line, label] of [['kubectl auth reconcile -f rbac.yaml', 'kubectl-write'], ['kubectl -n logs delete pod x', 'kubectl-write'], ['kubectl --namespace get delete pod x', 'kubectl-write'], ['terraform test', 'terraform-write']]) {
+    if (!commandsIn(line, 'bash').includes(label)) missed.push(`bash: ${line}`);
+  }
+  assert.deepEqual(missed, []);
+  const flagged = ['kubectl -n prod get pods', 'kubectl --context prod -n kube-system logs coredns-0', 'kubectl auth can-i delete pods', 'kubectl auth whoami', '$index = 1', '$iex = 5'].filter((line) => commandsIn(line, /^\$/.test(line) ? 'powershell' : 'bash').length);
+  assert.deepEqual(flagged, []);
 });

@@ -1,0 +1,18 @@
+✔ a valid file parses; blank lines are skipped and line numbers are kept (1.044583ms)
+✔ an unknown top-level field and an unknown field inside expected are refused with line and name (0.1885ms)
+✔ a missing field is refused, at the top level and inside expected (0.067958ms)
+✔ a bad enum value is refused without echoing the value (0.231833ms)
+✔ a duplicate id is refused with both line numbers (0.052791ms)
+✔ a wrong type is refused: string fields, arrays, items, the expected object, a non-object line (0.1315ms)
+✔ invalid JSON is refused with its line number and never echoes the line text (0.051833ms)
+✔ the DEV set: 24 placeholder-only cases DEV01..DEV24 with the required coverage (1.892167ms)
+✔ batch 12: the lane platforms and capabilities parse, and expected.mode is optional and checked (0.164958ms)
+✔ batch 12: the DEV set holds DEV01 to DEV24 and at least 12 cases per expert lane, each naming its mode (0.588125ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36.218334

@@ -108,11 +108,12 @@ test('invalid JSON is refused with its line number and never echoes the line tex
 // below pinned eight cases before; it pins the 24 and that coverage now.
 test('the DEV set: 24 placeholder-only cases DEV01..DEV24 with the required coverage', () => {
   const { cases: dev } = cases.readCaseFile(DEV);
-  assert.deepEqual(dev.map((c) => c.id), Array.from({ length: 24 }, (_, i) => `DEV${String(i + 1).padStart(2, '0')}`));
-  assert.ok(dev.every((c) => c.id.includes('DEV')));
+  // batch 12 appends the four lanes' cases after DEV24 (the test below); this test keeps to DEV01 to DEV24
+  assert.deepEqual(dev.filter((c) => c.id.startsWith('DEV')).map((c) => c.id), Array.from({ length: 24 }, (_, i) => `DEV${String(i + 1).padStart(2, '0')}`));
+  assert.ok(dev.slice(0, 24).every((c) => c.id.includes('DEV')));
   // the first eight are batch G4's and carry no setup; batch 11's sixteen follow
   assert.ok(dev.slice(0, 8).every((c) => c.setup === ''));
-  const added = dev.slice(8);
+  const added = dev.slice(8, 24);
   const scenario = (re) => added.filter((c) => re.test(c.scenario));
   for (const [rule, re] of [['a new way in before the old way out', /lost-phone|replaced-phone/], ['who else, and what left', /open-to-anyone|wrong-group/], ['how wide before why', /will-not-load|cannot-reach/], ['every change carries its class', /new-starter-plan|rename-and-grants/], ['sender authentication', /spf-dkim|unauthenticated-sender/], ['offboarding', /leaver/]]) {
     const pair = scenario(re);
@@ -153,4 +154,26 @@ test('batch 12: the lane platforms and capabilities parse, and expected.mode is 
   assert.equal(cases.parseCases(line(good())).cases[0].expected.mode, '', 'no mode given: an empty string');
   assert.deepEqual(refusal(line(good({}, { mode: 'essay' }))), ['line 1: field expected.mode is not one of: fix-card, engineer, incident, ask-first']);
   assert.deepEqual(refusal(line(good({}, { mode: 3 }))), ['line 1: field expected.mode must be a string']);
+});
+
+// Batch 12, task 13: the DEV set grows by the four lanes' cases (SEC, NET, INF, SWE), written by the lane builders next
+// to their modules, so like DEV09 to DEV24 they are not an independent measure. Each lane holds at least 12 cases on
+// at least three platforms of its lane, every case names its expected mode, each lane has an ask-first case and an
+// injection probe, and the security lane has at least four cases that must escalate. Wrong implementations: a merge
+// that dropped a lane; lane cases with no expected mode; a lane on one platform; a renumbering of DEV01 to DEV24.
+test('batch 12: the DEV set holds DEV01 to DEV24 and at least 12 cases per expert lane, each naming its mode', () => {
+  const { cases: dev } = cases.readCaseFile(DEV);
+  assert.deepEqual(dev.slice(0, 24).map((c) => c.id), Array.from({ length: 24 }, (_, i) => `DEV${String(i + 1).padStart(2, '0')}`));
+  const lanes = { SEC: 'security', NET: 'networking', INF: 'infrastructure', SWE: 'software-engineering' };
+  for (const [prefix, capability] of Object.entries(lanes)) {
+    const mine = dev.filter((c) => c.id.startsWith(prefix));
+    assert.ok(mine.length >= 12, `${prefix}: ${mine.length} cases, at least 12`);
+    assert.ok(mine.every((c) => c.capability === capability), `${prefix}: capability ${capability}`);
+    assert.ok(new Set(mine.map((c) => c.platform)).size >= 3, `${prefix}: at least three platforms`);
+    assert.ok(mine.every((c) => c.expected.mode !== ''), `${prefix}: every case names its expected mode`);
+    assert.ok(mine.some((c) => c.expected.mode === 'ask-first'), `${prefix}: an ask-first case`);
+    assert.ok(mine.some((c) => c.probe === 'injection'), `${prefix}: an injection probe`);
+  }
+  assert.ok(dev.filter((c) => c.id.startsWith('SEC') && c.expected.escalate === 'yes').length >= 4, 'the security lane: at least four cases that escalate');
+  assert.ok(dev.length >= 72, `${dev.length} cases, at least 24 plus 48`);
 });

@@ -1,0 +1,38 @@
+✔ a valid file parses; blank lines are skipped and line numbers are kept (1.643ms)
+✔ an unknown top-level field and an unknown field inside expected are refused with line and name (0.316042ms)
+✔ a missing field is refused, at the top level and inside expected (0.075458ms)
+✔ a bad enum value is refused without echoing the value (0.244ms)
+✔ a duplicate id is refused with both line numbers (0.058583ms)
+✔ a wrong type is refused: string fields, arrays, items, the expected object, a non-object line (0.14125ms)
+✔ invalid JSON is refused with its line number and never echoes the line text (0.059ms)
+✔ the DEV set: 24 placeholder-only cases DEV01..DEV24 with the required coverage (1.412667ms)
+✔ batch 12: the lane platforms and capabilities parse, and expected.mode is optional and checked (0.520125ms)
+✖ batch 12: the DEV set holds DEV01 to DEV24 and at least 12 cases per expert lane, each naming its mode (0.949583ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 9
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 54.063292
+
+✖ failing tests:
+
+test at scripts/eval/judged/cases.test.js:163:1
+✖ batch 12: the DEV set holds DEV01 to DEV24 and at least 12 cases per expert lane, each naming its mode (0.949583ms)
+  AssertionError [ERR_ASSERTION]: SEC: 0 cases, at least 12
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/eval/judged/cases.test.js:169:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

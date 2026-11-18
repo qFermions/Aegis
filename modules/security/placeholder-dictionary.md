@@ -156,6 +156,17 @@ server) · `[UNIT_NAME]` (one systemd unit) · `[SNAPSHOT_ID]` (one backup recov
 snapshot) · `[RESTORE_TARGET]` (the new, alternate-location name a restore writes to, never the
 live resource).
 
+Security lane (batch 12, 2026-11-14): `[CREDENTIAL_ID]` (the ID a platform shows for one
+credential, never its secret value: an AWS access key ID, a Google Cloud service account key ID,
+an Azure client secret's ID, a GitHub token's name, a Slack app token's label) ·
+`[CLOUD_PRINCIPAL]` (the identity a cloud credential belongs to: an AWS IAM user or role name, an
+Azure app registration's name, or a Google Cloud service account's name written without its `@`
+part) · `[CLOUD_ACCOUNT_ID]` (an AWS account ID, an Azure subscription ID or a Google Cloud project
+ID) · `[MAIL_RULE_NAME]` (one inbox rule's name as Outlook shows it, kept as evidence before the
+rule is turned off) · `[MESSAGE_COUNT]` (the number of messages a purge selects, written in the
+ticket before the gate). `[APP_NAME]` and `[APP_ID]` also cover an Entra enterprise app and an
+Okta app integration.
+
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in
 placeholders (SR-8).

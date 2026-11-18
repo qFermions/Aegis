@@ -1,0 +1,10 @@
+Full run: TMPDIR=/private/tmp node --test, on the lane's tree after the merge of feat/batch12-expert-lanes (2f2bcad), before the last lane commit.
+tests 2456, pass 2413, fail 42, skipped 1.
+
+Compared with docs/aegis/demo/evidence/batch12/baseline/failing-names.txt (41 names, pwsh-only):
+- names in both: 41 (every baseline name still fails, none stopped failing)
+- names not in the baseline: 1, "no file of this batch holds a long dash"
+
+That one failed on docs/aegis/demo/evidence/batch12/security/command-structure-lint.txt, the lane's saved lint output, which held the lint's own long dash.
+The dash was replaced by a hyphen, as the baseline's saved lint output already does, and scripts/demo/wiring.test.js then ran: tests 7, pass 7, fail 0.
+So the final tree fails exactly the 41 baseline names.

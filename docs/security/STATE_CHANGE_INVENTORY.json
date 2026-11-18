@@ -4056,6 +4056,65 @@
       ]
     },
     {
+      "id": "identity-compromise-forwarding-off-portal",
+      "file": ".claude/commands/identity-compromise.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "identity-compromise-gmail-persistence-preview",
+      "file": ".claude/commands/identity-compromise.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "gam-write",
+          "count": 2
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "identity-compromise-hidden-rule-preview",
+      "file": ".claude/commands/identity-compromise.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "identity-compromise-inbox-rule-off-portal",
+      "file": ".claude/commands/identity-compromise.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
       "id": "infra-safe-gcp-binding",
       "file": "knowledge/infrastructure/safe-changes.md",
       "kind": "shell",
@@ -5602,6 +5661,166 @@
       ]
     },
     {
+      "id": "leaked-key-aws-key-deactivate-portal",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:deactivate",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "leaked-key-aws-key-delete-portal",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:delete",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "leaked-key-aws-role-sessions-revoke-portal",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "leaked-key-azure-secret-delete-portal",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "leaked-key-gcp-key-disable",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "shell",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "gcloud-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related"
+      ]
+    },
+    {
+      "id": "leaked-key-github-pat-revoke-portal",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "leaked-key-github-revoke-api-preview",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "http-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "leaked-key-history-cleanup-preview",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "shell",
+      "mode": "preview",
+      "sinks": [
+        {
+          "sink": "git-force-push",
+          "count": 1
+        },
+        {
+          "sink": "git-write",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "reversible state change"
+      ]
+    },
+    {
+      "id": "leaked-key-issuer-handover-preview",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation"
+      ]
+    },
+    {
+      "id": "leaked-key-slack-token-revoke-portal",
+      "file": ".claude/commands/leaked-key.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "credential-related",
+        "external-system mutation",
+        "permission-related"
+      ]
+    },
+    {
       "id": "license-audit-documentation-portal",
       "file": ".claude/commands/license-audit.md",
       "kind": "portal",
@@ -6960,6 +7179,80 @@
       "sinks": [],
       "impactCategories": [
         "credential-related",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "oauth-app-review-consent-policy-preview",
+      "file": ".claude/commands/oauth-app-review.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "oauth-app-review-entra-disable-portal",
+      "file": ".claude/commands/oauth-app-review.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "identity-related",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "oauth-app-review-entra-grant-cleanup-preview",
+      "file": ".claude/commands/oauth-app-review.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "oauth-app-review-entra-user-grant-remove-portal",
+      "file": ".claude/commands/oauth-app-review.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:remove",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "permission-related"
+      ]
+    },
+    {
+      "id": "oauth-app-review-okta-deactivate-portal",
+      "file": ".claude/commands/oauth-app-review.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:deactivate",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
         "external-system mutation",
         "identity-related",
         "security-sensitive"
@@ -8464,6 +8757,52 @@
       ]
     },
     {
+      "id": "phishing-bec-block-sender-portal",
+      "file": ".claude/commands/phishing-bec.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:add",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "phishing-bec-gmail-delete-preview",
+      "file": ".claude/commands/phishing-bec.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "phishing-bec-purge-portal",
+      "file": ".claude/commands/phishing-bec.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
+        "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
       "id": "plan-bitlocker-key",
       "file": "docs/plan-mode-templates.md",
       "kind": "portal",
@@ -9166,6 +9505,52 @@
       "impactCategories": [
         "external-system mutation",
         "identity-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "ransomware-first-hour-isolate-portal",
+      "file": ".claude/commands/ransomware-first-hour.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:isolate",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "external-system mutation",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "ransomware-first-hour-network-isolation-preview",
+      "file": ".claude/commands/ransomware-first-hour.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "permission-related",
+        "security-sensitive"
+      ]
+    },
+    {
+      "id": "ransomware-first-hour-release-portal",
+      "file": ".claude/commands/ransomware-first-hour.md",
+      "kind": "portal",
+      "mode": "gated",
+      "sinks": [
+        {
+          "sink": "portal:release",
+          "count": 1
+        }
+      ],
+      "impactCategories": [
+        "data-removal related",
+        "destructive",
+        "external-system mutation",
         "security-sensitive"
       ]
     },
@@ -11616,6 +12001,17 @@
       "impactCategories": [
         "external-system mutation",
         "reversible state change"
+      ]
+    },
+    {
+      "id": "vuln-triage-compensating-control-preview",
+      "file": ".claude/commands/vuln-triage.md",
+      "kind": "portal",
+      "mode": "preview",
+      "sinks": [],
+      "impactCategories": [
+        "external-system mutation",
+        "security-sensitive"
       ]
     },
     {

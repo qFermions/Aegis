@@ -49,6 +49,8 @@ const MIXED_STATE_COMMANDS = [
   // batch 12: infrastructure and cloud lane
   'terraform-plan-review', 'k8s-pod-failure', 'cloud-access-denied', 'cloud-network-block', 'linux-server-triage',
   'cloud-cost-spike', 'backup-restore-test',
+  // batch 12: security lane
+  'incident-triage', 'identity-compromise', 'leaked-key', 'phishing-bec', 'ransomware-first-hour', 'oauth-app-review', 'vuln-triage',
 ];
 
 const REFERENCE_BOUNDARIES = [

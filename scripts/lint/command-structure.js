@@ -72,7 +72,9 @@ const VARIANTS = {
     'github-repo-access', 'github-branch-protection', 'github-org-security', 'github-offboard-member',
     'github-security-alerts', 'okta-group-membership',
     // batch 12: infrastructure and cloud lane (knowledge/infrastructure/)
-    'terraform-plan-review', 'backup-restore-test'],
+    'terraform-plan-review', 'backup-restore-test',
+    // batch 12: security lane (knowledge/security/)
+    'identity-compromise', 'leaked-key', 'phishing-bec', 'oauth-app-review'],
   B: ['troubleshoot', 'mfa-issue', 'printer-issue', 'wifi-issue', 'lan-wan', 'vpn-check', 'ad-connect', 'teams-issue',
     'outlook-issue', 'onedrive-issue', 'email-to-spam', 'intune-compliance', 'meraki-health', 'meraki-vpn-status',
     'sip-trunk-status', 'security-alert-triage',
@@ -83,7 +85,9 @@ const VARIANTS = {
     // batch 12: networking lane (knowledge/networking/)
     'dns-troubleshoot', 'tls-certificate', 'vpn-tunnel-down', 'zero-trust-block', 'mtu-path-issue',
     // batch 12: infrastructure and cloud lane (knowledge/infrastructure/)
-    'k8s-pod-failure', 'cloud-access-denied', 'cloud-network-block', 'linux-server-triage', 'cloud-cost-spike'],
+    'k8s-pod-failure', 'cloud-access-denied', 'cloud-network-block', 'linux-server-triage', 'cloud-cost-spike',
+    // batch 12: security lane (knowledge/security/)
+    'incident-triage', 'ransomware-first-hour', 'vuln-triage'],
   C: ['write-sop', 'runbook', 'incident-report', 'board-report', 'vendor-email', 'escalation-note', 'ticket-response',
     'draft-email', 'daily-start', 'daily-wrap', 'vent'],
   D: ['cloud-lab', 'devops-drill', 'ai-engineer-drill'],

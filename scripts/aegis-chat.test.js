@@ -267,3 +267,30 @@ test('batch 12, task 5: the chat loads the tool server with its own audit file, 
   assert.ok(!off[0].includes('--mcp-config') && !off[0].some((a) => /mcp__aegis-tools__/.test(a)));
   assert.doesNotMatch(quiet.join(''), /public lookups/);
 });
+
+// Code review 1 of batch 12, class D: every call to main() made ~/aegis-asks/chat-<id>/ and left it behind, even when
+// no lookup was made or claude never started (the tests alone left three in the real home folder each run). Now the
+// folder goes when its audit file is empty, and stays when the chat made lookups. Wrong implementations: a folder
+// left behind after a chat with no lookups; an audit file that holds calls deleted.
+test('code review 1, class D: a chat with no lookups leaves no chat folder; one with lookups keeps its audit file', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-chat-folders-'));
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  const chats = () => (fs.existsSync(path.join(home, 'aegis-asks')) ? fs.readdirSync(path.join(home, 'aegis-asks')).filter((d) => d.startsWith('chat-')) : []);
+  const quiet = new EventEmitter();
+  const r1 = chat.main([], { HOME: home }, { spawn: () => quiet, out: () => {}, err: () => {} });
+  quiet.emit('exit', 0);
+  assert.equal(await r1, 0);
+  assert.deepEqual(chats(), [], 'no lookups: no folder left');
+  const failed = await chat.main([], { HOME: home }, { spawn: () => { const e = new Error('nope'); e.code = 'ENOENT'; throw e; }, out: () => {}, err: () => {} });
+  assert.equal(failed, 2);
+  assert.deepEqual(chats(), [], 'claude never started: no folder left');
+  const busy = new EventEmitter();
+  let seen;
+  const r2 = chat.main([], { HOME: home }, { spawn: (cmd, args) => { seen = args; return busy; }, out: () => {}, err: () => {} });
+  const server = JSON.parse(seen[seen.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'];
+  fs.appendFileSync(server.args[server.args.indexOf('--audit') + 1], '{"tool":"net_dns"}\n');
+  busy.emit('exit', 0);
+  assert.equal(await r2, 0);
+  assert.equal(chats().length, 1, 'lookups were made: the audit file stays');
+});

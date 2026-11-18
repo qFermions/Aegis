@@ -1,0 +1,9 @@
+✔ code review 1, class D: a chat with no lookups leaves no chat folder; one with lookups keeps its audit file (2.695792ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.228333

@@ -80,7 +80,17 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
     // Ctrl-C reaches the whole foreground group: claude uses it to stop a reply, so the parent ignores it
     // while claude runs, or it would exit and leave claude on the terminal (code review round 1, finding 1)
     const ignoreInterrupt = () => {};
-    const finish = (code) => { if (!done) { done = true; process.removeListener('SIGINT', ignoreInterrupt); resolve(code); } };
+    // a chat that made no lookup leaves no folder behind: its audit file is empty or was never written (code review 1
+    // of batch 12, class D); one that made lookups keeps its audit file
+    const tidy = () => {
+      if (!auditFile) return;
+      let size = -1;
+      try { size = fs.statSync(auditFile).size; } catch { size = 0; }
+      if (size !== 0) return;
+      try { fs.unlinkSync(auditFile); } catch { /* never written */ }
+      try { fs.rmdirSync(path.dirname(auditFile)); } catch { /* not empty or gone: left as it is */ }
+    };
+    const finish = (code) => { if (!done) { done = true; process.removeListener('SIGINT', ignoreInterrupt); tidy(); resolve(code); } };
     process.on('SIGINT', ignoreInterrupt);
     const failed = (e) => { io.err(`aegis-chat: could not start claude (${e.code || 'error'}). Is Claude Code installed? Type claude once to install it and sign in.\n`); finish(2); };
     let child;

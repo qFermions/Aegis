@@ -53,9 +53,11 @@ const USD_PER_SESSION = SMOKE_USD_PER_SESSION;
 const DESK_MAX_TURNS = 40;
 // What a session will likely cost, from the first real run (1.00 and 2.07 US dollars) and a guess that a
 // four-system offboarding costs about twice that. Used only to stop before a limit, never reported as spent
-// unless a session reports no cost.
+// unless a session reports no cost. Batch 12 (task 13): thirteen sessions on 2026-11-18 cost 0.18 to 0.84 each,
+// and the old default of 2.00 stopped four tickets with money left, so the default is 1.00, still above every
+// measured session but T2's; T2 keeps its own 4.00.
 const LIKELY_USD = Object.freeze({ T2: 4 });
-const LIKELY_USD_DEFAULT = 2;
+const LIKELY_USD_DEFAULT = 1;
 // a messy twin (T2m) costs what its tidy twin (T2) does
 const likelyUsd = (id) => LIKELY_USD[String(id).replace(/m$/, '')] || LIKELY_USD_DEFAULT;
 const DESK_SESSION_TIMEOUT_MS = 1500000;

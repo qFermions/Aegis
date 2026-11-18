@@ -1,0 +1,9 @@
+✔ batch 12, task 13: with 3.11 spent under a 5.00 limit, the next ticket runs (the guess is 1.00 a session) (160.439ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 203.625792

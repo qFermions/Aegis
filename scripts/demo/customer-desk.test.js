@@ -282,7 +282,8 @@ test('the allowance guard stops before a ticket that could pass the limit, and r
   assert.equal(r.calls().length, 1);
   assert.equal(r.code, 3, 'a run the guard stopped says so');
   // money spent before this command counts
-  const earlier = await runDesk(t, { only: ['T1'], argv: ['--budget-usd', '20', '--spent-usd', '18.5'] });
+  // 19.5 spent (18.5 before batch 12 moved the guess from 2.00 to 1.00): one more session could pass 20
+  const earlier = await runDesk(t, { only: ['T1'], argv: ['--budget-usd', '20', '--spent-usd', '19.5'] });
   assert.deepEqual(earlier.run.tickets, []);
   assert.deepEqual(earlier.run.not_run.map((n) => n.id), ['T1']);
   assert.ok(fs.existsSync(path.join(earlier.results, 'desk.html')), 'the page is written even with nothing run');
@@ -1617,4 +1618,14 @@ test('batch 12, task 5: the desk loads the tool server with an audit file per ti
   const out = [];
   await desk.main(['--only', 'T7', '--no-tools'], {}, { out: (s) => out.push(s), err: () => {} });
   assert.doesNotMatch(out.join(''), /--mcp-config/);
+});
+
+// Batch 12, task 13: the guard's first guess of a session's cost moves toward measured costs. On 2026-11-18 thirteen
+// demo sessions cost 0.18 to 0.84 US dollars each (docs/aegis/demo/evidence/batch12/full-run-10 and full-run-11), and
+// the old guess of 2.00 stopped T8m, T9m, T7 and T8 with money left. Wrong implementation: a guess still at 2.00 (the
+// ticket below would not run with 3.11 spent under a 5.00 limit). T2's own guess (4.00, a four-system offboarding) stays.
+test('batch 12, task 13: with 3.11 spent under a 5.00 limit, the next ticket runs (the guess is 1.00 a session)', async (t) => {
+  const r = await runDesk(t, { only: ['T8'], answers: { T8: 'Which mailbox?\nGate: none' }, argv: ['--budget-usd', '5', '--spent-usd', '3.11'] });
+  assert.deepEqual(r.run.tickets.map((k) => k.id), ['T8']);
+  assert.deepEqual(r.run.not_run || [], [], 'nothing stopped by the guard');
 });

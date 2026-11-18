@@ -619,9 +619,12 @@ test('over real stdio the server writes protocol lines only to stdout and audits
 // cloud.google.com's documentation now redirects permanently (seen by the infrastructure lane builder on 2026-11-14),
 // so without it every Google Cloud docs fetch ends in refused_redirect. Wrong implementations: a list that dropped a
 // charter host; a wildcard or a host the charter did not name slipped in without a reason recorded here.
-test('the docs allowlist is the charter\'s 26 hosts plus docs.cloud.google.com, and nothing else', () => {
+// The owner added docs.slack.dev and tools.slack.dev on 2026-11-18: Slack moved its developer docs to docs.slack.dev and
+// the Bolt and CLI docs to tools.slack.dev; api.slack.com stays, so an old link that redirects there resolves inside the list.
+test('the docs allowlist is the charter\'s 26 hosts plus docs.cloud.google.com, docs.slack.dev and tools.slack.dev, and nothing else', () => {
   const { hosts } = JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname, '..', '..', '..', 'config', 'docs-allowlist.json'), 'utf8'));
   const charter = ['learn.microsoft.com', 'support.microsoft.com', 'support.google.com', 'knowledge.workspace.google.com', 'developers.google.com', 'cloud.google.com', 'help.okta.com', 'developer.okta.com', 'learn.jamf.com', 'support.apple.com', 'developer.apple.com', 'docs.aws.amazon.com', 'developers.cloudflare.com', 'fleetdm.com', 'docs.github.com', 'slack.com', 'api.slack.com', 'linear.app', 'kubernetes.io', 'developer.hashicorp.com', 'documentation.meraki.com', 'nvd.nist.gov', 'www.cisa.gov', 'attack.mitre.org', 'datatracker.ietf.org', 'www.rfc-editor.org'];
-  assert.deepEqual([...hosts].sort(), [...charter, 'docs.cloud.google.com'].sort());
+  assert.deepEqual([...hosts].sort(), [...charter, 'docs.cloud.google.com', 'docs.slack.dev', 'tools.slack.dev'].sort());
+  assert.ok(hosts.includes('api.slack.com'), 'kept: an old api.slack.com link that redirects resolves inside the list');
   assert.ok(hosts.every((h) => /^[a-z0-9.-]+$/.test(h)), 'exact host names, no wildcard');
 });

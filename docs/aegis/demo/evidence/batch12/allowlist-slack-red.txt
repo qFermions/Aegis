@@ -1,0 +1,120 @@
+✔ a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title (9.229625ms)
+✔ a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted (1.178542ms)
+✔ net_http refuses http://169.254.169.254/ before any query or request (0.174334ms)
+✔ net_http refuses http://169.254.169.254/latest/meta-data/ before any query or request (0.096292ms)
+✔ net_http refuses http://localhost before any query or request (0.106875ms)
+✔ net_http refuses http://10.0.0.1 before any query or request (0.085ms)
+✔ net_http refuses http://[::1]/ before any query or request (0.237292ms)
+✔ net_http refuses http://2130706433/ before any query or request (0.180583ms)
+✔ net_http refuses http://[::ffff:127.0.0.1]/ before any query or request (0.115834ms)
+✔ net_http refuses http://0x7f.1/ before any query or request (0.094709ms)
+✔ net_http refuses http://127.1/ before any query or request (0.059292ms)
+✔ net_http refuses http://[fd00:ec2::254]/ before any query or request (0.095375ms)
+✔ net_http refuses http://168.63.129.16/ before any query or request (0.059583ms)
+✔ net_http refuses http://[64:ff9b::a9fe:a9fe]/ before any query or request (0.289583ms)
+✔ a name whose resolution returns a private address is refused, with nothing sent (0.289958ms)
+✔ a name returning one public and one private address is refused (0.198333ms)
+✔ a redirect from a public URL to a private one is refused, with no request sent to the private hop (1.494875ms)
+✔ a docs redirect to an off-list host is refused, before that host is resolved (0.821709ms)
+✔ the connection uses the pinned address even if a second resolution would return a different one (rebinding) (0.545333ms)
+✔ port 22 and 8080 are refused (0.224792ms)
+✔ ftp: and file: are refused (0.149875ms)
+✔ user info is refused (0.100834ms)
+✔ GET reads at most 4 KB and then stops reading (0.394583ms)
+✔ the call cap holds: after 30 calls every call returns call_cap_reached (0.496709ms)
+✔ a TLS check on a fake expired certificate reports expired true and the verification error (0.244834ms)
+✔ tools/list lists exactly four tools, each with a strict input schema and no method, body, header or credential argument (0.155417ms)
+✔ an unknown method returns -32601 (0.048709ms)
+✔ malformed JSON returns -32700 (0.054833ms)
+✔ initialize echoes the client protocol version, notifications get no reply, a bad tools/call shape is -32602 (0.089ms)
+✔ net_dns validates the name, refuses private A and AAAA answers and maps the record types (0.27275ms)
+✔ net_http follows public redirects, re-resolving each hop, and returns only the selected headers (1.0605ms)
+✔ docs_fetch caps bytes and text, says when it cut, and caches by URL (3.16175ms)
+✔ a server that never answers ends in timeout (200.676708ms)
+✔ every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content (0.494834ms)
+✔ the audit file is created with mode 0600 and only appended (0.893375ms)
+✔ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (36.967292ms)
+✖ the docs allowlist is the charter's 26 hosts plus docs.cloud.google.com, docs.slack.dev and tools.slack.dev, and nothing else (0.738125ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 36
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 299.82325
+
+✖ failing tests:
+
+test at scripts/mcp/aegis-tools/server.test.js:624:1
+✖ the docs allowlist is the charter's 26 hosts plus docs.cloud.google.com, docs.slack.dev and tools.slack.dev, and nothing else (0.738125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      'api.slack.com',
+      'attack.mitre.org',
+      'cloud.google.com',
+      'datatracker.ietf.org',
+  ...
+      'docs.github.com',
+  -   'docs.slack.dev',
+      'documentation.meraki.com',
+      'fleetdm.com',
+      'help.okta.com',
+      'knowledge.workspace.google.com',
+      'kubernetes.io',
+  ...
+      'support.microsoft.com',
+  -   'tools.slack.dev',
+      'www.cisa.gov',
+      'www.rfc-editor.org'
+    ]
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/mcp/aegis-tools/server.test.js:627:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [
+      'api.slack.com',            'attack.mitre.org',
+      'cloud.google.com',         'datatracker.ietf.org',
+      'developer.apple.com',      'developer.hashicorp.com',
+      'developer.okta.com',       'developers.cloudflare.com',
+      'developers.google.com',    'docs.aws.amazon.com',
+      'docs.cloud.google.com',    'docs.github.com',
+      'documentation.meraki.com', 'fleetdm.com',
+      'help.okta.com',            'knowledge.workspace.google.com',
+      'kubernetes.io',            'learn.jamf.com',
+      'learn.microsoft.com',      'linear.app',
+      'nvd.nist.gov',             'slack.com',
+      'support.apple.com',        'support.google.com',
+      'support.microsoft.com',    'www.cisa.gov',
+      'www.rfc-editor.org'
+    ],
+    expected: [
+      'api.slack.com',                  'attack.mitre.org',
+      'cloud.google.com',               'datatracker.ietf.org',
+      'developer.apple.com',            'developer.hashicorp.com',
+      'developer.okta.com',             'developers.cloudflare.com',
+      'developers.google.com',          'docs.aws.amazon.com',
+      'docs.cloud.google.com',          'docs.github.com',
+      'docs.slack.dev',                 'documentation.meraki.com',
+      'fleetdm.com',                    'help.okta.com',
+      'knowledge.workspace.google.com', 'kubernetes.io',
+      'learn.jamf.com',                 'learn.microsoft.com',
+      'linear.app',                     'nvd.nist.gov',
+      'slack.com',                      'support.apple.com',
+      'support.google.com',             'support.microsoft.com',
+      'tools.slack.dev',                'www.cisa.gov',
+      'www.rfc-editor.org'
+    ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

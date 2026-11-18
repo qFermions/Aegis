@@ -206,3 +206,16 @@ test('the mode row reads no part label inside a fenced code block', () => {
   const answer = answerOf('a-aws-fail').replace('**Blast radius:**', `${yaml}\n**Blast radius:**`);
   assert.equal(expert.modeRow(answer, { ticket: 'x' }).verdict, 'pass', expert.modeRow(answer, { ticket: 'x' }).detail);
 });
+
+// Code review 1 of batch 12, class B: a past-tense claim after a time word is still a claim; every claim in a sentence
+// is read; and the lookup wording section 10 asks for ("A DNS lookup ... returned", "(net_dns, date)") is held to the
+// record too. Wrong implementations: a condition word that hides any later claim; only the first claim in a sentence
+// read; a lookup report with no actor never checked.
+test('code review 1, class B: past claims after a time word, every claim in a sentence, and actor-less lookup reports need their calls', () => {
+  for (const text of ['After I checked the DNS records, the MX still points to the old host.', 'When I looked at it, I checked the certificate chain.', 'If needed I read the runbook; I checked the TLS certificate chain.', 'A DNS lookup for example.com returned two MX records (net_dns, 2026-11-14).', 'The certificate lookup showed the leaf expired yesterday (net_tls, 2026-11-14).']) {
+    assert.equal(claimsWithoutCalls(text, [{ tool: 'Read', path: 'x', error: false }]).length, 1, text);
+  }
+  const calls = [{ tool: 'mcp__aegis-tools__net_dns', target: 'example.com', error: false }];
+  assert.deepEqual(claimsWithoutCalls('A DNS lookup for example.com returned two MX records (net_dns, 2026-11-14).', calls), []);
+  assert.deepEqual(claimsWithoutCalls('Once Aegis has verified the new method, tell the user.', []), [], 'a future condition is still no claim');
+});

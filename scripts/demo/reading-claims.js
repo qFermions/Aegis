@@ -20,6 +20,12 @@
 
 // A first-person or Aegis actor, then at most two adverbs, then a check verb; "I haven't checked" holds no claim.
 const CLAIM = /\b(?:I|I've|I have|we|we've|we have|Aegis|Aegis has)\s+(?:(?:also|just|already|now|first|then|quickly|briefly)\s+){0,2}(checked|looked (?:at|up|into|over)|read|re-?read|reviewed|tested|probed|fetched|confirmed|verified|resolved|queried|inspected|traced|pinged|scanned|went through|pulled up|opened)\b/i;
+// Every claim in a sentence is read (code review 1 of batch 12, class B).
+const CLAIMS = new RegExp(CLAIM.source, 'gi');
+// The lookup wording answer-format section 10 asks for has no actor ("A DNS lookup for example.com returned ..."), and a
+// tool named in a citation ("(net_dns, 2026-11-14)") says that tool ran: both are held to the record (class B).
+const LOOKUP_REPORT = /\b(?:a|the|this|that|my|our)\s+(?:DNS|MX|TXT|web|HTTPS?|certificate|TLS|SSL|docs?|documentation)\s+(?:lookup|probe|check|query|fetch)\b[^.!?]{0,160}?\b(?:returned|returns|shows?|showed|found|finds|reported|says|said)\b/i;
+const TOOL_CITE = /\b(net_dns|net_http|net_tls|docs_fetch)\b/gi;
 // "I read this as a DNS problem" is a reading of the problem, not a check.
 const READ_AS = /\bread (?:it|this|that|these|those|the \w+(?: \w+)?) as\b/i;
 // What is not a claim that a check ran (found by replaying the check over batch 11's saved real answers): a checklist
@@ -39,7 +45,8 @@ const KINDS = [
 
 // Sentences of a text, line by line (a list line never runs into the next one).
 const sentencesOf = (text) => String(text).replace(/[‘’]/g, "'").split(/\r?\n/)
-  .map((line) => line.replace(/[*_`]/g, ''))
+  // emphasis marks go; an underscore inside a word stays, so a tool name such as net_dns is still read (class B)
+  .map((line) => line.replace(/[*`]/g, '').replace(/(?<![A-Za-z0-9])_+|_+(?![A-Za-z0-9])/g, ''))
   .filter((line) => !CHECKLIST.test(line) && !FUTURE_PART.test(line))
   .flatMap((line) => line.split(/(?<=[.!?])\s+(?=\S)/)).map((s) => s.trim()).filter(Boolean);
 
@@ -49,13 +56,22 @@ function claimsWithoutCalls(text, toolCalls = []) {
   const calls = Array.isArray(toolCalls) ? toolCalls.filter(ok) : [];
   const out = [];
   for (const sentence of sentencesOf(text)) {
-    const claim = CLAIM.exec(sentence);
-    if (!claim || READ_AS.test(sentence) || ASKER_SENT.test(sentence)) continue;
-    // the noun read-back ("Aegis read-back passed"), and a claim under a condition, say nothing ran
-    if (/^read$/i.test(claim[1]) && /^-?back\b/i.test(sentence.slice(claim.index + claim[0].length))) continue;
-    if (CONDITIONED.test(sentence.slice(0, claim.index))) continue;
-    // each claimed check in the sentence ("I checked X and looked up Y") needs its own call (found by the networking lane builder)
-    const parts = sentence.slice(claim.index).split(/\s+and\s+(?=(?:(?:also|then|just)\s+)?(?:checked|looked (?:at|up|into|over)|read|reviewed|tested|probed|fetched|confirmed|verified|resolved|queried|inspected|traced|pinged|scanned|went through|pulled up|opened)\b)/i);
+    // a tool named in the sentence must have run, whatever the wording around it
+    const cited = [...sentence.matchAll(TOOL_CITE)].map((m) => m[1].toLowerCase()).filter((t) => !calls.some((c) => new RegExp(`(?:^|__)${t}$`).test(c.tool)));
+    if (cited.length) { out.push({ sentence: sentence.slice(0, 160), kinds: [...new Set(cited)] }); continue; }
+    if (READ_AS.test(sentence) || ASKER_SENT.test(sentence)) continue;
+    // every claim in the sentence, each judged on its own; a claim under a condition is no claim only in the perfect
+    // form ("once Aegis has verified"), never in the past ("after I checked") (class B)
+    const live = [...sentence.matchAll(CLAIMS)].filter((m) => {
+      if (/^read$/i.test(m[1]) && /^-?back\b/i.test(sentence.slice(m.index + m[0].length))) return false;
+      return !(CONDITIONED.test(sentence.slice(0, m.index)) && /\b(?:has|have)\b|'ve\b/i.test(m[0]));
+    });
+    const report = LOOKUP_REPORT.exec(sentence);
+    if (!live.length && !report) continue;
+    // each claim owns the text up to the next claim; each claimed check in it ("I checked X and looked up Y") needs its
+    // own call (found by the networking lane builder and code review 1)
+    const starts = live.length ? live.map((m) => m.index) : [report.index];
+    const parts = starts.flatMap((at, i) => sentence.slice(at, starts[i + 1]).split(/\s+and\s+(?=(?:(?:also|then|just)\s+)?(?:checked|looked (?:at|up|into|over)|read|reviewed|tested|probed|fetched|confirmed|verified|resolved|queried|inspected|traced|pinged|scanned|went through|pulled up|opened)\b)/i));
     const unbacked = parts.filter((part) => {
       const kinds = KINDS.filter((k) => k.re.test(part));
       return !kinds.some((k) => calls.some((c) => k.tool.test(c.tool)));

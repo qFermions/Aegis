@@ -229,7 +229,7 @@ git pull
 <img src="docs/assets/aegis-flow.svg" width="880" alt="Five steps: a ticket in plain words; Aegis reads its runbooks and read-only checks; two answers, a Fix card for the tech and a reply for the person who asked; a person makes the change; Aegis checks it really worked.">
 </div>
 
-1. **It reads before it guesses.** Aegis works from 108 written runbooks for Microsoft 365, Entra, Intune, Exchange, Google Workspace, Okta, Jamf, macOS, Fleet, Slack, Linear, GitHub and more. Where a read-only check could show the failing event (a sign-in log, an audit log, a device's status), the first step tells you what to look for.
+1. **It reads before it guesses.** Aegis works from 133 written runbooks for Microsoft 365, Entra, Intune, Exchange, Google Workspace, Okta, Jamf, macOS, Fleet, Slack, Linear, GitHub and more. Where a read-only check could show the failing event (a sign-in log, an audit log, a device's status), the first step tells you what to look for.
 2. **It thinks like a senior tech.** It asks what changed recently, tries the lightest fix that can be undone before anything that can't, and gives a new way in before removing the old one.
 3. **A person makes the change.** Aegis cannot change accounts, devices, mail or tickets. Every change is a step you run, behind a typed confirmation for the risky ones.
 4. **It proves the fix worked.** After you make a change, Aegis names the read-back that shows it really took effect. Its rules forbid calling anything fixed before that check passes.

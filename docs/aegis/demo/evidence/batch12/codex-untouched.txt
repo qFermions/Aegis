@@ -1,0 +1,9 @@
+R3: .codex/ left exactly as it is (checked 2026-11-18 at a597b593)
+$ git status --short .codex
+?? .codex/
+$ find .codex -type f | wc -l
+13
+$ find .codex -newermt 2026-11-14 | wc -l   (anything created or changed since the batch began)
+0
+$ stat -f '%Sm' .codex
+Nov  7 22:03:57 2026

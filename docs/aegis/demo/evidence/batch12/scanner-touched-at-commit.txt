@@ -14,4 +14,4 @@ table or in a `text` fence, which the scanner does not read: .claude/agents/grap
 and :111, docs/security_model.md:163-164, modules/automation/powershell/safety_patterns.md:500,
 modules/automation/pre_commit_hooks.md:124 and :127, modules/security/security-doctrine.md:47-48,
 modules/security/threat_detection.md:97, :159 and :162 (a `text` fence).
-The lanes' runbooks are checked again after they merge; that list is in docs/aegis/demo/evidence/batch12/scanner-touched-after-lanes.txt.
+The lanes' runbooks were checked again after they merged: docs/aegis/demo/evidence/batch12/lane-gates-and-previews.txt (every hit owned).

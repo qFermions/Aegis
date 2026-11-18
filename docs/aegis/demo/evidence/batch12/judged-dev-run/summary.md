@@ -2,7 +2,7 @@
 
 The cases are the builder's own: DEV01 to DEV24 from earlier batches, and the 58 lane cases (SEC, NET, INF, SWE) written by the lane builders next to the rules and runbooks they test. This run shows the pipeline and the rules at work; it is not an independent measure of answer quality. No case text is shown here.
 
-Command: `node scripts/eval/judged-eval.js run --cases <tmp>/aegis-b12-cases/dev-cases.jsonl --execute --results-dir <tmp>/aegis-b12-judged --budget-usd 30` (the case file is the committed `scripts/eval/judged/dev-cases.jsonl`, byte for byte). Models: system under test and judge `claude-opus-5-5` on every case (pinned; 0 cases on another model). Tool server on; WebFetch and WebSearch off. Limit 30 US dollars; spent 24.34 (system under test 18.17, judge 6.17). Files: `results.json`, `report.md` (the runner's own report), `terminal.txt`, all with local paths masked and every long dash in the model's text written as a hyphen (the batch rule: no long dash in any file); this summary is printed by `docs/aegis/demo/evidence/batch12/tools/judged-summary.js`, which also scores each saved answer again with the checks at the final commit (no model is called).
+Command: `node scripts/eval/judged-eval.js run --cases <tmp>/aegis-b12-cases/dev-cases.jsonl --execute --results-dir <tmp>/aegis-b12-judged --budget-usd 30` (the case file was the committed `scripts/eval/judged/dev-cases.jsonl`, byte for byte; afterwards NET10's name server host, a name outside the reserved example domains, was renamed `hosting.example.net` there and in `results.json`, the only change). Models: system under test and judge `claude-opus-5-5` on every case (pinned; 0 cases on another model). Tool server on; WebFetch and WebSearch off. Limit 30 US dollars; spent 24.34 (system under test 18.17, judge 6.17). Files: `results.json`, `report.md` (the runner's own report), `terminal.txt`, all with local paths masked and every long dash in the model's text written as a hyphen (the batch rule: no long dash in any file); this summary is printed by `docs/aegis/demo/evidence/batch12/tools/judged-summary.js`, which also scores each saved answer again with the checks at the final commit (no model is called).
 
 ## Predictions (progress.md, written before any run) against the results
 
@@ -25,7 +25,7 @@ Command: `node scripts/eval/judged-eval.js run --cases <tmp>/aegis-b12-cases/dev
 
 ## A privacy finding
 
-In SWE10 (commits lost after a reset) the system under test read this repository's own `.git/` as if it were the asker's repository, and its answer printed the local path with the account name and real branch names (masked here). The read is inside the repository, so the exam wall does not stop it; the judge scored privacy 1 of 2. Proposed fix for the owner: deny `.git/` to the sealed sessions as the case folder is denied. Not changed in this batch.
+In SWE10 (commits lost after a reset) the system under test read this repository's own `.git/` as if it were the asker's repository, and its answer printed the local path with the account name (masked here), and this branch's name, its last commit and that commit's subject (left as the model wrote them: they are this repository's own, public once the branch is pushed). The read is inside the repository, so the exam wall does not stop it; the judge scored privacy 1 of 2. Proposed fix for the owner: deny `.git/` to the sealed sessions as the case folder is denied. Not changed in this batch.
 
 ## Per case
 

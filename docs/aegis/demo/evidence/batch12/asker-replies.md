@@ -1,5 +1,7 @@
 # Batch 12: eight asker replies, two per lane (task 13)
 
+The tickets are the lane builders' own dev cases, written next to the rules, so these replies show the form check at work and are not an independent measure.
+
 Run 2026-11-18 with docs/aegis/demo/evidence/batch12/tools/run-asks.sh: one `node scripts/ask-aegis.js "<ticket>" --reply-to asker` per ticket, tool server on, each session on claude-opus-5-5 and capped at 0.60 US dollars, 3.50 for all eight. The tickets are the lane dev cases named, with any pasted evidence appended, after the privacy step. Each reply is text for a person to read and send; Aegis sent nothing. The form check is the widened one of batch 12, task 3.
 
 | Case | Lane | Words | Form check | Cost (US dollars) | Tool calls |

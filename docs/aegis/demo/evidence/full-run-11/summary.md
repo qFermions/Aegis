@@ -1,6 +1,6 @@
 # Full run 11 (the tidy tickets, T1 to T8, batch 12)
 
-Runs: aegis-b12-tidy, aegis-b12-tidy-2 (claude-opus-5-5, tool server on, the batch 12 rules). One row per ticket; a ticket the first run did not reach was run in the next folder.
+Runs: aegis-b12-tidy, aegis-b12-tidy-2 (claude-opus-5-5, tool server on, the batch 12 rules). One row per ticket; a ticket the first run did not reach was run in the next folder. The tickets were written by earlier batches' builders and run in earlier batches, so they are not an independent measure.
 
 | ticket | closing state | mode named | Fix card words | gates signed off | lightest step first | tool calls | cost in US dollars |
 |---|---|---|---|---|---|---|---|

@@ -49,7 +49,7 @@ test('every private and special address is refused, every public one passes', ()
 
 // Wrong implementations it catches: a suffix check that compares case-sensitively (LOCALHOST), forgets a
 // trailing dot (localhost.), matches a substring instead of a label (so "notlocal.example.com" is refused, or
-// "x.corp" passes because only ".corp.com" is listed); a name check that lets an IP-looking name through to
+// "x.corp" passes because only ".corp.example" is listed); a name check that lets an IP-looking name through to
 // the resolver ("127.1", "0x7f.1", "2130706433"); one that refuses an underscore label, which DMARC and DKIM
 // names need.
 test('a name is refused before any query when it is single-label, IP-looking or under a private suffix', () => {

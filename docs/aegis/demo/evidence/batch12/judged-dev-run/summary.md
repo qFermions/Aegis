@@ -21,7 +21,7 @@ Command: `node scripts/eval/judged-eval.js run --cases <tmp>/aegis-b12-cases/dev
 - The judge's rubric items ("must"): 118 misses over 75 failing cases; 40 failing cases miss one item, 11 miss two. In the lane cases they are expert content the answer left out (a prevention step, a severity and who decides, a test that splits two causes, what cannot be recovered).
 - The deterministic checks that predate this batch: read-back 31 cases, human-confirmation 27. Most are Engineer or Incident answers on cases with a change class, where the answer gives no `aegis-desk` block with the read-back and confirmation phrase.
 - The 150-word card check (new in this batch, a fail by the charter): 17 cases; for DEV18, DEV20, DEV23 and DEV24 it is the only reason, so the old cases fall from 9 of 24 (batch 11) to 3 of 24.
-- claims-match-calls: 3 cases. fetched-citations: none.
+- claims-match-calls: 3 cases as run, 2 with the final checks (INF01's object came before its claim, a false fail fixed in code review 3; DEV06 and SWE04 claim checks of this repository's own files). fetched-citations: none.
 
 ## A privacy finding
 
@@ -168,7 +168,7 @@ Batch 11: 9 of 24 passed; batch 12: 3 as run, 3 with the final checks. Cases who
 
 ## Verdicts or reasons that change with the final checks
 
-None.
+- INF01: FAIL to FAIL; reasons as run: must item 3 not met; must item 6 not met; check human-confirmation fail; check read-back fail; check claims-match-calls fail; with the final checks: must item 3 not met; must item 6 not met; check human-confirmation fail; check read-back fail.
 
 ## Hosts the tool server reached (from the audit files)
 

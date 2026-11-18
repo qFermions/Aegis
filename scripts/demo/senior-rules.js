@@ -12,7 +12,7 @@
 // shortcut: every reading here is a word list or a shape, so a ticket or an answer worded otherwise reads as "does
 // not apply" or passes; upgrade to a model-judged row when the owner's unseen cases show a miss the lists cannot hold.
 
-const { fixCard, deskBlock, words, sentences, userMessageProblems, stepChange, deskOnlyIn, MODE_LINE, ASSUMED_LINE } = require('./answer.js');
+const { fixCard, deskBlock, words, sentences, userMessageProblems, stepChange, deskOnlyIn, MODE_LINE, ASSUMED_LINE, withoutModeLine } = require('./answer.js');
 const { claimsWithoutCalls } = require('./reading-claims.js');
 const { namedGates, asks } = require('./catalog.js');
 const checks = require('../eval/judged/checks.js');
@@ -157,7 +157,7 @@ function isAskFirst(answer, ticket = '') {
 // desk asks every session for is not part of the question, so it is not read here.
 function askFirstProblems(answer) {
   // the mode line ("Mode: Ask first", batch 12) names the answer; it is not part of the question or its words
-  const body = deskBlock(answer).body.split(/\r?\n/).filter((l, i, all) => !(MODE_LINE.test(l) && all.slice(0, i).every((x) => x.trim() === ''))).join('\n');
+  const body = withoutModeLine(deskBlock(answer).body);
   const lines = body.split(/\r?\n/);
   const out = [];
   const marks = (body.match(/\?/g) || []).length;

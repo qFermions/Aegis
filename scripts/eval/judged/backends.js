@@ -201,7 +201,7 @@ function toolCall(part, inSubagent) {
     call.label = `${str(input.subagent_type) || 'agent'}: ${str(input.description) || '(no description)'}`;
   }
   // the tool server's calls (batch 12): what each looked up, so a claimed check or a cited page can be held to it
-  if (/^mcp__aegis-tools__/.test(call.tool)) {
+  if (call.tool.startsWith(`mcp__${aegisTools.SERVER_NAME}__`)) {
     const target = str(input.url) || str(input.name) || str(input.host);
     if (target) call.target = target;
   }

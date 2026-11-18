@@ -13,6 +13,10 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { SERVER_NAME } = require('../../mcp/aegis-tools/session.js');
+
+// the tool server's calls, named from the server's own name so a rename cannot leave them uncounted (code review 1)
+const SERVER_PREFIX = `mcp__${SERVER_NAME}__`;
 
 const LABEL = 'simulated: model-judged on a case file, no real tenant';
 const SMALL_PLATFORM_NOTE = 'fewer than 10 cases: cannot support a platform claim';
@@ -78,7 +82,7 @@ function regressions(results, baseline) {
 // Per lane and per mode (batch 12): tool calls, the Fix card words and the reads outside the repository of the group.
 function laneExtra(list) {
   const calls = list.reduce((a, r) => a + Object.values(r.tool_call_counts || {}).reduce((x, n) => x + n, 0), 0);
-  const server = list.reduce((a, r) => a + Object.entries(r.tool_call_counts || {}).filter(([t]) => t.startsWith('mcp__aegis-tools__')).reduce((x, [, n]) => x + n, 0), 0);
+  const server = list.reduce((a, r) => a + Object.entries(r.tool_call_counts || {}).filter(([t]) => t.startsWith(SERVER_PREFIX)).reduce((x, [, n]) => x + n, 0), 0);
   const words = list.map((r) => r.fix_card_words).filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
   const outside = list.filter((r) => r.sut && Array.isArray(r.sut.outside_reads) && r.sut.outside_reads.length > 0).length;
   return { tool_calls: calls, server_calls: server, card_words_median: median(words), cards: words.length, outside_reads: outside };
@@ -104,7 +108,7 @@ function summarize(results, { baseline = null } = {}) {
   const expectsMode = results.filter((r) => r.mode && typeof r.mode.expected === 'string' && r.mode.expected !== '' && ran(r));
   const byTool = {};
   for (const r of results) for (const [tool, n] of Object.entries(r.tool_call_counts || {})) byTool[tool] = (byTool[tool] || 0) + n;
-  const serverCases = results.filter((r) => Object.keys(r.tool_call_counts || {}).some((t) => t.startsWith('mcp__aegis-tools__'))).length;
+  const serverCases = results.filter((r) => Object.keys(r.tool_call_counts || {}).some((t) => t.startsWith(SERVER_PREFIX))).length;
   return {
     outside_reads: { count: outside.length, ids: outside },
     off_model: { count: offModel.length, ids: offModel },

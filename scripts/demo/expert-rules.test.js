@@ -257,3 +257,34 @@ test('code review 1, class G: two or three Options, and an answer with both Hypo
   assert.match(bothRow.detail, /both Hypotheses and Options/);
   assert.doesNotMatch(bothRow.detail, /out of order/);
 });
+
+// Code review 2 of batch 12, class B2: round 1's wider claim reader read sentences that say no check ran (a Verify line in
+// the present tense, a hypothetical, a negated tool name, a "Tell the user when done" draft), and still missed a lookup
+// report whose host has dots or that shares a sentence with a first-person claim. Wrong implementations: any lookup
+// wording counted whatever its tense; a tool name counted outside its citation; a dot in a host name ending the report;
+// a first-person claim hiding the lookup report before it; a "web probe" report no call can back.
+test('code review 2, class B2: what a claim is, and what is not', () => {
+  const none = [];
+  const read = [{ tool: 'Read', path: 'x', error: false }];
+  for (const text of [
+    'Verify: a certificate lookup shows the new expiry date and the chain verifies.',
+    'Test: a DNS lookup for the domain shows which host takes mail.',
+    'If the DNS lookup returns NXDOMAIN, the zone was deleted.',
+    'I did not run net_dns in this session, so this is reasoning.',
+    '**Tell the user when done:** I checked your mailbox and the forwarding rule is gone.',
+    'If we read the runbook first, the steps are clearer.',
+    'Once Aegis has verified the new method, tell the user.',
+  ]) assert.deepEqual(claimsWithoutCalls(text, none), [], text);
+  assert.deepEqual(claimsWithoutCalls('The web probe returned status 200.', [{ tool: 'mcp__aegis-tools__net_http', error: false }]), []);
+  for (const [text, calls] of [
+    ['A DNS lookup for example.com returned two MX records.', none],
+    ['A certificate lookup for www.example.com showed the leaf expired yesterday.', none],
+    ['The DNS lookup for the domain returned two MX records, and I checked our runbook for the cutover.', read],
+    ['The web probe returned status 200.', none],
+    ['A DNS lookup returned two MX records (net_dns, 2026-11-14).', none],
+    ['After I checked the DNS records, the MX still points to the old host.', read],
+    ['If needed I read the runbook; I checked the TLS certificate chain.', read],
+    ['I read the answer format, /phishing-bec and /identity-compromise.', none],
+  ]) assert.equal(claimsWithoutCalls(text, calls).length, 1, text);
+  assert.deepEqual(claimsWithoutCalls('I read the answer format, /phishing-bec and /identity-compromise.', read), [], 'a runbook named by its command is backed by a Read');
+});

@@ -30,6 +30,17 @@ You paste an IT ticket in plain words. Aegis gives you two things back:
 
 When a ticket says too little ("Calendar is broken"), Aegis asks one question first instead of guessing.
 
+Beyond the helpdesk, Aegis works four expert lanes. For an engineering question it gives an **Engineer answer** (what the evidence shows, the likely causes ranked with a test for each, the fix written out, how to undo it); for a security report it gives an **Incident answer** (how serious, what to contain first and who decides, what evidence to keep, who to call). Each lane is labeled with its status in the [capability map](docs/aegis/capability-map.md):
+
+| Lane | What it covers | Status |
+|---|---|---|
+| 🛡️ Security and incident response | account takeover, leaked keys, phishing and payment fraud, ransomware first hour, risky app grants, vulnerability triage | implemented but unverified (rows 84 to 100) |
+| 🌐 Networking | DNS, certificates, VPN and zero-trust blocks, MTU, firewall rules, Wi-Fi at scale | implemented but unverified (rows 101 to 109) |
+| ☁️ Infrastructure and cloud | AWS, Azure and Google Cloud access and networks, Terraform plans, Kubernetes, Linux servers, backups, cost spikes | implemented but unverified (rows 18, 19, 110 to 114) |
+| 🧑‍💻 Software engineering | stack traces, CI failures, dependencies, code review, safe scripts, git recovery | implemented but unverified (rows 115 to 131) |
+
+"Implemented but unverified" means the runbooks exist and their safety gates are tested, but no one outside the build has yet scored Aegis's answers in that lane. Aegis can also look up current vendor documentation and public DNS, web and certificate records; it never reaches inside your network, and it never changes anything.
+
 > [!NOTE]
 > **Aegis is early.** Its answers are being scored on IT tickets it has never seen. Until that score passes, use Aegis as a second opinion and check every step before you do it.
 

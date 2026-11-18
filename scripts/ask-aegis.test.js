@@ -493,7 +493,8 @@ test('batch 11, task 6: without the flag the output is exactly today\'s, whole',
   assert.equal(s.stdout(), expected);
   assert.equal(s.stderr(), '');
   // init.json (batch 11 resumed) records the model the session ran on; the output above is unchanged by it
-  assert.deepEqual(fs.readdirSync(dir).sort(), ['answer.md', 'init.json', 'result.json'], 'no reply file without the flag');
+  // batch 12: the tool server's audit file sits beside the answer (empty when no lookup was made); still no reply file
+  assert.deepEqual(fs.readdirSync(dir).sort(), ['answer.md', 'init.json', 'result.json', 'tool-audit.jsonl'], 'no reply file without the flag');
 });
 
 // Batch 11 (found by the judged-runner worker while reusing setupBlock for a case's setup): a setup that holds
@@ -627,4 +628,22 @@ test('batch 12, task 5: the tool server is on with an audit file beside the answ
   assert.equal(await ask.main(['The printer will not print', '--no-tools'], off.env, off.deps), 0, off.stderr());
   assert.ok(!off.calls()[0].args.includes('--mcp-config'));
   assert.ok(!off.calls()[0].args.some((a) => /mcp__aegis-tools__/.test(a)));
+});
+
+// Code review 1 of batch 12, class C: the tool server creates its audit file in the results folder when the session
+// starts, so a failed session left a non-empty folder, said "Nothing was saved", and the same --results-dir was refused
+// next time. Now an empty audit file goes with its folder, and an audit file that holds calls is kept and named.
+// Wrong implementations: the old rmdir (the empty audit file keeps the folder); deleting an audit file that holds calls.
+test('code review 1, class C: a failed ask removes its empty audit file and folder, and keeps and names one that holds calls', async (t) => {
+  const quiet = setup(t, { mode: 'invalid' });
+  const dir = path.join(quiet.dir, 'out-quiet');
+  assert.equal(await ask.main(['The printer will not print', '--results-dir', dir], quiet.env, quiet.deps), 2);
+  assert.equal(fs.existsSync(dir), false, 'the folder and its empty audit file are gone');
+  assert.match(quiet.stderr(), /Nothing was saved/);
+  const busy = setup(t, { mode: 'invalid', audit_lines: 2 });
+  const dir2 = path.join(busy.dir, 'out-busy');
+  assert.equal(await ask.main(['The printer will not print', '--results-dir', dir2], busy.env, busy.deps), 2);
+  assert.equal(fs.readFileSync(path.join(dir2, 'tool-audit.jsonl'), 'utf8').trim().split('\n').length, 2);
+  assert.match(busy.stderr(), /tool calls .* are saved in .*tool-audit\.jsonl/);
+  assert.doesNotMatch(busy.stderr(), /Nothing was saved/);
 });

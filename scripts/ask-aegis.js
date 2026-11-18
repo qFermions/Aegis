@@ -285,9 +285,19 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   const stream = backends.parseStream(run.stdout);
   const turn = backends.summarizeTurn(stream, run);
   if (turn.state !== 'OK') {
-    if (made !== undefined) try { fs.rmdirSync(dir); } catch { /* not empty or gone: left as it is */ }
     const hint = /ENOENT/.test(turn.reason || '') ? ' Is Claude Code installed? Type claude once to install it and sign in.' : '';
-    io.err(`ask-aegis: the Aegis session did not finish (${turn.reason || turn.state}). Nothing was saved.${hint}\n`);
+    // the tool server opens its audit file when the session starts: an empty one goes with the folder; one that holds
+    // calls is kept and named, since those lookups did happen (code review 1 of batch 12, class C)
+    const audit = path.join(dir, 'tool-audit.jsonl');
+    let calls = 0;
+    try { calls = fs.readFileSync(audit, 'utf8').split('\n').filter((l) => l.trim() !== '').length; } catch { /* no audit file */ }
+    if (calls === 0) {
+      try { fs.unlinkSync(audit); } catch { /* none */ }
+      if (made !== undefined) try { fs.rmdirSync(dir); } catch { /* not empty or gone: left as it is */ }
+      io.err(`ask-aegis: the Aegis session did not finish (${turn.reason || turn.state}). Nothing was saved.${hint}\n`);
+    } else {
+      io.err(`ask-aegis: the Aegis session did not finish (${turn.reason || turn.state}). No answer was saved; its ${calls} tool calls (public lookups) are saved in ${audit}.${hint}\n`);
+    }
     return 2;
   }
 

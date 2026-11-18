@@ -56,6 +56,16 @@ if (config.log) {
   fs.appendFileSync(config.log, `${JSON.stringify({ role, cwd: process.cwd(), argc: args.length, args: args.filter((a) => a !== prompt), prompt, resume: resume !== null, env: Object.keys(process.env).sort() })}\n`);
 }
 
+// Like the real aegis-tools server, which opens its --audit file (create, append) when the session starts: the file
+// exists, empty, even when no tool is called; audit_lines writes that many call lines into it (code review 1 of batch 12).
+if (role === 'sut' && args.includes('--mcp-config')) {
+  try {
+    const server = JSON.parse(valueAfter('--mcp-config')).mcpServers['aegis-tools'];
+    const at = server.args.indexOf('--audit');
+    if (at >= 0) fs.appendFileSync(server.args[at + 1], '{"tool":"net_dns","decision":"ok"}\n'.repeat(settings.audit_lines || 0), { mode: 0o600 });
+  } catch { /* no audit file named: the server would audit to stderr */ }
+}
+
 const sessionId = resume || crypto.randomUUID();
 const model = settings.model || valueAfter('--model') || (role === 'judge' ? 'fake-judge-model' : 'fake-sut-model');
 const emit = (ev) => process.stdout.write(`${JSON.stringify(ev)}\n`);

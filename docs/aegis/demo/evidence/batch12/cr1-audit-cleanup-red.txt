@@ -1,0 +1,32 @@
+✔ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (3.546458ms)
+✔ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.174334ms)
+✔ code review 3, class C3 (batch 10): digits after "'s" or " - " stop the ask in mid-sentence; menu paths and subject lines pass (0.616209ms)
+✖ code review 1, class C: a failed ask removes its empty audit file and folder, and keeps and names one that holds calls (22.335417ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.192541
+
+✖ failing tests:
+
+test at scripts/ask-aegis.test.js:637:1
+✖ code review 1, class C: a failed ask removes its empty audit file and folder, and keeps and names one that holds calls (22.335417ms)
+  AssertionError [ERR_ASSERTION]: the folder and its empty audit file are gone
+  
+  true !== false
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/ask-aegis.test.js:641:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -401,7 +401,9 @@ const KUBECTL_READ = new Set(['get', 'describe', 'logs', 'top', 'events', 'expla
 // options that take a separate value: the value is never the verb (security review 1 of batch 12: kubectl -n logs delete)
 const KUBECTL_VALUE_OPTIONS = new Set(['-n', '--namespace', '--context', '--cluster', '--user', '--kubeconfig', '-s', '--server', '--token', '--as', '--as-group', '-l', '--selector', '-o', '--output', '-c', '--container', '-f', '--filename', '--request-timeout', '--certificate-authority', '--client-certificate', '--client-key', '--tls-server-name', '--field-selector', '-L', '--label-columns',
   // code review 1 of batch 12: more options that take a value
-  '--as-uid', '--cache-dir', '--username', '--password', '--profile', '--profile-output', '-v', '--v', '--log-file', '--log-dir', '--vmodule']);
+  '--as-uid', '--cache-dir', '--username', '--password', '--profile', '--profile-output', '-v', '--v', '--log-file', '--log-dir', '--vmodule', '--kuberc']);
+// kubectl's global options that take no value (code review 3): a read after one of these is a read
+const KUBECTL_FLAGS = new Set(['--insecure-skip-tls-verify', '--match-server-version', '--warnings-as-errors', '--disable-compression', '-h', '--help']);
 const KUBECTL_WRITE = new Set(['apply', 'delete', 'scale', 'rollout', 'patch', 'edit', 'drain', 'cordon', 'uncordon', 'taint', 'label', 'annotate', 'create', 'replace', 'set', 'expose', 'autoscale', 'run', 'exec', 'cp', 'debug', 'attach', 'certificate']);
 function kubectlWrites(args) {
   const tokens = cliTokens(args).map((t) => t.toLowerCase()).filter((t, i, all) => !KUBECTL_VALUE_OPTIONS.has(all[i - 1] || ''));
@@ -416,13 +418,16 @@ function kubectlWrites(args) {
   // option's value, so the next word decides (kubectl --some-opt get delete pod x is a delete); a resource named like a
   // verb after a real read (kubectl describe certificate) stays a read
   const prev = tokens[at - 1] || '';
-  // a known value option's value was already taken out, so the read after it is no value (code review 2)
-  const maybeValue = prev.startsWith('-') && !prev.includes('=') && !KUBECTL_VALUE_OPTIONS.has(prev);
-  return KUBECTL_WRITE.has(tokens[at]) || (maybeValue && KUBECTL_WRITE.has(tokens[at + 1] || ''));
+  // a known value option's value was already taken out, so the read after it is no value (code review 2); after an
+  // option this file does not know, the line is a read only when the next word is a read verb too (code review 3)
+  const maybeValue = prev.startsWith('-') && !prev.includes('=') && !KUBECTL_VALUE_OPTIONS.has(prev) && !KUBECTL_FLAGS.has(prev);
+  const next = tokens.slice(at + 1).find((t) => !t.startsWith('-'));
+  return KUBECTL_WRITE.has(tokens[at]) || (maybeValue && next !== undefined && !KUBECTL_READ.has(next));
 }
 const HELM_READ = new Set(['list', 'ls', 'status', 'get', 'history', 'show', 'inspect', 'template', 'search', 'version', 'lint', 'env', 'verify']);
 // options that take a value, and the subcommands that change a release (code review 1 of batch 12: helm -n list uninstall)
-const HELM_VALUE_OPTIONS = new Set(['-n', '--namespace', '--kube-context', '--kubeconfig', '-f', '--values', '--set', '--set-string', '--set-file', '--set-json', '--version', '-o', '--output', '--repo', '--timeout', '--registry-config', '--repository-config', '--repository-cache', '--post-renderer', '--kube-apiserver', '--kube-as-user', '--kube-as-group', '--kube-token', '--kube-ca-file', '--burst-limit']);
+const HELM_VALUE_OPTIONS = new Set(['-n', '--namespace', '--kube-context', '--kubeconfig', '-f', '--values', '--set', '--set-string', '--set-file', '--set-json', '--version', '-o', '--output', '--repo', '--timeout', '--registry-config', '--repository-config', '--repository-cache', '--post-renderer', '--kube-apiserver', '--kube-as-user', '--kube-as-group', '--kube-token', '--kube-ca-file', '--burst-limit', '--kube-tls-server-name', '--qps']);
+const HELM_FLAGS = new Set(['--debug', '--kube-insecure-skip-tls-verify', '-h', '--help']);
 const HELM_WRITE = new Set(['install', 'upgrade', 'uninstall', 'delete', 'del', 'un', 'rollback', 'push', 'test']);
 function helmWrites(args) {
   const tokens = cliTokens(args).map((t) => t.toLowerCase());
@@ -431,8 +436,11 @@ function helmWrites(args) {
   if (!first || !HELM_READ.has(first.t)) return true;
   // as for kubectl (code review 2): a read right after an option this list does not know may be its value, so the next
   // word decides; a release named like a subcommand (helm status test) stays a read
+  // fail closed (code review 3): after an option this file does not know, the line is a read only when the next
+  // positional word is a read too
   const prev = tokens[first.i - 1] || '';
-  return prev.startsWith('-') && !prev.includes('=') && HELM_WRITE.has((positional[1] || {}).t || '');
+  const maybeValue = prev.startsWith('-') && !prev.includes('=') && !HELM_FLAGS.has(prev);
+  return maybeValue && positional[1] !== undefined && !HELM_READ.has(positional[1].t);
 }
 // aws: the service and the operation, past the global options and their values
 const AWS_FLAGS_WITHOUT_VALUE = new Set(['--dry-run', '--no-dry-run', '--debug', '--no-cli-pager', '--no-paginate', '--no-verify-ssl', '--no-sign-request', '--recursive', '--force', '--quiet', '--human-readable', '--summarize', '--cli-auto-prompt', '--no-cli-auto-prompt']);
@@ -488,7 +496,7 @@ const B12_REMOTE_SINKS = new Set(['service-write', 'terraform-write', 'kubectl-w
 // each option parses one way only (a value option with a space takes the next word; a lone option is never one of them),
 // so a long run of options cannot backtrack exponentially (code review 2)
 const GIT_VALUE_OPTIONS = String.raw`(?:-C|-c|--git-dir|--work-tree|--namespace|--super-prefix|--config-env|--exec-path)`;
-const GIT_GLOBALS = String.raw`(?:(?:${GIT_VALUE_OPTIONS}\s+\S+|(?!${GIT_VALUE_OPTIONS}\s)(?:-[A-Za-z]|--[\w-]+(?:=\S+)?))\s+)*`;
+const GIT_GLOBALS = String.raw`(?:(?:${GIT_VALUE_OPTIONS}\s+(?:"[^"]*"|'[^']*'|\S+)|(?!${GIT_VALUE_OPTIONS}\s)(?:-[A-Za-z]|--[\w-]+(?:=\S+)?))\s+)*`;
 const FORCE_PUSH = String.raw`git\s+${GIT_GLOBALS}push\b[^;|&\n]*?(?:\s--force(?:-with-lease|-if-includes)?\b|\s-[A-Za-z]*f[A-Za-z]*(?=\s|$)|\s\+[\w./:-]+)`;
 function b12CliHits(statement) {
   const hits = [];
@@ -544,9 +552,9 @@ function commandsIn(statement, language) {
       [new RegExp(`${boundary}rsync\\s+`, 'i'), 'rsync'],
       [new RegExp(`${boundary}(?:cp|install|mkdir|mv|rm|tee|touch)\\s+`, 'i'), 'file-write'],
       [new RegExp(`${boundary}(?:chmod|chown)\\s+`, 'i'), 'metadata-write'],
-      [new RegExp(`${boundary}(?:apt(?:-get)?|brew|dnf|npm|pip(?:3)?|pnpm|winget|yum)\\s+(?:add|ci|install|remove|rm|uninstall|update|upgrade)\\b`, 'i'), 'package-write'],
+      [new RegExp(`${boundary}(?:apt(?:-get)?|brew|dnf|npm|pip(?:3)?|pnpm|winget(?:\\.exe)?|yum)\\s+(?:add|ci|install|remove|rm|uninstall|update|upgrade)\\b`, 'i'), 'package-write'],
       // winget's own configure and import change the machine too (code review 2)
-      [new RegExp(`${boundary}winget(?:\\.exe)?\\s+(?:configure|import)\\b`, 'i'), 'package-write'],
+      [new RegExp(`${boundary}winget(?:\\.exe)?\\s+(?:configure|import|repair)\\b`, 'i'), 'package-write'],
       [/(?:^|\s)>{1,2}\s*(?:[./~$]|["'][^"']+["']|[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b)/i, 'redirect-write'],
     ];
     for (const [pattern, label] of nativePatterns) {
@@ -560,7 +568,7 @@ function commandsIn(statement, language) {
     // batch 12, task 12: indirect execution and package installs in PowerShell, and a forced git push
     // an assignment, a dot-source or a command lookup cannot hide it either (security review 1 of batch 12)
     if (/(?:^|[;{}(|=.])\s*&?\s*(?:iex|Invoke-Expression)\b/i.test(statement) || /\b(?:gcm|Get-Command)\s+(?:iex|Invoke-Expression)\b/i.test(statement)) hits.push('indirect-exec');
-    if (/(?:^|[;{}(|=.])\s*&?\s*winget(?:\.exe)?\s+(?:install|upgrade|update|uninstall|remove|rm|import|configure|add)\b/i.test(statement)) hits.push('package-write');
+    if (/(?:^|[;{}(|=.])\s*&?\s*winget(?:\.exe)?\s+(?:install|upgrade|update|uninstall|remove|rm|import|configure|add|repair)\b/i.test(statement)) hits.push('package-write');
     if (new RegExp(`(?:^|[;{}(|=.])\\s*&?\\s*${FORCE_PUSH}`, 'i').test(statement)) hits.push('git-force-push');
   }
   return [...new Set(hits)];
@@ -3182,4 +3190,27 @@ test('batch 12, code review 2: kubectl and helm reads stay reads, git options pa
   commandsIn(`git ${'--git-dir -a '.repeat(30)}status`, 'bash');
   commandsIn(`git ${'-C '.repeat(40)}status`, 'bash');
   assert.ok(Date.now() - started < 1000, `two long option runs took ${Date.now() - started} ms`);
+});
+
+// Code review 3 of batch 12, class E3: helm's next-word rule failed open (a write after an option the list does not know
+// passed when the word after the read was not itself a write verb); kubectl's rule looked only at the next token and only
+// for write verbs, and missed --kuberc; winget.exe and winget repair were missed in shell fences; a quoted git -C path
+// with a space hid a forced push. Wrong implementations: any of those; or the reads of rounds 1 and 2 turned to writes.
+test('batch 12, code review 3: helm and kubectl fail closed after an unknown option, winget.exe and repair, quoted git paths', () => {
+  const writes = [
+    ['helm --kube-tls-server-name list --qps 5 uninstall web', 'helm-write'],
+    ['helm --unknown-flag list plugin install https://example.com/p', 'helm-write'],
+    ['helm --kube-tls-server-name status --kube-tls-server-name list uninstall web', 'helm-write'],
+    ['kubectl --kuberc get auth reconcile -f rbac.yaml', 'kubectl-write'],
+    ['kubectl --kuberc get -n prod delete pod x', 'kubectl-write'],
+    ['kubectl --flag-not-listed get -n prod delete pod x', 'kubectl-write'],
+    ['winget.exe install Fixture.Tool', 'package-write'],
+    ['winget.exe rm Fixture.Tool', 'package-write'],
+    ['winget repair Fixture.Tool', 'package-write'],
+    ['git -C "/srv/my app" push --force origin main', 'git-force-push'],
+  ].filter(([line, label]) => !commandsIn(line, 'bash').includes(label)).map(([line]) => line);
+  assert.deepEqual(writes, []);
+  assert.ok(commandsIn('winget repair Fixture.Tool', 'powershell').includes('package-write'), 'winget repair in PowerShell');
+  const reads = ['helm --debug list', 'helm status test', 'helm list --filter test', 'helm -n prod history install', 'kubectl -n cert-manager get certificate', 'kubectl --insecure-skip-tls-verify get pods', 'kubectl -n prod logs debug', 'kubectl rollout status deploy/web', 'git -C "/srv/my app" log --oneline'].filter((line) => commandsIn(line, 'bash').length);
+  assert.deepEqual(reads, []);
 });

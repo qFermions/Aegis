@@ -501,4 +501,13 @@ function onlyLooks(raw) {
   return { steps, looks: steps.length > 0 && change === null, change, where };
 }
 
-module.exports = { MODE_LINE, ASSUMED_LINE, defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };
+// The text without its first non-blank line when that line is the mode line (answer-format section 9): one pass, shared
+// by the printers and the reply check (code review 1 of batch 12).
+function withoutModeLine(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  const at = lines.findIndex((l) => l.trim() !== '');
+  if (at >= 0 && MODE_LINE.test(lines[at])) lines.splice(at, 1);
+  return lines.join('\n');
+}
+
+module.exports = { MODE_LINE, withoutModeLine, ASSUMED_LINE, defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };

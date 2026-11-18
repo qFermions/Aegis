@@ -647,3 +647,18 @@ test('code review 1, class C: a failed ask removes its empty audit file and fold
   assert.match(busy.stderr(), /tool calls .* are saved in .*tool-audit\.jsonl/);
   assert.doesNotMatch(busy.stderr(), /Nothing was saved/);
 });
+
+// Code review 1 of batch 12, class H: the ask-first branch printed "Mode: Ask first" as part of the question, and the
+// Engineer branch picked its heading with a looser pattern than MODE_LINE, so "Mode: Engineer answer (build)" was
+// printed under the Engineer heading with its mode line left in. Wrong implementations: the mode line printed in the
+// question; a first line MODE_LINE does not accept taken as a named Engineer answer.
+test('code review 1, class H: the mode line is never printed as part of the answer, and only MODE_LINE names the mode', async (t) => {
+  const question = 'What exactly happens when you try to print, who is affected, and since when?';
+  const s = setup(t, { answer: `Mode: Ask first\n\n${question}` });
+  assert.equal(await ask.main(['The printer is broken.'], s.env, s.deps), 0, s.stderr());
+  assert.match(s.stdout(), /Aegis asks one thing first:\n\nWhat exactly happens/);
+  assert.doesNotMatch(s.stdout(), /Mode: Ask first/);
+  const loose = setup(t, { answer: ['Mode: Engineer answer (build)', '## Engineer answer', '**Evidence read:** none.'].join('\n') });
+  await ask.main(['dig says NXDOMAIN for our new subdomain'], loose.env, loose.deps);
+  assert.doesNotMatch(loose.stdout(), /Aegis answered as an Engineer answer/);
+});

@@ -29,7 +29,7 @@ const backends = require('./eval/judged/backends.js');
 const paths = require('./eval/judged/paths.js');
 const sanitize = require('./graph/sanitize.js');
 const { PHONE_LITERAL, replaceEmails, isCanonicalPlaceholder } = require('./tier/tier-guard.js');
-const { fixCard, PARTS, deskBlock, MODE_LINE } = require('./demo/answer.js');
+const { fixCard, PARTS, deskBlock, MODE_LINE, withoutModeLine } = require('./demo/answer.js');
 const { askerReply, replyProblems, isAskFirst } = require('./demo/senior-rules.js');
 const { catalog } = require('./demo/catalog.js');
 
@@ -319,6 +319,7 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   if (args.replyTo) return printReply({ answer: turn.answer, ticket: ticket.text, setup: setupText.text || '', dir, answerFile, cost, toolCalls: stream.toolCalls }, io);
 
   const card = fixCard(turn.answer);
+  const named = (MODE_LINE.exec(turn.answer.split(/\r?\n/).find((l) => l.trim() !== '') || '') || [])[1] || '';
   if (card.present) {
     io.out(`\n## Fix\n${card.text}\n`);
     const tell = userLines(card.text);
@@ -326,11 +327,12 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   } else if (isAskFirst(turn.answer, ticket.text)) {
     // a ticket with nothing to go on gets one question and nothing else (answer-format section 7)
     // the aegis-desk block the format closes it with is the desk's, not part of the question (code review 1, finding 13)
-    io.out(`\nAegis asks one thing first:\n\n${deskBlock(turn.answer).body.trim()}\n`);
-  } else if (/^\s*(?:\*\*)?Mode(?:\*\*)?\s*:\s*(?:\*\*)?\s*(?:Engineer answer|Incident answer)\b/i.test(turn.answer)) {
-    // an Engineer or Incident answer (batch 12, task 2): printed under its mode, without the mode line and the desk's block
-    const mode = /Engineer answer/i.test(turn.answer.split(/\r?\n/).find((l) => l.trim() !== '')) ? 'an Engineer answer' : 'an Incident answer';
-    const body = deskBlock(turn.answer).body.split(/\r?\n/).filter((l, i, all) => !(MODE_LINE.test(l) && all.slice(0, i).every((x) => x.trim() === ''))).join('\n').trim();
+    io.out(`\nAegis asks one thing first:\n\n${withoutModeLine(deskBlock(turn.answer).body).trim()}\n`);
+  } else if (/^(?:Engineer|Incident) answer$/i.test(named)) {
+    // an Engineer or Incident answer (batch 12, task 2), named by MODE_LINE alone (code review 1, class H): printed under
+    // its mode, without the mode line and the desk's block
+    const mode = /^Engineer/i.test(named) ? 'an Engineer answer' : 'an Incident answer';
+    const body = withoutModeLine(deskBlock(turn.answer).body).trim();
     io.out(`\nAegis answered as ${mode}:\n\n${body}\n`);
   } else {
     io.out(`\nThe answer has no Fix card, so here it is in full:\n\n${turn.answer}\n`);

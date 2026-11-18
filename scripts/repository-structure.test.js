@@ -25,9 +25,11 @@ test('all command files have valid description frontmatter', () => {
   const directory = path.join(ROOT, '.claude', 'commands');
   const files = fs.readdirSync(directory).filter(file => file.endsWith('.md')).sort();
   // batch 12: 108, plus the networking lane's five runbooks (dns-troubleshoot, tls-certificate, vpn-tunnel-down,
-  // zero-trust-block, mtu-path-issue), the infrastructure and cloud lane's seven, and the security lane's seven
+  // zero-trust-block, mtu-path-issue), the infrastructure and cloud lane's seven, the security lane's seven
   // (incident-triage, identity-compromise, leaked-key, phishing-bec, ransomware-first-hour, oauth-app-review, vuln-triage)
-  assert.strictEqual(files.length, 127);
+  // and the software engineering lane's six (debug-stack-trace, ci-failure, dependency-problem, code-review-checklist,
+  // safe-script, git-recovery)
+  assert.strictEqual(files.length, 133);
 
   const failures = [];
   for (const file of files) {

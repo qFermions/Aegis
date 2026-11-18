@@ -167,6 +167,12 @@ rule is turned off) · `[MESSAGE_COUNT]` (the number of messages a purge selects
 ticket before the gate). `[APP_NAME]` and `[APP_ID]` also cover an Entra enterprise app and an
 Okta app integration.
 
+Software engineering lane (batch 12, 2026-11-14, `knowledge/software-engineering/`): `[COMMIT_SHA]` (one git
+commit id, full or abbreviated, as `git log` or `git reflog` prints it) · `[PR_NUMBER]` (one pull request
+number in `[REPO_NAME]`) · `[RUN_ID]` (one GitHub Actions workflow run id, as the run's page address shows
+it) · `[PACKAGE_NAME]` (one npm or PyPI package name) · `[PACKAGE_VERSION]` (one exact version of that
+package, such as 4.2.1). `[FILE_NAME]` also covers a script file or a CI workflow file in this lane.
+
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in
 placeholders (SR-8).

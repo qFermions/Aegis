@@ -51,6 +51,8 @@ const MIXED_STATE_COMMANDS = [
   'cloud-cost-spike', 'backup-restore-test',
   // batch 12: security lane
   'incident-triage', 'identity-compromise', 'leaked-key', 'phishing-bec', 'ransomware-first-hour', 'oauth-app-review', 'vuln-triage',
+  // batch 12: software engineering lane
+  'debug-stack-trace', 'ci-failure', 'dependency-problem', 'code-review-checklist', 'safe-script', 'git-recovery',
 ];
 
 const REFERENCE_BOUNDARIES = [

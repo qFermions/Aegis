@@ -1,0 +1,6 @@
+Replay of claimsWithoutCalls (code review 3, class B3) over saved real answers: the batch 11 and batch 12 judged answers with their recorded tool calls; desk and ask answers with no calls (none are saved).
+batch12 DEV06 [{"sentence":"I checked the session notes and they don't mention an earlier problem, so I can't tell what \"it\" is.","kinds":[]}]
+batch12 SWE04 [{"sentence":"(I checked .github/workflows/ci.yml and release-gate.yml in this repo and neither has an \"Upload coverage\" step, so the workflow you mean must be somewhere else","kinds":[]}]
+docs/aegis/demo/evidence/batch12/asks/SEC03/answer.txt [{"sentence":"I read the answer format, /phishing-bec and /identity-compromise.","kinds":["runbook"]}]
+answers read: 153; flagged: 3
+Read by hand: DEV06 and SWE04 claim checks of this repository's own files (session notes, the CI workflow), which name nothing Aegis can check for the asker, and fail by design; SEC03 is an ask whose Read calls the save does not keep. INF01's object-before-claim sentence was a false fail and is fixed in this commit.

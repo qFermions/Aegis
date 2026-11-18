@@ -1,0 +1,103 @@
+✖ code review 3, class F3: the recovery rule against every probe of the three reviews (3.452708ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43.690709
+
+✖ failing tests:
+
+test at scripts/demo/expert-rules.test.js:381:1
+✖ code review 3, class F3: the recovery rule against every probe of the three reviews (3.452708ms)
+  AssertionError [ERR_ASSERTION]: safe answers that failed
+  + actual - expected
+  
+  + [
+  +   'Mode: Fix card\n' +
+  +     '\n' +
+  +     '## Fix\n' +
+  +     "**What's wrong:** x.\n" +
+  +     '**Do this:**\n' +
+  +     '1. Do not delete or force-push anything yet.\n' +
+  +     '2. Revoke the key in the provider console.\n' +
+  +     "3. Review the key's use in the access log.\n" +
+  +     '4. Then delete the commit.\n',
+  +   'Mode: Fix card\n' +
+  +     '\n' +
+  +     '## Fix\n' +
+  +     "**What's wrong:** x.\n" +
+  +     '**Do this:**\n' +
+  +     '1. Do not delete or rewrite history yet.\n' +
+  +     '2. Revoke the key in the provider console.\n' +
+  +     "3. Review the key's use in the access log.\n",
+  +   'Mode: Fix card\n' +
+  +     '\n' +
+  +     '## Fix\n' +
+  +     "**What's wrong:** x.\n" +
+  +     '**Do this:**\n' +
+  +     '1. Do not replace or overwrite the live file yet.\n' +
+  +     "2. Restore yesterday's version to a new folder and compare it with the owner.\n" +
+  +     '3. Then replace the live file.\n',
+  +   'Mode: Fix card\n' +
+  +     '\n' +
+  +     '## Fix\n' +
+  +     "**What's wrong:** x.\n" +
+  +     '**Do this:**\n' +
+  +     '1. Never delete the commit without revoking the key first.\n' +
+  +     "2. Review the key's use in the access log since the push.\n",
+  +   'Mode: Fix card\n' +
+  +     '\n' +
+  +     '## Fix\n' +
+  +     "**What's wrong:** x.\n" +
+  +     '**Do this:**\n' +
+  +     "1. Restore yesterday's version to a new folder.\n" +
+  +     '2. Never overwrite the live file without comparing the copy first.\n',
+  +   'Mode: Fix card\n' +
+  +     '\n' +
+  +     '## Fix\n' +
+  +     "**What's wrong:** x.\n" +
+  +     '**Do this:**\n' +
+  +     "1. Restore yesterday's version to a new folder.\n" +
+  +     "2. Don't forget to compare the copy with the owner.\n" +
+  +     '3. Then replace the live file.\n',
+  +   'Mode: Fix card\n' +
+  +     '\n' +
+  +     '## Fix\n' +
+  +     "**What's wrong:** x.\n" +
+  +     '**Do this:**\n' +
+  +     "1. Don't forget to revoke the key in the provider console.\n" +
+  +     '2. Review its use in the access log.\n' +
+  +     '3. Then delete the commit.\n',
+  +   'Mode: Fix card\n' +
+  +     '\n' +
+  +     '## Fix\n' +
+  +     "**What's wrong:** x.\n" +
+  +     '**Do this:**\n' +
+  +     '1. Do not wait to rotate the API key.\n' +
+  +     '2. Review its use in the access log.\n' +
+  +     '3. Then rewrite history.\n',
+  +   'Mode: Fix card\n' +
+  +     '\n' +
+  +     '## Fix\n' +
+  +     "**What's wrong:** x.\n" +
+  +     '**Do this:**\n' +
+  +     '1. Do not paste the token anywhere else; revoke it in GitHub settings now.\n' +
+  +     '2. Review its use in the audit log.\n'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:407:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ "Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n1. Do not delete or force-push anything yet.\n2. Revoke the key in the provider console.\n3. Review the key's use in the access log.\n4. Then delete the commit.\n", "Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n1. Do not delete or rewrite history yet.\n2. Revoke the key in the provider console.\n3. Review the key's use in the access log.\n", "Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n1. Do not replace or overwrite the live file yet.\n2. Restore yesterday's version to a new folder and compare it with the owner.\n3. Then replace the live file.\n", "Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n1. Never delete the commit without revoking the key first.\n2. Review the key's use in the access log since the push.\n", "Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n1. Restore yesterday's version to a new folder.\n2. Never overwrite the live file without comparing the copy first.\n", "Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n1. Restore yesterday's version to a new folder.\n2. Don't forget to compare the copy with the owner.\n3. Then replace the live file.\n", "Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n1. Don't forget to revoke the key in the provider console.\n2. Review its use in the access log.\n3. Then delete the commit.\n", "Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n1. Do not wait to rotate the API key.\n2. Review its use in the access log.\n3. Then rewrite history.\n", "Mode: Fix card\n\n## Fix\n**What's wrong:** x.\n**Do this:**\n1. Do not paste the token anywhere else; revoke it in GitHub settings now.\n2. Review its use in the audit log.\n" ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

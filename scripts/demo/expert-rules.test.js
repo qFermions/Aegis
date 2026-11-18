@@ -239,3 +239,21 @@ test('code review 1, class F: a negated replace or cleanup is not the step; a re
   ];
   for (const [answer, ticket] of unsafe) assert.equal(expert.safeRecovery(answer, { ticket }).verdict, 'fail', answer);
 });
+
+// Code review 1 of batch 12, class G: answer-format section 9 asks for two or three Options (two to four Hypotheses);
+// the row let four Options pass, and an answer with both Hypotheses and Options got "its parts are out of order".
+// Wrong implementations: four Options passing; the both-parts answer reported as out of order instead of by name.
+test('code review 1, class G: two or three Options, and an answer with both Hypotheses and Options is told so', () => {
+  const good = fs.readFileSync(path.join(__dirname, 'fixtures', 'batch12', 'software-engineering', 'engineer-build-good.md'), 'utf8');
+  const ticket = 'Can you write us a script that deletes the remote branches in [REPO_NAME] that were merged into main more than 90 days ago? There are hundreds.';
+  assert.equal(expert.modeRow(good, { ticket }).verdict, 'pass', 'three Options pass');
+  const four = good.replace('3. Leave them.', '4. Archive them to tags. Trade-off: keeps history, adds tags.\n3. Leave them.');
+  const fourRow = expert.modeRow(four, { ticket });
+  assert.equal(fourRow.verdict, 'fail');
+  assert.match(fourRow.detail, /4 ranked options, not 2 or 3/);
+  const both = good.replace('**Options:**', '**Hypotheses:**\n1. The branches are stale; test: list them.\n2. They are protected; test: read the rules.\n**Options:**');
+  const bothRow = expert.modeRow(both, { ticket });
+  assert.equal(bothRow.verdict, 'fail');
+  assert.match(bothRow.detail, /both Hypotheses and Options/);
+  assert.doesNotMatch(bothRow.detail, /out of order/);
+});

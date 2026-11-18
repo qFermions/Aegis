@@ -93,17 +93,22 @@ function sectionProblems(body, spec, mode) {
   const section = sectionOf(body, spec.title);
   if (section === null) return [`there is no "## ${spec.title}" section`];
   const { order, parts } = labeledParts(section, spec.labels);
-  // an Engineer answer holds Hypotheses or, for a build, Options in the same place
-  const want = spec.labels.filter((l) => l.key !== 'options' || !order.includes('hypotheses')).filter((l) => l.key !== 'hypotheses' || !order.includes('options'));
+  // an Engineer answer holds Hypotheses or, for a build, Options in the same place; one with both is told so by name,
+  // and its order is read with the Hypotheses (code review 1 of batch 12, class G)
+  const both = order.includes('hypotheses') && order.includes('options');
+  const want = spec.labels.filter((l) => l.key !== 'options' || !order.includes('hypotheses')).filter((l) => l.key !== 'hypotheses' || !order.includes('options') || both);
   const out = [];
+  if (both) out.push('it has both Hypotheses and Options; a build gives Options in the place of Hypotheses');
   const missing = want.filter((l) => !order.includes(l.key)).map((l) => l.name);
   if (missing.length) out.push(`it has no ${missing.join(', ')}`);
   const expected = want.map((l) => l.key).filter((k) => order.includes(k));
-  if (order.join() !== expected.join()) out.push('its parts are out of order');
+  if (order.filter((k) => !both || k !== 'options').join() !== expected.join()) out.push('its parts are out of order');
   const ranked = parts.hypotheses !== undefined ? parts.hypotheses : parts.options;
   if (mode === 'engineer' && ranked !== undefined) {
     const items = numbered(ranked);
-    if (items.length < 2 || items.length > 4) out.push(`${items.length} ranked ${parts.hypotheses !== undefined ? 'hypotheses' : 'options'}, not 2 to 4`);
+    // section 9: two to four Hypotheses; for a build, two or three Options
+    const max = parts.hypotheses !== undefined ? 4 : 3;
+    if (items.length < 2 || items.length > max) out.push(`${items.length} ranked ${parts.hypotheses !== undefined ? 'hypotheses, not 2 to 4' : 'options, not 2 or 3'}`);
     else if (parts.hypotheses !== undefined && items.some((i) => !/\btests?\b/i.test(i))) out.push('a hypothesis has no test that splits it from the next');
   }
   if (mode === 'engineer' && parts.blast !== undefined && (!/\b(?:roll ?back|undo|revert|restore)\b/i.test(parts.blast) || !/\bstop\b/i.test(parts.blast))) out.push('the blast radius gives no rollback or no stop condition');

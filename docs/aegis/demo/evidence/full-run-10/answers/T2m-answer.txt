@@ -1,0 +1,89 @@
+Mode: Fix card
+## Fix
+**What's wrong:** [FIRST_NAME] leaves Friday. Their access has to end everywhere, and their work has to stay with the company.
+
+**Do this:**
+1. Put HR's written confirmation and the head of engineering's approval in the ticket. Confirm the GitHub login with the manager.
+2. Check what they hold: Okta apps, any Google admin role, and their GitHub role, teams and forks.
+3. Friday, after they finish work: deactivate them in Okta first. Then check that Google shows them as suspended.
+4. Move their Drive files and calendar to the manager. Remove them from GitHub. Suspend them in Linear and deactivate them in Slack, unless Okta already did.
+5. Collect the Mac.
+
+**Done when:** Aegis reads every system showing them blocked, and both transfers show complete.
+**Stop if:** HR's confirmation isn't in writing, the GitHub login is unconfirmed, or they're a Google super admin or a GitHub owner.
+**Tell the user now:** IT is checking HR's written confirmation and preparing Friday's steps.
+**Tell the user when done:** [FIRST_NAME]'s access is closed, and their files and calendar are with their manager.
+
+This needs a longer plan across six systems: see Details.
+
+## Details
+
+**Verdict:** This is a planned, friendly offboarding. Nothing points to a compromise. The replay lookup returned MISS. The plan follows `/gws-offboard` (Okta and Google), `/github-offboard-member`, `/linear-workspace-admin` Phase D, `/slack-user-lifecycle` Phase D and `/fleet-device-actions`.
+
+**Approvals and checks before Friday**
+- **Written approvals:** The profile asks for written confirmation from HR. "Confirmed w HR" in a comment isn't that. Get HR's note and the head of engineering's approval into the ticket.
+- **GitHub login:** The ticket says "i think", so the login is a guess. Confirm it with the manager, and match it to the member list in Phase A. Don't remove anyone based on a guessed login.
+- **Independent review:** This plan deletes access in several systems. An out-of-session review must sign it off before step 3.
+- **Pre-state:** Save the GitHub role, teams, repositories and forks to `tasks/checkpoints/`.
+- **Stop conditions:**
+  - They are a Google super admin. That role can sign in to the Admin console without going through Okta, so remove it first.
+  - They are one of 2 or fewer GitHub owners, or the only admin of a repository. Hand that role to someone else first.
+  - A fork holds work nobody else has. The repository owner decides what happens to it before removal.
+- **SCIM in Linear and Slack:** If SCIM is on, Okta's deactivation suspends those accounts. In that case skip the Linear and Slack changes. Aegis only reads them back.
+- **Integration settings:** The deactivation options on Okta's Google Workspace integration aren't known yet. Read them before step 3.
+
+**Mail, cost and how long you can undo each step**
+- **Mail:** Once the Google account is suspended, it receives no new mail. The manager and HR decide whether mail is redirected, to whom, and until what date. A redirect has no gate in this runbook. If they want one, raise it as its own change before Friday. Proof it works: a test message arrives in the receiving person's inbox.
+- **Google cost:** A suspended account is still billed at the full rate. The other options are an Archived User licence (its own change) or deleting the account after the data is moved. A deleted account can be restored for 20 days, then it is gone. Leave the account suspended until the retention decision is in the ticket.
+- **GitHub:** The paid seat count doesn't go down by itself; the plan owner lowers it. A removed member can be reinstated within 3 months.
+- **Linear:** A suspended member drops off the next billing cycle. Unsuspending reverses it, and nothing is deleted.
+- **Slack:** A deactivated account can be reactivated, but channel memberships have to be rebuilt by hand.
+
+**Every change, its class and its check**
+- Step 3 (deactivate in Okta): R3. Check: Aegis reads the Okta status as deprovisioned.
+- Step 4 (Drive files to the manager): R2. Check: Aegis reads the Drive transfer as complete, and the manager opens a sample file.
+- Step 4 (calendar events to the manager): R2. Check: Aegis reads the calendar transfer as complete.
+- Step 4 (remove from the GitHub org): R3. Check: Aegis reads that they aren't a member, an outside collaborator or a pending invitee.
+- Step 4 (suspend in Linear): R3. Check: Aegis reads the Linear member as inactive.
+- Step 4 (deactivate in Slack): R3. Check: Aegis reads the Slack account as deactivated.
+- Step 5 (collect the Mac): no gate. Proof: the Mac's serial number is on the signed handover note.
+
+**Later steps, not run now**
+- **Google suspend:** Only if Google still shows the account as active after the Okta deactivation. Gate `gws-offboard-suspend-portal` (R2).
+- **Mac lock:** Only if the Mac isn't handed back. Gate `fleet-device-actions-lock-portal` (R2).
+- **Google delete:** Only after the retention decision and the review. Gate `gws-offboard-delete-portal` (R3).
+
+**Risks**
+- **Order:** Okta goes first. Suspending only in Google leaves every other app open.
+- **Open sessions:** Okta's deactivation stops new sign-ins, but sessions already open inside apps can stay alive. That's why GitHub, Linear and Slack each get their own step.
+- **Secrets:** If they could read repository secrets, deploy keys or tokens, rotate those at the issuer. Removing the person doesn't make a copied secret useless.
+
+**Jira note (use only once every check passes):**
+> Offboarded [USER@DOMAIN.COM] on [date]. HR written confirmation and head of engineering approval attached. Okta deactivated. Google suspended. Drive and Calendar transferred to [MANAGER_UPN]. GitHub [GITHUB_USER] removed (pre-state in checkpoints). Linear suspended. Slack deactivated. Mac returned. Mail: [decision]. Retention: [decision]. Time spent: [X] min.
+
+```aegis-desk
+Gate: gws-offboard-okta-deactivate-portal
+Phrase: DEACTIVATE OKTA USER [UPN]
+Change record: R3, read-back okta:verify-status --status DEPROVISIONED
+Read-back: okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
+Gate: gws-offboard-drive-transfer-portal
+Phrase: TRANSFER DRIVE FILES FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]
+Change record: R2, read-back google-workspace:verify-transfer --application-id 55656082996 --not-before
+Read-back: gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 55656082996 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: gws-offboard-calendar-transfer-portal
+Phrase: TRANSFER CALENDAR EVENTS FROM [USER@DOMAIN.COM] TO [MANAGER_UPN]
+Change record: R2, read-back google-workspace:verify-transfer --application-id 435070579839 --not-before
+Read-back: gws-client.js verify-transfer --transfer-id [TRANSFER_ID] --old-owner [USER@DOMAIN.COM] --new-owner [MANAGER_UPN] --application-id 435070579839 --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: github-offboard-member-remove-portal
+Phrase: REMOVE [GITHUB_USER] FROM ORGANIZATION [@Aegion_GITHUB_ORG]
+Change record: R3, read-back github:verify-offboarded
+Read-back: github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute
+Gate: linear-workspace-admin-suspend-portal
+Phrase: SUSPEND LINEAR MEMBER [USER@DOMAIN.COM] ID [USER_ID]
+Change record: R3, read-back linear:verify-suspended
+Read-back: linear-client.js verify-suspended --user [USER_ID] --change [CHANGE_ID] --execute
+Gate: slack-user-lifecycle-deactivate-portal
+Phrase: DEACTIVATE SLACK MEMBER [USER_ID]
+Change record: R3, read-back slack:verify-deactivated
+Read-back: slack-client.js verify-deactivated --user [USER_ID] --change [CHANGE_ID] --execute
+```

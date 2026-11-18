@@ -1,0 +1,57 @@
+Mode: Fix card
+## Fix
+**What's wrong:** Authenticator didn't move to the new phone, so sign-ins can't be approved.
+**Do this:**
+1. Call the office manager on the number on file and have them confirm it's [FIRST_NAME]. Then read Entra → Users → [UPN] → Authentication methods.
+2. If the old phone still works, [FIRST_NAME] adds the new one at aka.ms/mfasetup.
+3. If not, go to Add authentication method → Temporary Access Pass (one-time, shortest lifetime). Read it out by calling the office line on file.
+4. [FIRST_NAME] uses it at aka.ms/mfasetup to add the new phone.
+5. Then delete only the old phone's entry.
+
+**Done when:** the new phone is listed and the old one is gone. Aegis checks both.
+**Stop if:** the old phone was lost or stolen, or there were sign-in prompts nobody made. Call the security lead.
+**Tell the user now:** IT is confirming it's you with the office manager, then will call the front desk.
+**Tell the user when done:** Your new phone now approves sign-ins. Outlook and Teams should open.
+
+## Details
+
+**Verdict:** This is a new phone, not a lost one. The runbook is `/mfa-issue` (new phone / re-register). The replay check missed. Accounts are cloud-only and Authenticator is the only method, so there is probably no second method to fall back on.
+
+**What to check first**
+- **Identity:** the office manager confirms who it is on a call the tech places (the profile's rule until the office sets one; the identity rule is still an org gap). Write in the ticket which check was used.
+- **Pass policy:** read Entra ID → Authentication methods → Policies → Temporary Access Pass. If it is off, or [UPN] is outside its scope, stop. Changing that policy is a tenant-wide R3 change that the runbook doesn't authorize. Escalate it.
+- **Sessions:** leave them alone. [FIRST_NAME] still has the old phone or swapped it in, so no session revoke is needed. If the old phone turns out to be lost, stolen or handed back without a wipe, that becomes a separate gate (`mfa-session-revoke-portal`) and goes to the security lead.
+- **Not this path:** "Require re-register MFA". It removes the old way in before the new one exists.
+
+**Changes**
+- Step 3 (issue a Temporary Access Pass): R3. Double-check: Aegis reads that a pass created after approval is listed for [UPN] and can be used.
+  - Issued by an Authentication Administrator, and approved by the office manager.
+  - Read the pass out only on that call. Never send it by text or chat, and never write it in the ticket.
+  - Skip this step if step 2 worked.
+- Step 5 (delete the old phone's Authenticator entry): R3. Double-check: Aegis reads that the old method's ID is gone and that an Authenticator method is still registered.
+  - This can't be undone, so the office manager **and** the practice owner approve it.
+  - Do it only after the new phone shows in the list.
+
+**⚠️ Risk:** a Temporary Access Pass signs in as [FIRST_NAME] for as long as it lasts. Issue it only after the identity call, and choose one-time use with the shortest lifetime. Once [FIRST_NAME] signs in with it, they have 10 minutes to finish adding the new phone.
+
+**Verification checklist**
+- [ ] Identity confirmed through the office manager on a call the tech placed
+- [ ] Pass read-back passed before the handover
+- [ ] New phone listed, then old entry deleted, and the delete read-back passed
+- [ ] Outlook and Teams sign in with an approval on the new phone
+
+**Jira-ready note**
+> MFA new-phone re-registration for [UPN]. Identity: office manager confirmed on a call the tech placed. New way in: [Temporary Access Pass, read back, handed over on the office line on file / old phone still worked, no pass]. Old Authenticator entry deleted after the new phone was registered, with office manager and practice owner approval. Sessions not revoked (the phone was not lost). Time spent: [X] min.
+
+```aegis-desk
+Gate: mfa-temporary-access-pass-portal
+Phrase: CREATE TEMPORARY ACCESS PASS FOR [UPN]
+Change record: R3, read-back msgraph:verify-temporary-access-pass --not-before
+Read-back: msgraph-client.js verify-temporary-access-pass --user [USER_ID] --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: mfa-method-delete-portal
+Phrase: DELETE MFA METHOD $methodType ID $methodId FOR [UPN]
+Change record: R3, read-back msgraph:verify-method-absent
+Read-back: msgraph-client.js verify-method-absent --user [USER_ID] --method-id [METHOD_ID] --change [CHANGE_ID] --execute
+Read-back: node scripts/adapters/msgraph-client.js verify-mfa-method --user [USER_ID] --method microsoftAuthenticator --execute
+Read-back: node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-before [NOT_BEFORE] --execute
+```

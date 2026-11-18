@@ -1,0 +1,40 @@
+Mode: Engineer answer
+
+**Evidence read:** "Slow for everyone", Zoom freezing, "again" (it has happened before). We don't know since when, which hours, or whether wired Macs are affected too. The profile doesn't say what firewall, Wi-Fi or ISP the studio uses, so there's no admin path for those below. The replay lookup was a MISS. **Nothing below changes anything; it's all reads.**
+
+**Ranked hypotheses, each with a splitting test**
+
+1. **The internet line is full, and calls get no priority.** This is the most likely cause when everyone is slow and it keeps coming back. Typical culprits: cloud sync of large design files (Drive, Dropbox, Adobe CC), a backup, or macOS updates pushed through Jamf.
+   - Test: when it's bad, run `networkQuality -v` on one Mac (built into macOS; read-only). Run it again early in the morning. If upload or download is near the line's rated speed, and responsiveness (RPM) drops sharply under load, the line is full.
+   - Also check the firewall's traffic view for the top users at the bad hour, and check Jamf for any patch or update policy scheduled for that time.
+2. **Loss or jitter on the provider's path.**
+   - Test: when it's bad, run `ping -c 100 8.8.8.8` from a **wired** Mac. Loss or big swings in time, while the line isn't full, point to the ISP.
+3. **Wi-Fi (what the requester asked about).**
+   - Test: when it's bad, compare a wired Mac with a Wi-Fi Mac in the same spot. If the wired one is fine and Wi-Fi isn't, it's the Wi-Fi: look at channel use and how many devices are connected per access point.
+4. **Zoom's own service.**
+   - Test: check status.zoom.us. If Slack and Google Meet calls are fine, the problem is Zoom itself.
+
+**Blast radius and rollback:** none for now, since every step is a read. If test 1 proves the line is full, the likely fix is a traffic-shaping rule on the studio's firewall that puts Zoom and voice first and caps bulk sync. That rule touches every connection in the office, so it is **R3**:
+- export the current rules first
+- the studio manager approves
+- the firewall owner applies it
+- rollback is restoring the export
+
+That will be a separate ticket, after the evidence is in.
+
+**Verify:** run `networkQuality` and a 10-minute Zoom test call at the busy hour. Done when RPM holds and the call doesn't freeze.
+
+**Ask next:**
+- What firewall, Wi-Fi gear and ISP line (speed) does the studio have?
+- What hours does it happen?
+- Is anyone on a cable affected?
+
+**Tell the user now:** "We're looking into it. Can you tell us roughly what times it happens, and whether you're on Wi-Fi or a cable?" Don't say it's the Wi-Fi, and don't promise a fix time.
+
+**Jira note:** Office-wide slowness and Zoom freezes, happening again. Read-only tests sent: line saturation, ISP jitter, wired vs Wi-Fi, Zoom status. No changes made. Waiting on the network gear details and the bad hours.
+
+```aegis-desk
+Replay: MISS
+Class: R0 (reads only)
+Gate: none
+```

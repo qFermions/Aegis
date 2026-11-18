@@ -1,0 +1,100 @@
+Mode: Fix card
+## Fix
+**What's wrong:** [FIRST_NAME] leaves Friday. Their Okta, GitHub, Google and Linear access needs to end at 18:00 that day.
+
+**Do this:**
+1. Before Friday: get HR's written confirmation and the head of engineering's approval into the ticket. Write down what [UPN] has today in each system.
+2. Friday at 18:00: Okta Admin Console → Directory → People → [UPN] → More Actions → Deactivate. Then check that Google Admin console → Directory → Users shows them as Suspended.
+3. GitHub → [@Aegion_GITHUB_ORG] → People → tick only [GITHUB_USER] → Remove from organization.
+4. Linear → Settings → Administration → Members → [USER@DOMAIN.COM] → Suspend.
+
+**Done when:** Okta shows Deactivated, Google shows Suspended, GitHub no longer lists them and Linear shows them as suspended. Aegis checks all four.
+
+**Stop if:** HR hasn't confirmed in writing, they own the GitHub organization or hold a Google admin role, or this is a dismissal for cause.
+
+**Tell the user now:** IT is preparing to remove [FIRST_NAME]'s access at the end of Friday, once HR confirms in writing. Who should receive their email and files?
+
+**Tell the user when done:** [FIRST_NAME]'s access to Okta, GitHub, Google and Linear has ended. Their mail and files are kept.
+
+This needs a longer plan across four systems: see Details.
+
+## Details
+
+**Before Friday (approval and review)**
+- The ticket only has the manager confirming the date. This customer also needs **written confirmation from HR** and **approval from the head of engineering**. Without both, nothing runs.
+- These are destructive changes across several systems. Someone other than the tech who runs them must review the plan before Friday.
+- Save a record of their current access in all four systems before any change:
+  - Okta: status and app list, plus the deactivation settings on the Google integration.
+  - GitHub: role, teams, repositories they reach and forks of the org's repositories.
+  - Google: status and any admin role.
+  - Linear: role, and the open issues they're assigned.
+
+**Why this order**
+- Okta goes first because it creates the Google accounts.
+- With Okta's default settings, deactivating the user also suspends their Google account. If the integration is set to "Do not suspend user", Google stays active.
+- There's no lighter option for a leaver. Suspending in Okta keeps every app assignment, so it doesn't remove anything.
+- Turning off Okta sign-in doesn't remove someone from the GitHub organization, and it doesn't suspend their Linear seat unless Linear is set to follow Okta automatically (SCIM). So steps 3 and 4 are separate changes.
+
+**Each change and its check**
+- Step 2 (deactivate in Okta): R3. Double-check: Aegis reads Okta as Deactivated, then Google as Suspended.
+- Step 3 (remove from the GitHub organization): R3. Double-check: Aegis reads that they are not a member, not invited and not an outside collaborator.
+- Step 4 (suspend in Linear): R3. Double-check: Aegis reads the Linear member as inactive.
+- Step 4, if Linear follows Okta automatically (SCIM is on): don't suspend by hand. Wait for Okta's change to reach Linear, then run the same check.
+- Only if Google still shows Active after step 2: gate `gws-offboard-suspend-portal`.
+
+**Stop conditions in GitHub**
+- They are an owner and there are 2 owners or fewer. Add another owner first.
+- They are the only admin of a repository. Give someone else admin first.
+- A fork holds work nobody else has, and the repository owner hasn't decided what to keep.
+
+**Mail, cost and the restore window**
+- **Mail:** a suspended Google account gets no new mail. If the manager wants it forwarded, that is a separate change, and it must be in place before Friday 18:00. Name who receives the mail and the end date.
+- **Cost:**
+  - Google: a suspended account is billed at the full rate. The Archived User licence is the cheaper way to keep the data.
+  - GitHub: the paid seat count doesn't drop on its own. Lowering it is a separate billing step.
+  - Linear: a suspended member drops off the next bill.
+  - Okta: whether a deactivated user counts toward the licence isn't confirmed. Check the contract.
+- **Restore window:**
+  - Okta: a deactivated account can be turned back on.
+  - GitHub: a removed member can be reinstated with their settings for 3 months.
+  - Linear: unsuspending reverses it.
+  - Google: suspension deletes nothing. A later deletion leaves 20 days to restore.
+- **Later, not this ticket:** moving Drive and Calendar data, and any deletion, wait for the retention decision (gates `gws-offboard-drive-transfer-portal`, `gws-offboard-calendar-transfer-portal`, then `gws-offboard-delete-portal`).
+
+**Not on the request (please confirm)**
+- **Slack:** it's in their setup but not on the list. Ask whether to include it.
+- **Mac:** Fleet manages the laptops. Plan the laptop return, but no device action is advised here.
+- **Secrets:** as an engineer, they may have been able to read repository or org secrets, deploy keys or tokens. Review them. Any judged exposed gets rotated where it was issued, before anything else.
+
+**Jira note (fill in after the checks pass):** Leaver [FIRST_NAME], last day Friday. HR written confirmation and head of engineering approval are attached, and the review is recorded.
+- Okta deactivated, and Google read back as Suspended.
+- GitHub [GITHUB_USER] removed from [@Aegion_GITHUB_ORG], with the record of their access saved. The 3-month reinstatement window ends [date].
+- Linear member suspended.
+- Mail: [blocked / forwarded to [MANAGER_UPN] until [date]]. Time spent: [X] min.
+
+```aegis-desk
+Pre-state (R0, save to tasks/checkpoints/ before Friday):
+  node scripts/adapters/okta-client.js user --user [OKTA_USER_ID] --execute
+  node scripts/adapters/github-client.js membership --user [GITHUB_USER] --execute
+  node scripts/adapters/github-client.js members --role admin --execute
+  node scripts/adapters/github-client.js outside-collaborators --execute
+  node scripts/adapters/github-client.js invitations --execute
+Preconditions: HR written confirmation + head-of-engineering approval in ticket; independent out-of-session review recorded (R3 multi-system).
+
+Gate: okta-user-lifecycle-deactivate-portal
+Phrase: DEACTIVATE OKTA USER [UPN]
+Change record: R3, read-back okta:verify-status --status DEPROVISIONED
+Read-back: node scripts/adapters/okta-client.js verify-status --user [OKTA_USER_ID] --status DEPROVISIONED --change [CHANGE_ID] --execute
+Then read Google status: Admin console → Directory → Users → [USER@DOMAIN.COM] (expect Suspended; if Active, later rung gws-offboard-suspend-portal)
+
+Gate: github-offboard-member-remove-portal
+Phrase: REMOVE [GITHUB_USER] FROM ORGANIZATION [@Aegion_GITHUB_ORG]
+Change record: R3, read-back github:verify-offboarded
+Read-back: node scripts/adapters/github-client.js verify-offboarded --user [GITHUB_USER] --change [CHANGE_ID] --execute
+
+Gate: linear-workspace-admin-suspend-portal
+Phrase: SUSPEND LINEAR MEMBER [USER@DOMAIN.COM] ID [USER_ID]
+Change record: R3, read-back linear:verify-suspended
+Read-back: node scripts/adapters/linear-client.js verify-suspended --user [USER_ID] --change [CHANGE_ID] --execute
+(Stop on this gate if Linear SCIM is on; run the read-back only.)
+```

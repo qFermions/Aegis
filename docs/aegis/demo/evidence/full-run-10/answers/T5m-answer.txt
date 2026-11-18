@@ -1,0 +1,52 @@
+I worked this ticket against the `/email-quarantine` runbook (replay was a MISS). The answer is below.
+
+---
+
+Mode: Fix card
+## Fix
+**What's wrong:** The vendor's invoices are probably being stopped before they reach the inbox. A message trace will show where.
+
+**Do this:**
+1. In the Exchange admin center, go to Mail flow → Message trace. Trace the vendor's domain to your company for the last 10 days and read each message's status.
+2. If a message is quarantined, open it in the Defender portal under Email & collaboration → Review → Quarantine. Read the reason and the SPF/DKIM/DMARC results.
+3. If the reason is spam or bulk and those results pass, release each invoice to its one recipient.
+4. If the reason is phish, or a message shows Delivered but isn't in the inbox, don't release it. Check that mailbox's inbox rules and forwarding, then escalate to the security lead.
+5. If the trace shows nothing, call the vendor on the number you have on file and ask for their bounce or send log.
+
+**Done when:** All 6 invoices are in the inbox.
+**Stop if:** The verdict is phish or malware, or you find an inbox rule nobody recognizes.
+**Tell the user now:** We're tracing the vendor's emails to find where they stopped.
+**Tell the user when done:** The invoices are in your inbox. Please confirm all six are there.
+
+## Details
+- **Profile used:** Customer C (Microsoft 365, hybrid AD, Defender for Office 365). The IT lead approves changes. A mail-flow change, such as an allow entry or a transport rule, also needs the operations manager's approval.
+- **Why the trace comes first:** It's a read-only check that shows whether each message was quarantined, filtered to Junk, delivered or never received. Look at "how wide" before "why": is it only this vendor, and only this mailbox?
+- **Possible fraud:** Vendor invoices that disappear quietly are a common sign of invoice fraud. That can be an inbox rule that moves or deletes them, forwarding to an outside address, or a lookalike vendor domain. If the trace shows a different sending domain than usual, or a rule you can't explain, the security lead needs the message IDs, the sender, the verdicts, the mailbox, the rule's details and the dates. Don't change or delete the rule before they have looked.
+- **If SPF, DKIM or DMARC fail:** The vendor has to fix their own DNS records. Don't allow their domain as a first fix.
+- **Late fees:** The urgency is real, but it doesn't skip any approval or sign-off step.
+- Step 3 (release each invoice to one recipient): R2, approved by the IT lead. Double-check: Aegis reads back that each message shows Released for that recipient. With 6 invoices, the gate runs once per message.
+- **Later, only if quarantine keeps happening after the vendor fixes their records:** an address-scoped Tenant Allow/Block entry with an expiry date (`quarantine-allow-entry`, through `/email-whitelist`). It needs both the IT lead and the operations manager to approve. It isn't advised now.
+
+<details><summary>PowerShell, for reference only (read-only)</summary>
+
+```powershell
+# Connect to Exchange Online (sign-in prompt; reads only)
+Connect-ExchangeOnline
+# List messages from the vendor's domain over the last 10 days, with their delivery status
+Get-MessageTraceV2 -SenderAddress "*@[VENDOR_DOMAIN]" -StartDate (Get-Date).AddDays(-10) -EndDate (Get-Date) |
+  Select-Object Received, SenderAddress, RecipientAddress, Subject, Status
+# List the recipient mailbox's inbox rules, to spot one that moves, deletes or forwards mail
+Get-InboxRule -Mailbox "[USER@DOMAIN.COM]" | Select-Object Name, Enabled, From, MoveToFolder, DeleteMessage, ForwardTo, RedirectTo
+```
+</details>
+
+**Checklist:** trace read · quarantine reason recorded · invoices released to the one recipient · read-back passed · no unknown rules or forwarding · user confirmed 6/6.
+
+**Jira note:** No invoices received from the freight vendor since last Tuesday. Message trace run: [RESULT]. Quarantine reason: [REASON]. SPF/DKIM/DMARC: [RESULTS]. Released [N] messages to [USER@DOMAIN.COM] with IT lead approval; release verified. Inbox rules and forwarding checked: [RESULT]. Security escalation: [YES/NO].
+
+```aegis-desk
+Gate: quarantine-release-one-portal
+Phrase: RELEASE QUARANTINED MESSAGE [MESSAGE_IDENTITY_GUID] TO [USER@DOMAIN.COM]
+Change record: R2, read-back exo:verify-quarantine-released
+Read-back: exo-client.js verify-quarantine-released --message-id "[MESSAGE_ID]" --recipient [USER@DOMAIN.COM] --change [CHANGE_ID] --execute
+```

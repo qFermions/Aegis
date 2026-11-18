@@ -1,0 +1,35 @@
+Mode: Fix card
+
+## Fix
+
+**What's wrong:** A staff member wants access to the billing mailbox "same as [FIRST_NAME]". Nothing is broken. This is an access request for a finance mailbox, and it needs sign-off.
+
+**Do this:**
+1. Call the requester back on the number in the firm's staff list to confirm they really sent this.
+2. Exchange admin center → Recipients → Mailboxes → billing mailbox → **Mailbox delegation**. Copy the three lists into the ticket and note which rights [FIRST_NAME] has.
+3. Ask the managing partner which right this person needs and get their written approval. Reading the mailbox is the usual need. Sending as the billing mailbox is a separate approval.
+4. If approved: **Read and manage (Full Access)** → Edit → Add members → requester → Save → Confirm.
+
+**Done when:** The billing mailbox shows up in their Outlook, and Aegis's check shows them on the billing mailbox's Full Access list.
+
+**Stop if:** The callback doesn't match, or the managing partner doesn't recognise the request.
+
+**Tell the user now:** We've got your request. We'll call you to confirm it's you, and the managing partner will need to approve it.
+
+**Tell the user when done:** You can now open the billing inbox. It will appear in Outlook under your own mailbox. Restart Outlook if it isn't there yet.
+
+## Details
+
+- **Setup used:** the Customer E profile (cloud-only Microsoft 365, one office). There is no on-prem AD, so no sync step.
+- **Why there's a gate:** Full Access lets the person read every message in the mailbox, past and present. At an accounting firm the billing mailbox holds client financial data, and anything they read can't be taken back (R2). "Same as [FIRST_NAME]" is not an approval. Grant only the rights the managing partner approves, even if [FIRST_NAME] has more.
+- **Least privilege:** Start with Full Access only. Send As (mail goes out from the billing address) needs its own approval and its own change. Send on Behalf has no gated procedure in the runbook. If several staff end up needing this mailbox, give access to a mail-enabled security group instead. That is a separate reviewed change.
+- **Temporary access:** If this is cover for leave, put the end date in the ticket. The grant doesn't expire by itself, so remove it on that date.
+- **Undo:** Remove the person from Full Access on the same Mailbox delegation page.
+- **Jira note:** Resolved [date/time]. Full Access on the billing mailbox for `[UPN]`. Requester identity confirmed by callback. Approved by the managing partner, [JIRA-###]. Read-back: [verified / not performed]. Time spent: [X] min.
+
+```aegis-desk
+Gate: mailbox-full-access-grant-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

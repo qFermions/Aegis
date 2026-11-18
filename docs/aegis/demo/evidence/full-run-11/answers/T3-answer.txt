@@ -1,0 +1,38 @@
+I treated this as an **Incident answer**: a stolen Mac with client files on it is a possible compromise, so the whole ticket is about that. The replay lookup missed, and the steps below come from the `/jamf-lock-erase` and `/gws-password-reset` runbooks.
+
+Mode: Incident answer
+## Incident answer
+**Severity:** SEV-3. We suspect a compromise but see no sign of use yet. At risk: the client files on the Mac and any Google or Slack sessions still signed in on it.
+
+**Contain first:**
+1. Read the Mac's record (no change): Jamf Pro → Computers → Search inventory → `[SERIAL_NUMBER]`. Note its last check-in, macOS, chip, whether FileVault is on, whether a bootstrap token is stored, and any commands still pending. FileVault decides how exposed the files are.
+2. **Lock the Mac.** Decided by the studio manager. First store a six-digit PIN in the password manager. Then: Management → **Lock Computer**, with a return message. This deletes nothing, and the PIN undoes it. It runs only when the Mac next connects.
+3. **Sign the designer out of Google everywhere.** Decided by the studio manager. Admin console → Directory → Users → `[USER@DOMAIN.COM]` → Security → Sign-in cookies → **Reset**. Nothing is lost, and the designer just signs in again on their other devices.
+4. **Slack:** the runbook has no way to sign out one person, and the workspace-wide reset is a mass action. The security lead decides whether it is needed.
+5. **Wipe later, not now:** only if the security lead calls for it. It needs both the studio manager and the designer's own manager to approve, plus an independent review.
+
+**Preserve:** before you lock, keep a copy of the Jamf record and its Management History, the designer's Google sign-in and Drive audit events since last night, Slack access logs if your plan has them, and the police report number.
+
+**Escalate to:** the security lead or security on-call. They need the serial, the designer, when it was taken, the last check-in, the FileVault state, and the designer's sign-ins since last night. Nobody calls this harmless until they have looked.
+
+**Communications:** confirm the request first by calling the studio manager back on the number in the staff list. If the client contracts require it, the studio manager decides whether to tell clients. Tell the designer: IT is securing their accounts, they should expect to be asked to sign in again, and they should not try to track the Mac or confront anyone.
+
+**Timeline:** stolen last night (exact time unknown). Reported today. Last check-in unknown until step 1. No sign of use so far.
+
+## Details
+- Step 2 (lock the Mac): R2. Double-check: Aegis reads Jamf's command history and expects the lock to be acknowledged. It stays inconclusive until the Mac connects.
+- Step 3 (Google sign-in cookies): R1. Double-check: Aegis reads the Google admin log for the cookie reset on this account. Gmail can take up to an hour to sign out.
+- Step 5, only if the security lead calls for it after the lock: gate `jamf-lock-erase-wipe-portal` (R3, cannot be undone).
+- A thief's Mac that never goes online never gets the lock or the wipe. Until then, FileVault and Activation Lock are what protect the data.
+
+**Jira note:** Mac `[SERIAL_NUMBER]` stolen, police report filed. Lock and Google cookie reset approved by the studio manager. Escalated to security. The wipe waits on their call.
+
+```aegis-desk
+Gate: jamf-lock-erase-lock-portal
+Phrase: LOCK MAC [SERIAL_NUMBER]
+Change record: R2, read-back jamf:verify-command --not-before --type DEVICE_LOCK
+Read-back: jamf-client.js verify-command --management-id [DEVICE_ID] --type DEVICE_LOCK --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: gws-password-reset-cookies-portal
+Phrase: RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]
+Read-back: node scripts/adapters/gws-client.js verify-event --app admin --event RESET_SIGNIN_COOKIES --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+```

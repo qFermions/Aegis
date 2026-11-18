@@ -1,0 +1,3 @@
+$ node scripts/lint/ladder-audit.js --check
+ladder-audit: 157 sections audited, the fixed scope passes
+exit 0

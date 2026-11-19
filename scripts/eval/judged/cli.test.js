@@ -24,6 +24,7 @@ const test = require('node:test');
 const cli = require('../judged-eval.js');
 const cases = require('./cases.js');
 const calibrate = require('./calibrate.js');
+const backends = require('./backends.js');
 const { REPO_ROOT } = require('./paths.js');
 
 const CLI = path.join(__dirname, '..', 'judged-eval.js');
@@ -353,4 +354,33 @@ test('batch 12d: each case records its tool server calls allowed and refused, wi
   const notRun = JSON.parse(fs.readFileSync(path.join(capped.results, 'results.json'), 'utf8')).cases[0];
   assert.equal(notRun.verdict, 'INCONCLUSIVE');
   assert.deepEqual(notRun.tool_server, { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] });
+});
+
+// Code review 2 of batch 12d, finding 5. Wrong implementation it catches: the earlier run's audit and typed files
+// cleared only when a case's session starts, so in a results folder used before, a case the run does not start (the
+// limit is reached) or whose prompt is too long keeps the earlier run's files, and its record or a tool that reads the
+// folder counts the earlier run's calls as its own.
+test('batch 12d: a case that does not start leaves no audit or typed file of an earlier run in the results folder', async (t) => {
+  const stale = `${JSON.stringify({ time: 't', tool: 'net_dns', input: { name: 'old.example.com', type: 'A' }, decision: 'ok', addresses: [], bytes: 0, duration_ms: 1 })}\n`;
+  const id = JSON.parse(G4_TEXT.split('\n')[0]).id;
+  const seed = (s) => {
+    fs.mkdirSync(s.results, { recursive: true });
+    fs.writeFileSync(path.join(s.results, `${id}-tool-audit.jsonl`), stale);
+    fs.writeFileSync(path.join(s.results, `${id}-typed.txt`), 'old.example.com\n');
+  };
+  // not run: the limit is reached before the first case
+  const capped = setup(t);
+  fs.writeFileSync(capped.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  seed(capped);
+  await cli.main(['run', '--cases', capped.copy, '--execute', '--results-dir', capped.results, '--budget-usd', '0.01'], capped.io, capped.deps);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(capped.results, 'results.json'), 'utf8')).cases[0].verdict, 'INCONCLUSIVE');
+  assert.deepEqual(fs.readdirSync(capped.results).filter((f) => f.startsWith(`${id}-`)), [], 'the earlier run\'s files are gone');
+  // a prompt too long for one argument: runSut returns before any session, and the record holds no earlier call
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-too-long-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const auditFile = path.join(dir, 'B1-tool-audit.jsonl');
+  fs.writeFileSync(auditFile, stale);
+  const sut = await backends.runSut({ id: 'B1', ticket: 'x'.repeat(backends.MAX_PROMPT_BYTES + 10), evidence: '', follow_up: '' }, { command: process.execPath, prefixArgs: [], repoRoot: REPO_ROOT, auditFile });
+  assert.equal(sut.state, 'ERROR');
+  assert.deepEqual(backends.toolServerRecord(auditFile).calls, 0);
 });

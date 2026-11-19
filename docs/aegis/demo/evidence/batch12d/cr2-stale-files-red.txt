@@ -1,0 +1,48 @@
+✔ a dry run prints the plan and the estimate, exits 4, and starts no process (2.390125ms)
+✔ the real CLI refuses the DEV file in the repository and a symlink into it (exit 1); dry run on a copy exits 4 (187.287709ms)
+✔ the DEV set runs through the runner with the fake backends and produces the report; no threshold gives NO VERDICT (exit 3) (418.242459ms)
+✔ with a threshold the runner prints PASS or FAIL; the calibrate command reports agreement and kappa (379.759834ms)
+✔ a boundary violation fails the run even without a threshold (exit 2) (373.90525ms)
+✔ a timed-out case is INCONCLUSIVE and never counts as a pass (311.314167ms)
+✔ a results directory in a tracked part of the repository is refused before any case runs (25.852209ms)
+✔ a custom --results-dir is denied to every system-under-test turn, the follow-up included (374.518292ms)
+✔ code review 1: the whole DEV file runs through the runner; the two setup cases reach the session with their setup (3748.581375ms)
+✔ batch 12: a case records its lane, its mode against the expected one, its tool calls and the new checks (46.977375ms)
+✔ batch 12, task 5: the tool server is on by default with an audit file per case, --no-tools turns it off, and the run records the tools each session had (94.050375ms)
+✔ batch 12d: each case's typed file, in the results folder, holds its setup, ticket and evidence when its session starts (93.908292ms)
+✔ batch 12d: each case records its tool server calls allowed and refused, with every refused call and its reason, and the report shows the counts (46.99075ms)
+✖ batch 12d: a case that does not start leaves no audit or typed file of an earlier run in the results folder (1.367959ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 13
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6154.445417
+
+✖ failing tests:
+
+test at scripts/eval/judged/cli.test.js:362:1
+✖ batch 12d: a case that does not start leaves no audit or typed file of an earlier run in the results folder (1.367959ms)
+  AssertionError [ERR_ASSERTION]: the earlier run's files are gone
+  + actual - expected
+  
+  + [
+  +   'DEV01-tool-audit.jsonl',
+  +   'DEV01-typed.txt'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/cli.test.js:376:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'DEV01-tool-audit.jsonl', 'DEV01-typed.txt' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit 1

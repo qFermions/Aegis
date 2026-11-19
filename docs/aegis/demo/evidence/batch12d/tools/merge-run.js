@@ -17,7 +17,7 @@ if (!outDir) {
   process.exit(2);
 }
 const repo = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
-const mask = (text) => text.split(repo).join('<repo>').split(os.homedir()).join('<home>').split('/private/tmp').join('<tmp>').split('—').join('-');
+const mask = (text) => text.split(repo).join('<repo>').split(os.homedir()).join('<home>').split('/private/tmp').join('<tmp>').split(String.fromCharCode(0x2014)).join('-');
 
 const one = JSON.parse(fs.readFileSync(oneFile, 'utf8'));
 const two = JSON.parse(fs.readFileSync(twoFile, 'utf8'));

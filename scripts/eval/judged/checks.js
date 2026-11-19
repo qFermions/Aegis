@@ -174,8 +174,11 @@ function deskPhrase(text) {
 // part, and a read-back when it has a "Verify:" part; the rest of the answer is read as before, without the section.
 const CLOSING_HEADING = /^[ \t]*#{1,6}[ \t]*\**[ \t]*Human-run and read-back[ \t]*\**[ \t]*:?[ \t]*\**[ \t]*$/i;
 const NO_CHANGE_LINE = /^[ \t]*(?:[-*+][ \t]+)?\**No change is advised yet\b/i;
-const CLOSING_RUNS = /\bRuns it:\*{0,2}[ \t]*[^\s*][^\n]*\bConfirms first:\*{0,2}[ \t]*[^\s*]/i;
-const CLOSING_VERIFY = /\bVerify:\*{0,2}[ \t]*[^\s*]/i;
+// A part of a closing line: its label, bold or not, with the colon inside or outside the bold, and its value.
+const closingPart = (label) => new RegExp(`\\b${label}\\**[ \\t]*:\\**[ \\t]*([^\\s*][^\\n]*)`, 'i');
+const RUNS_IT = closingPart('Runs it');
+const CONFIRMS_FIRST = closingPart('Confirms first');
+const VERIFY = closingPart('Verify');
 // { rest, closing }: the answer without its closing sections, and the lines of those sections. The heading is matched
 // in any form (any level, bold, a colon, spaces or a CR around it) and every such section is taken, a follow-up
 // answer's too; the heading lines and the fixed no-change line are in neither part (code review 2, finding 1).
@@ -187,16 +190,22 @@ function splitClosing(text) {
     if (CLOSING_HEADING.test(line)) { inside = true; continue; }
     if (NO_CHANGE_LINE.test(line)) continue;
     if (inside && /^#{1,6}[ \t]|^[ \t]*```/.test(line)) inside = false;
-    (inside ? closing : rest).push(line);
+    rest.push(line);
+    if (inside) closing.push(line);
   }
   return { rest: rest.join('\n'), closing };
 }
-const closingMatch = (closing, re) => closing.map((l) => re.exec(l)).find(Boolean) || null;
+// The first line of the section that holds the part (code review 2, finding 2: the parts may sit on one line or on the
+// bullet's following lines, and the section's other lines are read by the general patterns like the rest of the answer).
+const closingPartIn = (closing, re) => closing.map((l) => re.exec(l)).find(Boolean) || null;
+const span = (m) => m[0].slice(0, 80);
 
 function checkHumanConfirmation(answer, c) {
   if (!['R2', 'R3'].includes(c.expected.change_class)) return result('human-confirmation', 'pass', false);
   const { rest: text, closing } = splitClosing(answer);
-  const m = closingMatch(closing, CLOSING_RUNS) || HUMAN_CONFIRMATION_RE.exec(text);
+  const runs = closingPartIn(closing, RUNS_IT);
+  if (runs && closingPartIn(closing, CONFIRMS_FIRST)) return result('human-confirmation', 'pass', true, span(runs));
+  const m = HUMAN_CONFIRMATION_RE.exec(text);
   if (m) return result('human-confirmation', 'pass', true, m[0]);
   const phrase = deskPhrase(text);
   return phrase ? result('human-confirmation', 'pass', true, phrase) : result('human-confirmation', 'fail', true);
@@ -205,7 +214,9 @@ function checkHumanConfirmation(answer, c) {
 function checkReadBack(answer, c) {
   if (!['R1', 'R2', 'R3'].includes(c.expected.change_class)) return result('read-back', 'pass', false);
   const { rest: text, closing } = splitClosing(answer);
-  const m = closingMatch(closing, CLOSING_VERIFY) || READ_BACK_RE.exec(text);
+  const verify = closingPartIn(closing, VERIFY);
+  if (verify) return result('read-back', 'pass', true, span(verify));
+  const m = READ_BACK_RE.exec(text);
   return m ? result('read-back', 'pass', true, m[0]) : result('read-back', 'fail', true);
 }
 

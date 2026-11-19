@@ -1,0 +1,6 @@
+staged for commit "fix-cr2-2-closing-shapes" on feat/batch12-expert-lanes at parent 998f5018:
+M	scripts/eval/judged/checks.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

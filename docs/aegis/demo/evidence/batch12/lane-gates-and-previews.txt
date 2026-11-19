@@ -1,0 +1,120 @@
+Batch 12, the gates and previews each expert lane added, from docs/security/STATE_CHANGE_INVENTORY.json at df9d577
+(the scanner regenerates that file from discovery: AEGIS_PRINT_STATE_CHANGE_INVENTORY=1 node scripts/command-safety-gates.test.js;
+ the test "checked-in state-change inventory exactly matches discovery" fails when it is stale). SAFETY GATE ids are also counted
+ straight from the runbook files with grep, independent of the inventory.
+
+== networking: 5 runbooks; SAFETY GATEs in its runbooks (grep): 0; inventory: 0 gated, 16 preview
+  preview powershell dns-troubleshoot-cache-flush  (.claude/commands/dns-troubleshoot.md)  sinks: Clear-DnsClientCache x1
+  preview portal     dns-troubleshoot-delegation-change  (.claude/commands/dns-troubleshoot.md)  sinks: 
+  preview portal     dns-troubleshoot-record-change  (.claude/commands/dns-troubleshoot.md)  sinks: 
+  preview portal     mtu-path-issue-appliance-mss  (.claude/commands/mtu-path-issue.md)  sinks: 
+  preview portal     mtu-path-issue-icmp-allow  (.claude/commands/mtu-path-issue.md)  sinks: 
+  preview shell      mtu-path-issue-mss-clamp  (.claude/commands/mtu-path-issue.md)  sinks: file-write x2
+  preview powershell net-safe-dns-cache-flush-windows  (knowledge/networking/safe-changes.md)  sinks: Clear-DnsClientCache x1
+  preview portal     net-safe-dns-record-change  (knowledge/networking/safe-changes.md)  sinks: 
+  preview portal     net-safe-firewall-rule-change  (knowledge/networking/safe-changes.md)  sinks: 
+  preview shell      net-safe-mss-clamp-linux  (knowledge/networking/safe-changes.md)  sinks: file-write x2
+  preview shell      net-safe-wireguard-peer-change  (knowledge/networking/safe-changes.md)  sinks: file-write x2
+  preview portal     tls-certificate-bind-change  (.claude/commands/tls-certificate.md)  sinks: 
+  preview portal     vpn-tunnel-down-proposal-change  (.claude/commands/vpn-tunnel-down.md)  sinks: 
+  preview portal     vpn-tunnel-down-reinitiate  (.claude/commands/vpn-tunnel-down.md)  sinks: 
+  preview shell      vpn-tunnel-down-wireguard-peer  (.claude/commands/vpn-tunnel-down.md)  sinks: file-write x2
+  preview portal     zero-trust-block-exception  (.claude/commands/zero-trust-block.md)  sinks: 
+
+== infrastructure: 7 runbooks; SAFETY GATEs in its runbooks (grep): 21; inventory: 21 gated, 10 preview
+  gated   shell      backup-restore-test-gcp-disk-from-snapshot  (.claude/commands/backup-restore-test.md)  sinks: gcloud-write x1, redirect-write x1
+  gated   portal     backup-restore-test-replace-live-portal  (.claude/commands/backup-restore-test.md)  sinks: 
+  gated   portal     backup-restore-test-restore-new-portal  (.claude/commands/backup-restore-test.md)  sinks: 
+  gated   shell      cloud-access-denied-aws-decode  (.claude/commands/cloud-access-denied.md)  sinks: aws-write x1, redirect-write x1
+  gated   portal     cloud-access-denied-aws-policy-portal  (.claude/commands/cloud-access-denied.md)  sinks: 
+  gated   portal     cloud-access-denied-azure-assign-portal  (.claude/commands/cloud-access-denied.md)  sinks: portal:add x1
+  gated   shell      cloud-access-denied-gcp-binding  (.claude/commands/cloud-access-denied.md)  sinks: gcloud-write x1, redirect-write x1
+  gated   portal     cloud-cost-spike-delete-disk-portal  (.claude/commands/cloud-cost-spike.md)  sinks: portal:delete x1
+  gated   portal     cloud-cost-spike-snapshot-portal  (.claude/commands/cloud-cost-spike.md)  sinks: 
+  gated   shell      cloud-cost-spike-stop-instance  (.claude/commands/cloud-cost-spike.md)  sinks: aws-write x1, redirect-write x1
+  gated   shell      cloud-network-block-aws-sg-ingress  (.claude/commands/cloud-network-block.md)  sinks: aws-write x1, redirect-write x1
+  gated   portal     cloud-network-block-azure-nsg-portal  (.claude/commands/cloud-network-block.md)  sinks: portal:add x1
+  gated   shell      cloud-network-block-gcp-firewall  (.claude/commands/cloud-network-block.md)  sinks: gcloud-write x1, redirect-write x1
+  gated   shell      k8s-pod-failure-apply-manifest  (.claude/commands/k8s-pod-failure.md)  sinks: kubectl-write x1, redirect-write x1
+  gated   shell      k8s-pod-failure-rollout-undo  (.claude/commands/k8s-pod-failure.md)  sinks: kubectl-write x1, redirect-write x1
+  gated   shell      linux-server-triage-restart-unit  (.claude/commands/linux-server-triage.md)  sinks: redirect-write x1, service-write x1
+  gated   shell      linux-server-triage-vacuum-journal  (.claude/commands/linux-server-triage.md)  sinks: redirect-write x1, service-write x1
+  gated   shell      terraform-plan-review-apply-in-place  (.claude/commands/terraform-plan-review.md)  sinks: file-write x1, redirect-write x1, terraform-write x1
+  gated   shell      terraform-plan-review-apply-replace  (.claude/commands/terraform-plan-review.md)  sinks: file-write x1, redirect-write x1, terraform-write x1
+  gated   shell      terraform-plan-review-force-unlock  (.claude/commands/terraform-plan-review.md)  sinks: file-write x1, terraform-write x1
+  gated   shell      terraform-plan-review-refresh-only  (.claude/commands/terraform-plan-review.md)  sinks: file-write x1, redirect-write x1, terraform-write x1
+  preview shell      cloud-cost-spike-release-preview  (.claude/commands/cloud-cost-spike.md)  sinks: aws-write x2, gcloud-write x1, redirect-write x1
+  preview shell      infra-safe-gcp-binding  (knowledge/infrastructure/safe-changes.md)  sinks: gcloud-write x1, redirect-write x1
+  preview shell      infra-safe-k8s-rollback  (knowledge/infrastructure/safe-changes.md)  sinks: kubectl-write x1, redirect-write x1
+  preview shell      infra-safe-network-rule  (knowledge/infrastructure/safe-changes.md)  sinks: aws-write x1, redirect-write x1
+  preview shell      infra-safe-terraform-apply  (knowledge/infrastructure/safe-changes.md)  sinks: redirect-write x1, terraform-write x1
+  preview shell      infra-safe-unit-restart  (knowledge/infrastructure/safe-changes.md)  sinks: redirect-write x1, service-write x1
+  preview shell      k8s-pod-failure-capacity-preview  (.claude/commands/k8s-pod-failure.md)  sinks: kubectl-write x4, redirect-write x1
+  preview shell      k8s-pod-failure-exec-preview  (.claude/commands/k8s-pod-failure.md)  sinks: kubectl-write x1
+  preview shell      linux-server-triage-remove-files  (.claude/commands/linux-server-triage.md)  sinks: file-write x1, redirect-write x1
+  preview shell      terraform-plan-review-state-surgery  (.claude/commands/terraform-plan-review.md)  sinks: redirect-write x1, terraform-write x2
+
+== security: 7 runbooks; SAFETY GATEs in its runbooks (grep): 16; inventory: 16 gated, 10 preview
+  gated   portal     identity-compromise-forwarding-off-portal  (.claude/commands/identity-compromise.md)  sinks: 
+  gated   portal     identity-compromise-inbox-rule-off-portal  (.claude/commands/identity-compromise.md)  sinks: 
+  gated   portal     leaked-key-aws-key-deactivate-portal  (.claude/commands/leaked-key.md)  sinks: portal:deactivate x1
+  gated   portal     leaked-key-aws-key-delete-portal  (.claude/commands/leaked-key.md)  sinks: portal:delete x1
+  gated   portal     leaked-key-aws-role-sessions-revoke-portal  (.claude/commands/leaked-key.md)  sinks: 
+  gated   portal     leaked-key-azure-secret-delete-portal  (.claude/commands/leaked-key.md)  sinks: 
+  gated   shell      leaked-key-gcp-key-disable  (.claude/commands/leaked-key.md)  sinks: gcloud-write x1
+  gated   portal     leaked-key-github-pat-revoke-portal  (.claude/commands/leaked-key.md)  sinks: 
+  gated   portal     leaked-key-slack-token-revoke-portal  (.claude/commands/leaked-key.md)  sinks: 
+  gated   portal     oauth-app-review-entra-disable-portal  (.claude/commands/oauth-app-review.md)  sinks: 
+  gated   portal     oauth-app-review-entra-user-grant-remove-portal  (.claude/commands/oauth-app-review.md)  sinks: portal:remove x1
+  gated   portal     oauth-app-review-okta-deactivate-portal  (.claude/commands/oauth-app-review.md)  sinks: portal:deactivate x1
+  gated   portal     phishing-bec-block-sender-portal  (.claude/commands/phishing-bec.md)  sinks: portal:add x1
+  gated   portal     phishing-bec-purge-portal  (.claude/commands/phishing-bec.md)  sinks: 
+  gated   portal     ransomware-first-hour-isolate-portal  (.claude/commands/ransomware-first-hour.md)  sinks: portal:isolate x1
+  gated   portal     ransomware-first-hour-release-portal  (.claude/commands/ransomware-first-hour.md)  sinks: portal:release x1
+  preview shell      identity-compromise-gmail-persistence-preview  (.claude/commands/identity-compromise.md)  sinks: gam-write x2
+  preview portal     identity-compromise-hidden-rule-preview  (.claude/commands/identity-compromise.md)  sinks: 
+  preview shell      leaked-key-github-revoke-api-preview  (.claude/commands/leaked-key.md)  sinks: http-write x1
+  preview shell      leaked-key-history-cleanup-preview  (.claude/commands/leaked-key.md)  sinks: git-force-push x1, git-write x1
+  preview portal     leaked-key-issuer-handover-preview  (.claude/commands/leaked-key.md)  sinks: 
+  preview portal     oauth-app-review-consent-policy-preview  (.claude/commands/oauth-app-review.md)  sinks: 
+  preview portal     oauth-app-review-entra-grant-cleanup-preview  (.claude/commands/oauth-app-review.md)  sinks: 
+  preview portal     phishing-bec-gmail-delete-preview  (.claude/commands/phishing-bec.md)  sinks: 
+  preview portal     ransomware-first-hour-network-isolation-preview  (.claude/commands/ransomware-first-hour.md)  sinks: 
+  preview portal     vuln-triage-compensating-control-preview  (.claude/commands/vuln-triage.md)  sinks: 
+
+== software-engineering: 6 runbooks; SAFETY GATEs in its runbooks (grep): 8; inventory: 8 gated, 7 preview
+  gated   portal     ci-failure-rerun-portal  (.claude/commands/ci-failure.md)  sinks: 
+  gated   portal     code-review-checklist-merge-portal  (.claude/commands/code-review-checklist.md)  sinks: 
+  gated   shell      dependency-problem-pin-branch  (.claude/commands/dependency-problem.md)  sinks: git-write x2, package-write x1
+  gated   shell      git-recovery-local-reset  (.claude/commands/git-recovery.md)  sinks: git-write x1
+  gated   shell      git-recovery-restore-branch  (.claude/commands/git-recovery.md)  sinks: git-write x1
+  gated   shell      git-recovery-revert-commit  (.claude/commands/git-recovery.md)  sinks: git-write x2
+  gated   shell      git-recovery-revert-merge  (.claude/commands/git-recovery.md)  sinks: git-write x2
+  gated   shell      safe-script-apply  (.claude/commands/safe-script.md)  sinks: file-write x1
+  preview portal     ci-failure-cache-delete-preview  (.claude/commands/ci-failure.md)  sinks: 
+  preview portal     ci-failure-token-default-preview  (.claude/commands/ci-failure.md)  sinks: 
+  preview shell      dependency-problem-python-pip-preview  (.claude/commands/dependency-problem.md)  sinks: package-write x1
+  preview shell      git-recovery-history-rewrite-preview  (.claude/commands/git-recovery.md)  sinks: git-force-push x1, git-write x1
+  preview shell      script-patterns-bash-skeleton  (knowledge/software-engineering/script-patterns.md)  sinks: file-write x1
+  preview powershell script-patterns-powershell-skeleton  (knowledge/software-engineering/script-patterns.md)  sinks: Move-Item x1
+  preview shell      software-engineering-history-rewrite-preview  (knowledge/software-engineering/safe-changes.md)  sinks: git-force-push x1, git-write x1
+
+== Scanner ownership tests at df9d577 (the whole repository, networking lane included):
+$ TMPDIR=/private/tmp node --test --test-name-pattern="exactly one same-fence owner|owned by the nearest PREVIEW ONLY|manual portal mutation has one action-local|preview region contains no executable mutation|checked-in state-change inventory" scripts/command-safety-gates.test.js
+✔ checked-in state-change inventory exactly matches discovery and client boundaries (1208.005167ms)
+✔ every executable mutation has exactly one same-fence owner (0.393709ms)
+✔ every commented mutation is owned by the nearest PREVIEW ONLY marker (0.214209ms)
+✔ every discovered manual portal mutation has one action-local gate or preview owner (3.810958ms)
+ℹ tests 91
+ℹ pass 91
+ℹ fail 0
+
+== The networking previews one by one (the per-preview test names):
+✔ dns-troubleshoot-cache-flush: preview region contains no executable mutation (0.046167ms)
+✔ mtu-path-issue-mss-clamp: preview region contains no executable mutation (0.014209ms)
+✔ vpn-tunnel-down-wireguard-peer: preview region contains no executable mutation (0.012333ms)
+✔ net-safe-wireguard-peer-change: preview region contains no executable mutation (0.010583ms)
+✔ net-safe-mss-clamp-linux: preview region contains no executable mutation (0.009875ms)
+✔ net-safe-dns-cache-flush-windows: preview region contains no executable mutation (0.011083ms)
+
+What this shows: the scanner finds every shell, PowerShell and portal change step in a fence or a portal list line, and each one in the networking lane is owned by a PREVIEW ONLY marker (0 gates, 16 previews; none needed VISITOR_SETUP_INVENTORY); no executable mutation sits inside a preview region. What it does not show: a change written only in prose outside a fence or a portal list line, which the scanner does not read.

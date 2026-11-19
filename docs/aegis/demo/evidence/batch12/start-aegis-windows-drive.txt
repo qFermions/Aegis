@@ -1,0 +1,7 @@
+The Windows CI job on PR 21 (run 44413337189) failed one test: 'the saved file is outside the repository, mode 0600 in a 0700 folder; ...' at scripts/start-aegis.test.js:136, 'outside the repository'.
+Cause, shown with node's win32 path rules (this Mac has no second drive):
+path.win32.relative(repo on D:, file on C:) = "C:\\Users\\runner\\AppData\\Local\\Temp\\home\\.aegis\\company-setup.txt"
+old assertion rel.startsWith(".."): false
+new assertion (up and out, or another drive): true
+new assertion on a save inside the repository: false (must be false)
+The product check, paths.isInside in scripts/eval/judged/paths.js, already treats an absolute relative path as outside; only the test was wrong.

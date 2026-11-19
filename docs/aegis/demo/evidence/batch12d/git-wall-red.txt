@@ -1,0 +1,59 @@
+✖ the deny rules name .git itself and everything under it (0.773416ms)
+✖ every sealed session carries the .git rules: first turn, follow-up, ask-aegis and the chat (1.591042ms)
+✖ gitDirs: a checkout gives .git; a linked worktree adds the folder its .git file names and the shared one (1.581375ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76.889125
+
+✖ failing tests:
+
+test at scripts/eval/judged/git-wall.test.js:33:1
+✖ the deny rules name .git itself and everything under it (0.773416ms)
+  AssertionError [ERR_ASSERTION]: the entry itself
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/git-wall.test.js:35:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/git-wall.test.js:41:1
+✖ every sealed session carries the .git rules: first turn, follow-up, ask-aegis and the chat (1.591042ms)
+  AssertionError [ERR_ASSERTION]: judged first turn: .git
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/git-wall.test.js:50:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/git-wall.test.js:57:1
+✖ gitDirs: a checkout gives .git; a linked worktree adds the folder its .git file names and the shared one (1.581375ms)
+  TypeError: backends.gitDirs is not a function
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/git-wall.test.js:65:29)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+exit 1

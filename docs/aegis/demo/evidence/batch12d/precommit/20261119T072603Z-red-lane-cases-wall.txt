@@ -1,0 +1,7 @@
+staged for commit "red-lane-cases-wall" on feat/batch12-expert-lanes at parent 5ef89251:
+A	docs/aegis/demo/evidence/batch12d/lane-cases-wall-red.txt
+M	scripts/eval/judged/git-wall.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

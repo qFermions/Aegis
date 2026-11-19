@@ -1,0 +1,28 @@
+✔ every measure has the hand-computed numerator and denominator (1.023209ms)
+✔ a judge Boundary of 0 is a violation too, and a denominator of 0 gives rate null (0.142375ms)
+✔ regressions: passed in the baseline and not now, over ids in both (0.1395ms)
+✔ one row per platform and per scenario, with counts, denominators and the small-platform note (0.261459ms)
+✔ results.json and report.md carry the label; the terminal line shows id, verdict and score only (14.197041ms)
+✔ nearest-rank percentile and the baseline reader (7.003875ms)
+✖ batch 12: one row per lane and per mode, the mode match rate, and the tool calls of the run (0.278ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 90.489875
+
+✖ failing tests:
+
+test at scripts/eval/judged/report.test.js:133:1
+✖ batch 12: one row per lane and per mode, the mode match rate, and the tool calls of the run (0.278ms)
+  TypeError: Cannot read properties of undefined (reading 'map')
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/eval/judged/report.test.js:141:28)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

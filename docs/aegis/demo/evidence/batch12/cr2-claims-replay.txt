@@ -1,0 +1,5 @@
+Replay of claimsWithoutCalls (code review 2, class B2) over saved real answers at 730df7e3 plus the class B2 change.
+Batch 11 judged answers use their recorded tool calls; desk and ask answers are read with no calls (none are saved), so a flag there is a claim no call backs, or a call the save does not keep.
+docs/aegis/demo/evidence/batch12/asks/SEC03/answer.txt [{"sentence":"I read the answer format, /phishing-bec and /identity-compromise.","kinds":["runbook"]}]
+answers read: 71; flagged: 1
+The one flag: the SEC03 tech answer (not its reply) says it read runbooks; ask sessions have Read, and their calls are not saved with the answer.

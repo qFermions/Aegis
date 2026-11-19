@@ -1,0 +1,7 @@
+Mode: Ask first
+
+Since when has it been slow? Is it only people in the office, or remote staff too? Is it every website or mainly certain apps (Slack, Google Drive, big file uploads)? And what router or firewall does the office use?
+
+```aegis-desk
+Gate: none
+```

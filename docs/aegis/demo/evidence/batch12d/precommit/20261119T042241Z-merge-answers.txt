@@ -1,0 +1,48 @@
+staged for commit "merge-answers" on feat/batch12-expert-lanes at parent 65b4ea2e:
+M	docs/aegis/answer-format.md
+A	docs/aegis/demo/evidence/batch12d/ask-first-you-green.txt
+A	docs/aegis/demo/evidence/batch12d/ask-first-you-red.txt
+A	docs/aegis/demo/evidence/batch12d/card-rows-narrow-green.txt
+A	docs/aegis/demo/evidence/batch12d/card-rows-narrow-red.txt
+A	docs/aegis/demo/evidence/batch12d/card-slots-green.txt
+A	docs/aegis/demo/evidence/batch12d/card-slots-red.txt
+A	docs/aegis/demo/evidence/batch12d/card-words-before.txt
+A	docs/aegis/demo/evidence/batch12d/closing-block-green.txt
+A	docs/aegis/demo/evidence/batch12d/closing-block-red.txt
+A	docs/aegis/demo/evidence/batch12d/final-full-suite-comparison.txt
+A	docs/aegis/demo/evidence/batch12d/final-targeted-tests.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T040838Z-closing-block-tests.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041028Z-closing-block.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041122Z-card-slots-tests.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041338Z-card-slots.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041408Z-card-rows-narrow-tests.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041502Z-card-rows-narrow.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041536Z-ask-first-you-tests.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041629Z-ask-first-you.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041709Z-card-words.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041928Z-final-tests.txt
+A	docs/aegis/demo/evidence/batch12d/tools/card-words.js
+M	scripts/demo/answer.js
+A	scripts/demo/ask-first-you.test.js
+A	scripts/demo/card-rows-narrow.test.js
+A	scripts/demo/card-slots.test.js
+A	scripts/demo/closing-block.test.js
+M	scripts/demo/fixtures/batch12/infrastructure/engineer-gke-dns-good.md
+M	scripts/demo/fixtures/batch12/infrastructure/engineer-terraform-bucket-module-good.md
+M	scripts/demo/fixtures/batch12/infrastructure/incident-azure-unknown-gpu-vms-good.md
+M	scripts/demo/fixtures/batch12/networking/engineer-good.md
+M	scripts/demo/fixtures/batch12/networking/incident-good.md
+M	scripts/demo/fixtures/batch12/security/engineer-good.md
+M	scripts/demo/fixtures/batch12/security/incident-good.md
+M	scripts/demo/fixtures/batch12/software-engineering/engineer-build-good.md
+M	scripts/demo/fixtures/batch12/software-engineering/engineer-good.md
+M	scripts/demo/fixtures/batch12/software-engineering/incident-good.md
+A	scripts/demo/fixtures/batch12d/engineer-closing-block.md
+A	scripts/demo/fixtures/batch12d/fix-card-slots.md
+A	scripts/demo/fixtures/batch12d/incident-closing-block.md
+M	scripts/demo/senior-rules.js
+M	scripts/demo/wiring.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

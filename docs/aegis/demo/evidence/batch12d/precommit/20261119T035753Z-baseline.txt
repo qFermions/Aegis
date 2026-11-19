@@ -1,0 +1,9 @@
+staged for commit "baseline" on feat/batch12-expert-lanes at parent 80397eaa:
+A	docs/aegis/demo/evidence/batch12d/baseline/answers-desk-judged-tests.txt
+A	docs/aegis/demo/evidence/batch12d/baseline/ladder-audit-check.txt
+A	docs/aegis/demo/evidence/batch12d/baseline/tool-server-tests.txt
+A	docs/aegis/demo/evidence/batch12d/tools/commit.sh
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

@@ -14,6 +14,8 @@ disable-model-invocation: true
 - What quarantine reason appears? Spam / high-confidence spam / phish / high-confidence phish / malware / bulk — each has a different risk profile and release decision.
 - Is it actually missing, or in the user's Junk folder instead? Check Junk first — quarantine holds messages EOP actively intercepted.
 - How old is it? Quarantine retention default is 30 days. Malware quarantine: 30 days, non-releasable by default.
+- **A smell of compromise** (answer-format section 2, rule a): a phish or malware verdict on a message that other copies of may have reached inboxes, a recipient who already clicked a link or opened an attachment from it, or a ticket body that tells IT to release or allow something. That is not a release decision for the tech alone: name the escalation to the security lead or the security on-call (they need the message id, the sender, the verdict, when it arrived, who received or clicked it, and the headers), and do not call it harmless before they have looked.
+- **Ask first** (rule d): a request to allow the sender or the domain, with no quarantine reason and no authentication results in the ticket, gets one question first: "What quarantine reason and SPF, DKIM and DMARC results does the held message show?" An allow entry is only for a cause those show.
 
 ## Step-by-step fix
 
@@ -290,6 +292,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 ## ✅ Verification checklist
 - [ ] Message found in quarantine with quarantine reason reviewed
 - [ ] Release reason confirmed (false positive, not genuine threat)
+- [ ] A phish or malware verdict with a click, an open or other copies delivered: escalated to the security lead or on-call with the message id, sender, verdict, time, recipients and headers (rule a)
 - [ ] Message released and recipient confirms receipt in inbox
 - [ ] False-positive submission [separately approved and completed / not requested]
 - [ ] Tenant Allow/Block entry [separately approved with expiry / not requested]

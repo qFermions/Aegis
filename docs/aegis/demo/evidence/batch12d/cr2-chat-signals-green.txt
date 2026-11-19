@@ -1,0 +1,34 @@
+✔ the chat starts once under a fake claude with the desk's isolation and the setup as appended data (24.816875ms)
+✔ with no --setup the argv is the isolation alone (0.626375ms)
+✔ bad arguments exit 1 with no session; a claude that cannot start is a plain message and exit 2 (2.192959ms)
+✔ while the chat runs the parent ignores Ctrl-C, and it stops ignoring it when claude exits (0.416041ms)
+✔ code review 2, finding 14: the chat protects its setup text as ask-aegis does (0.633917ms)
+✔ batch 11, task 6: chatArgs with the voice is one appended prompt; without it the arguments are today's (0.579667ms)
+✔ batch 11, task 6: --reply-to asker starts the chat with the voice; another value is refused before claude starts (17.921208ms)
+✔ batch 11 resumed: the chat runs on claude-opus-5-5 unless --model names another; a bad value starts nothing (17.827625ms)
+✔ batch 12, task 5: the chat loads the tool server with its own audit file, says so, and --no-tools turns it off (0.767417ms)
+✔ code review 1, class D: a chat with no lookups leaves no chat folder; one with lookups keeps its audit file (1.375ms)
+✔ batch 12d: the chat types the setup in its own folder, hands it to the server and the prompt hook, and removes it at the end (1.456333ms)
+✔ batch 12d: a closed terminal or a kill removes the typed file at once and passes the signal to claude (1.513167ms)
+✔ batch 12d: on a signal only the typed file goes at once; the audit file and the folder wait for claude to exit (0.621875ms)
+✔ batch 12d: a claude that ignores the signal is killed after the grace, and the chat still ends (21.95125ms)
+✔ first run asks the one question once, saves the answer and starts the chat with exactly --setup <answer> (4.925ms)
+✔ an email address and a phone number in the answer become placeholders before they are saved or passed on (1.18275ms)
+✔ a password in the answer is refused and nothing is saved; it asks again, and after 3 refusals starts with no setup (1.228875ms)
+✔ the saved file is outside the repository, mode 0600 in a 0700 folder; a home folder inside the repository saves nothing (0.89575ms)
+✔ a later run shows the saved answer in one line; Enter keeps it, c or change asks again, clear removes the file (1.717583ms)
+✔ with no terminal it asks nothing and starts with the saved answer, or with none (0.91875ms)
+✔ a saved file it cannot read starts with no setup and says so; a home folder it cannot write still starts (1.73325ms)
+✔ Ctrl-C at the question exits cleanly: nothing saved and no chat (0.470083ms)
+✔ the chat's exit code is the launcher's; Ctrl-C is ignored only while the chat runs; a chat that cannot start is exit 2 (0.587666ms)
+✔ parseSaved reads the saved file as one line, or null when it holds nothing (0.053958ms)
+✔ a saved answer that holds a password is not used, and a saved address is masked (0.90975ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 134.82975
+exit 0

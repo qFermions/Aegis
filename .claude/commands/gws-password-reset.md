@@ -16,6 +16,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - A password reset is a credential change on one account (R1); the sign-in-cookie reset ends every session that account holds (R1, its own gate). Each has its own exact phrase; "yes" is never a confirmation.
 - Verify the requester before Phase B: a reset asked for over chat or phone is the classic social-engineering move — use the agreed identity check **[org gap — confirm the identity-verification rule]**.
 - The temporary password never goes into the ticket or into a reply the requester could have forged.
+- **A smell of compromise** (answer-format section 2, rule a): sign-ins the user did not make, a reset nobody asked for, or a password typed into a phishing page make this an incident, not a routine reset. Name the escalation to the security lead or the security on-call (they need what was seen, when, `[USER@DOMAIN.COM]`, and the User log events), contain it with them through `/gws-account-containment`, and do not call it harmless before they have looked.
 
 ## Inputs needed
 

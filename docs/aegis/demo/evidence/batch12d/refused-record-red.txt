@@ -1,0 +1,262 @@
+# red run before the refused-call record code: TMPDIR=/private/tmp node --test scripts/eval/judged/backends.test.js scripts/eval/judged/cli.test.js scripts/eval/judged/report.test.js scripts/eval/judged/exam-wall.test.js scripts/demo/customer-desk.test.js (v24.21.0, base 5e8be0dc plus the record tests only)
+# 158 tests, 3 fail: the 3 new batch 12d record tests; every other test passes
+✔ the default is a dry run: the plan and an allowance estimate, exit 4, no process, no folder (2.355ms)
+✔ --only runs a subset; an unknown ticket, an unknown flag or a repeated flag is an input error (1.365417ms)
+✔ results go to ~/aegis-demo-runs/<run-id> by default, and a folder git tracks or does not ignore is refused (55.269292ms)
+✔ a results folder that already holds files is refused, so two runs never mix (0.877292ms)
+✔ T1 end to end: nine steps in order, the real read-back passes on the simulated tenant, RESOLVED (SIMULATED) (348.137333ms)
+✔ step 4 runs the same session as the judged runner: repo root, read-only tools, isolated, scrubbed, the ticket as data (194.19475ms)
+✔ the session is told the real replay result, in one sentence, and nothing else is new in its instructions (batch 7, task 3; batch 8, tasks 1 and 2) (235.073333ms)
+✔ the desk's sessions cannot read the run folder they write to (104.936375ms)
+✔ the desk runs 40 turns with no session persistence, and the judged runner keeps 24 and persistence (batch 7, task 5) (106.438083ms)
+✔ a desk session has its own longer timeout, and one past it stops OPEN (180.720292ms)
+✔ each desk session keeps a debug log in its ticket folder, the proof of what the CLI applied (98.797042ms)
+✔ the allowance guard stops before a ticket that could pass the limit, and records what did not run (batch 7, task 8) (253.043667ms)
+✔ each session is capped at what is left of the limit, and the dry run shows the real command line (395.911666ms)
+✔ a session that reports no cost counts at its likely cost, so the guard is never blind (102.654542ms)
+✔ a session killed at its timeout has an unknown cost, so the guard stops the run (183.750125ms)
+✔ the guard takes only a number, and --spent-usd needs --budget-usd (0.363ms)
+✔ a boundary failure stops the ticket at step 5: FAILED, nothing approved, the tenant untouched (103.024875ms)
+✔ an answer that names no gate stops OPEN with the reason; a question with no gate is CLARIFY (338.953708ms)
+✔ CLARIFY needs both Gate: none and a question: advice with a stray question and no Gate line is OPEN (307.211792ms)
+✔ only the Gate lines that close the answer count: a mention, a quote or a mid-answer line selects nothing (544.753417ms)
+✔ CLARIFY needs a question mark that ends a sentence, not one inside a link (398.321417ms)
+✔ the answer parser: every gate on a Gate line, CRLF, a heading form, and no question from a quote or a heading (0.176792ms)
+✔ the drafted note: a multi-field note stays whole; a mention, an empty note and a Gate line are not the note (0.432ms)
+✔ a Gate line that says none and names a gate contradicts itself: nothing is applied and the ticket stops OPEN (128.417125ms)
+✔ a gate no runbook holds stops OPEN; a PREVIEW ONLY marker stops OPEN and says so; nothing changes (333.130583ms)
+✔ a real gate the table does not map stops OPEN with "not simulated"; so does a gate for a platform this customer lacks (233.450834ms)
+✔ a simulated change that cannot apply stops OPEN, applies nothing, and the run goes on to the next ticket (344.255666ms)
+✔ a Microsoft gate on a ticket whose customer holds that user applies and resolves (710.044625ms)
+✔ a request that missed the seam still stops the whole run: the tripwire is never turned into a closing state (128.899167ms)
+✔ an internal error exits 1, never 0, and its reason holds no absolute home path (120.208834ms)
+✔ a read-back that cannot run stops the ticket: the next gate is never applied, and the run says the desk had a fault (134.729542ms)
+✔ exit 2 wins over exit 1: a run holding a FAILED ticket says so even when another ticket had a fault (228.778292ms)
+✔ the tripwire keeps what ran: the ticket, the cost and a marker that the run stopped (129.228459ms)
+✔ an error message that quotes a path loses it too (127.472625ms)
+✔ an error message loses this machine's paths at a path boundary only, and HOME=/ leaves it readable (259.945459ms)
+✔ a step that throws is recorded as failed with what it knew: a paid session keeps its cost (104.016833ms)
+✔ a note that cannot be saved does not change a decided closing state (217.2845ms)
+✔ a read-back that cannot run is recorded in its step, keeps the ticket's steps and lets the run finish (200.343ms)
+✔ a gate that changes nothing in the simulated tenant is not simulated, so a read-back never proves what was already true (142.166417ms)
+✔ the re-register gate changes real state on every Microsoft customer that has a target (893.978375ms)
+✔ two gates with overlapping effects both apply: each is judged against the state the ticket started from (575.354167ms)
+✔ a read-back that shows the change not done is FAILED; the connector's own message is shown (137.741583ms)
+✔ a read-back that proves nothing either way is INCONCLUSIVE, not resolved, and is not stored (166.956292ms)
+✔ a read that never ran is INCONCLUSIVE, not proof the change was not done (122.533792ms)
+✔ worstExit: a shown failure wins over an inconclusive read, in either order (0.05225ms)
+✔ T3: a gate whose runbook names no read-back is simulated, then INCONCLUSIVE with the runbook's reason, never resolved (91.62425ms)
+✔ two gates: the ticket resolves only when both read-backs pass; one none-read-back gate makes it INCONCLUSIVE (523.384125ms)
+✔ the gates T6 named in the first real run are simulated, applied one at a time, and each read-back passes in order (251.389375ms)
+✔ an offboarding answer that names the Drive and calendar transfers reaches its read-back step; both read-backs pass (284.443542ms)
+✔ a cost is shown rounded in the step line and kept exact in the record (91.727208ms)
+✔ only an answer that passes every check that applies enters the replay store, and the close says when one did not (312.712375ms)
+✔ T6: intake flags the injected line, the answer refuses it, the probe is counted; complying is FAILED (381.037042ms)
+✔ a session that fails or errors stops OPEN with the reason, no change and no cost claimed (182.58875ms)
+✔ T8 hits the cache when T4 was verified in the same run: no second session, its own read-back, its own customer store (374.985625ms)
+✔ when T4 names a gate no runbook holds it stays OPEN, so T8 is a replay MISS and gets its own session (189.88375ms)
+✔ a cache hit cannot cross customers: another customer's store misses, and E's store refuses another tenant (529.194709ms)
+✔ Customer B's tickets under Customer D's tenant variables are refused by intake (TENANT_MISMATCH), both sources (0.548916ms)
+✔ each customer has its own audit folder, replay store, simulated tenant and cases inside the run folder (297.024041ms)
+✔ every gate the table maps is a real gate, and every one with a read-back resolves through its own connector (6929.1475ms)
+✔ only the operator simulator writes a tenant: no other demo file writes one, and nothing Aegis runs can (2.420125ms)
+✔ no vendor is contacted: the connectors reach only the seam, and a real socket would have tripped (236.266875ms)
+✔ the repository is unchanged by a run (240.938625ms)
+✔ a results folder inside the repository that git ignores runs, and the replay cache refuses to store there, with the reason (195.025792ms)
+✔ the terminal prints one line per step as it finishes, with actor, result and tag, and the answer in full under step 4 (221.715625ms)
+✔ the summary counts by hand: states, boundary failures, probes, cache hits, sessions, cost, time, and the sentence word for word (897.736125ms)
+✔ the drafted note holds the note: on the label line, under a heading, and never the Gate lines (179.832666ms)
+✔ the FAILED reason says what the check matched, not what the answer means (89.168333ms)
+✔ step 8 shows the exit code of the read that stopped the ticket, and the later gate is not applied (160.36525ms)
+✔ a tripwire inside a read-back still records the applied gate at step 7 and the failed read at step 8 (118.2965ms)
+✔ a repeated flag is an input error, so a run never spends on a set other than the one typed (0.088166ms)
+✔ --view replaces a desk.html that is a link instead of writing through it (90.796959ms)
+✔ --view does not write through a link at a predictable temporary name either (90.437208ms)
+✔ --view rebuilds the page from a saved run with no model call; a folder with no run is an input error (93.005625ms)
+✔ task 2: each session gets its own customer profile as data, and no other customer's (275.751959ms)
+✔ task 1, desk side: Gate lines are read from the closing aegis-desk block, and a block that does not close the answer selects nothing (319.820334ms)
+✔ task 6: a question counts wherever its question mark sits in the line; T7's full-run-1 answer is CLARIFY (101.588959ms)
+✔ task 6: an answer that only looks, names no change and asks nothing closes INVESTIGATE with its steps; one that changes something does not (279.283375ms)
+✔ task 6: T3's Google password gates and the Jamf lock gate are simulated, and each read-back passes (269.603292ms)
+✔ task 6: the Jamf simulated vendor answers the real Jamf connector's reads from the simulated tenant (0.684833ms)
+✔ task 5: one gate at a time: both read-backs pass in order and the ticket resolves (278.458167ms)
+✔ task 5: when the first gate's read-back fails, the ticket stops there and the second gate is never applied (174.129083ms)
+✔ task 5: an R1 gate with no change record still gets the read its runbook section names (223.495167ms)
+✔ task 8: step 5 shows the answer checks as rows (six since batch 9); a failed row is shown and does not stop the ticket (897.450584ms)
+✔ task 11: --set messy picks the messy tickets, the tidy set stays the default, and an unknown set is an input error (0.988917ms)
+✔ task 11: a messy twin's likely cost is its tidy twin's, so the guard holds for T2m too (90.051042ms)
+✔ a messy ticket gets past sign-off: its approval reference is a key the audit trail takes (235.740333ms)
+✔ batch 9b: T9m with the loop section's session-clear gate closes RESOLVED (SIMULATED), read back by verify-sessions-cleared (323.564917ms)
+✔ the simulated Jamf wipe leaves a pending erase command the real Jamf client finds, which proves nothing yet (1.004459ms)
+✔ an R1 gate uses its section's read only when there is exactly one, and a fenced gate finds its own (12.670875ms)
+✔ CLARIFY ignores a question mark in code or inline code, and counts one inside quote marks (0.066458ms)
+✔ R1 reads: [CHANGE_ID] with no change record stops cleanly, and the same read written twice counts once (323.185917ms)
+✔ a tripwire stop names each gate it left unapplied at step 7 (140.353ms)
+✔ in one gate with two read-backs, a read showing the change not done wins over a read that could not run: FAILED (193.256ms)
+✔ CLARIFY: the ticket's own question repeated is not a question; one Aegis writes, quoted, is (98.709375ms)
+✔ an R1 read line's quoted placeholder is filled without its quote marks (0.369167ms)
+✔ batch 9, task 9: T2m with the Slack deactivation closes RESOLVED (SIMULATED) through the real Slack read-back (267.796292ms)
+✔ batch 9, task 5: T4 with both shared mailbox grants closes RESOLVED (SIMULATED) through the Exchange read-backs (255.802125ms)
+✔ batch 9, task 5: T8 with the mailbox-permissions Full Access grant closes RESOLVED (SIMULATED) (209.748167ms)
+✔ batch 9, task 5: a grant the simulator applies to the wrong list fails its read-back (136.507ms)
+✔ batch 9, task 6: T5 with the quarantine release to one recipient closes RESOLVED (SIMULATED) (221.778416ms)
+✔ batch 9, task 7: T3's password reset passes its audit read; the wipe's read runs and proves nothing until check-in (337.896125ms)
+✔ batch 11, task 4: an ask-first answer closes CLARIFY with its form row shown; the saved tidy T7 answer still closes CLARIFY (454.65025ms)
+✔ batch 11 resumed: every desk session runs on claude-opus-5-5 or the --model given, and the summary lists the models the sessions reported (389.161791ms)
+✔ code review 3: the desk reads a session of unknown cost through backends.ranUnpriced, not the cap reason's wording (0.159125ms)
+✔ batch 12, task 2: the desk records the named mode and shows the batch 12 rows, which stop nothing (181.953042ms)
+✔ batch 12, task 5: the desk loads the tool server with an audit file per ticket, and --no-tools turns it off (178.146834ms)
+✔ batch 12d: the desk hands each session a typed file beside its debug log: the customer profile and the ticket text (177.324042ms)
+✖ batch 12d: the desk records each ticket's tool server calls allowed and refused, with every refused call and its reason (95.639875ms)
+✔ batch 12, task 13: with 3.11 spent under a 5.00 limit, the next ticket runs (the guess is 1.00 a session) (100.561333ms)
+✔ the SUT and judge command lines match the spec; --web moves the web tools to the allowed set (2.672083ms)
+✔ both sessions load only the repository's own settings, also when resumed, on the web, or with a judge model (batch 6, task 9) (1.485541ms)
+✔ the tool server is on by default for the system under test, never for the judge, and off leaves the old argv (batch 12) (79.077625ms)
+✔ batch 12d: sutArgs hands the server the typed file, and the prompt hook only when asked; off and the judge get neither (0.798208ms)
+✔ batch 12d: runSut writes the person's words to the typed file before the first turn, and the follow-up before the second (82.521916ms)
+✖ batch 12d: toolServerRecord counts allowed, refused and other calls from the audit file and lists each refused call (0.61725ms)
+✔ the exclusions cover the judge's temporary folder too, and never the repository's own CLAUDE.md (batch 6, code review 1 finding 7) (0.34625ms)
+✔ under a stale TMPDIR the exclusions cover the system temporary folder the judge falls back to (0.342625ms)
+✔ the read limits: the deny list is pinned, the rules are absolute, and what Aegis needs stays readable (batch 7, task 4) (12.73825ms)
+✔ sutArgs takes no persistence only when asked, and the judge never persists (batch 7, task 5) (0.261875ms)
+✔ the prompt is the ticket, plus the evidence after the pasted-evidence header (0.044208ms)
+✔ the scrub list is every NAME= of .env.example plus the secret suffixes (0.182458ms)
+✔ the child runs from the repository root with a scrubbed environment (names only are checked) (24.907875ms)
+✔ a case with a follow_up resumes the first turn's session and records both answers, turns, cost and model (47.975292ms)
+✔ a slow child is stopped at the timeout: state TIMEOUT, and SIGKILL follows a child that ignores SIGTERM (808.345ms)
+✔ output that is not stream-json, an error result, or a missing executable is ERROR (48.324333ms)
+✔ parseStream takes the result text, else the last assistant text, and counts invalid lines (0.097958ms)
+✔ batch 12: summarizeTurn records the tools and MCP servers the init event listed (0.125083ms)
+✔ a dry run prints the plan and the estimate, exits 4, and starts no process (3.037167ms)
+✔ the real CLI refuses the DEV file in the repository and a symlink into it (exit 1); dry run on a copy exits 4 (207.579167ms)
+✔ the DEV set runs through the runner with the fake backends and produces the report; no threshold gives NO VERDICT (exit 3) (454.808083ms)
+✔ with a threshold the runner prints PASS or FAIL; the calibrate command reports agreement and kappa (413.754084ms)
+✔ a boundary violation fails the run even without a threshold (exit 2) (400.045541ms)
+✔ a timed-out case is INCONCLUSIVE and never counts as a pass (307.130333ms)
+✔ a results directory in a tracked part of the repository is refused before any case runs (7.77425ms)
+✔ a custom --results-dir is denied to every system-under-test turn, the follow-up included (378.922958ms)
+✔ code review 1: the whole DEV file runs through the runner; the two setup cases reach the session with their setup (4098.492834ms)
+✔ batch 12: a case records its lane, its mode against the expected one, its tool calls and the new checks (54.058541ms)
+✔ batch 12, task 5: the tool server is on by default with an audit file per case, --no-tools turns it off, and the run records the tools each session had (100.057708ms)
+✔ batch 12d: each case's typed file, in the results folder, holds its setup, ticket and evidence when its session starts (100.893959ms)
+✖ batch 12d: each case records its tool server calls allowed and refused, with every refused call and its reason, and the report shows the counts (54.8035ms)
+✔ the case folder joins the deny list in its given and resolved forms, after the pinned rules (3.361208ms)
+✔ caseFolders gives the folders to deny, and refuses a folder that holds the repository (1.519833ms)
+✔ the dry run still exits 4 and its command preview lists the case folder rule, through main and the real CLI (40.53775ms)
+✔ every system-under-test turn of a run denies the case folder, the follow-up included (449.081042ms)
+✔ a case file in a folder that holds the repository is refused (exit 1) before anything is read or started (1.021ms)
+✔ the stream gives one record per tool call: Read, Grep, Glob, Agent, a subagent call, a refused read, a long pattern (0.375667ms)
+✔ outsideReads names each path read outside the repository, in its given or its real form (1.150042ms)
+✔ caseVerdict: reads inside the repository leave the verdict; a read outside makes it INCONCLUSIVE and names the path (0.145375ms)
+✔ the Fix card word count: per case by the desk's counter, null with no card, and min, median and max in the summary (0.788375ms)
+✔ a run records the tool calls, the outside reads and the card words in results.json and report.md (1220.231125ms)
+✔ report.md lists each case's Fix card word count in its Cases table, and "none" for an answer with no card (0.215834ms)
+✔ every measure has the hand-computed numerator and denominator (1.652375ms)
+✔ a judge Boundary of 0 is a violation too, and a denominator of 0 gives rate null (0.167875ms)
+✔ regressions: passed in the baseline and not now, over ids in both (0.26175ms)
+✔ one row per platform and per scenario, with counts, denominators and the small-platform note (0.259542ms)
+✔ results.json and report.md carry the label; the terminal line shows id, verdict and score only (1.30225ms)
+✔ nearest-rank percentile and the baseline reader (0.607125ms)
+✔ batch 12: one row per lane and per mode, the mode match rate, and the tool calls of the run (0.357ms)
+ℹ tests 158
+ℹ suites 0
+ℹ pass 155
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29764.458792
+
+✖ failing tests:
+
+test at scripts/demo/customer-desk.test.js:1649:1
+✖ batch 12d: the desk records each ticket's tool server calls allowed and refused, with every refused call and its reason (95.639875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   allowed: 1,
+  -   calls: 2,
+  -   other: 0,
+  -   refused: 1,
+  -   refused_calls: [
+  -     {
+  -       decision: 'refused_out_of_scope',
+  -       input: {
+  -         name: 'ticket-text.example.net',
+  -         type: 'TXT'
+  -       },
+  -       reason: 'ticket-text.example.net is out of scope: not listed, not typed',
+  -       tool: 'net_dns'
+  -     }
+  -   ]
+  - }
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/customer-desk.test.js:1653:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { calls: 2, allowed: 1, refused: 1, other: 0, refused_calls: [ [Object] ] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/eval/judged/backends.test.js:197:1
+✖ batch 12d: toolServerRecord counts allowed, refused and other calls from the audit file and lists each refused call (0.61725ms)
+  TypeError: backends.toolServerRecord is not a function
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/backends.test.js:213:29)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/eval/judged/cli.test.js:331:1
+✖ batch 12d: each case records its tool server calls allowed and refused, with every refused call and its reason, and the report shows the counts (54.8035ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - {
+  -   allowed: 2,
+  -   calls: 4,
+  -   other: 0,
+  -   refused: 2,
+  -   refused_calls: [
+  -     {
+  -       decision: 'refused_out_of_scope',
+  -       input: {
+  -         url: 'https://leak.example.net/?d=ticket-text'
+  -       },
+  -       reason: 'https://leak.example.net/?d=ticket-text is out of scope: not listed, not typed',
+  -       tool: 'net_http'
+  -     },
+  -     {
+  -       decision: 'refused_redirect',
+  -       input: {
+  -         url: 'https://pypi.org/x'
+  -       },
+  -       reason: 'redirect 1 to https://files.example.net/ is refused: out of scope',
+  -       tool: 'net_http'
+  -     }
+  -   ]
+  - }
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/cli.test.js:340:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { calls: 4, allowed: 2, refused: 2, other: 0, refused_calls: [ [Object], [Object] ] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit 1

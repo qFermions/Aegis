@@ -130,6 +130,56 @@ Added with batch 10 (2026-11-07): `[TRANSFER_ID]` (one Google Workspace data tra
 the Data Transfer API names it and `gam print datatransfers` lists it; `gws-client.js
 verify-transfer --transfer-id [TRANSFER_ID]` reads that one transfer, `/gws-offboard` Phase C).
 
+Networking lane (batch 12, `knowledge/networking/` and its runbooks): `[HOSTNAME]` (a fully qualified
+host name a ticket names: a site, a service, a VPN endpoint; written as the name the client uses) ·
+`[IP_ADDRESS]` (one IPv4 or IPv6 address: a resolver, a peer's public address, a node behind a load
+balancer; examples use the documentation ranges 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24 and
+2001:db8::/32) · `[SUBNET]` (a network in CIDR form, such as a VPN's protected subnet) · `[INTERFACE]`
+(a network interface name on a host, such as a WireGuard or tunnel interface). None is env-backed.
+
+Networking runbooks, added with batch 12d (2026-11-18): `[SITE_A]` / `[SITE_B]` (the two
+office sites at the ends of a site-to-site VPN, when a runbook speaks of any pair of sites and not
+of the default environment's `[@Aegion_SITE_2]`) · `[SITE_B_HOST]` (a host name at the far site,
+used to test reachability across the tunnel) · `[SITE_B_GATEWAY]` (the far site's subnet gateway
+address) · `[SWITCH_NAME]` (a network switch's name, as the network dashboard lists it) ·
+`[VLAN_ID]` (a VLAN number).
+
+Infrastructure and cloud lane (batch 12, 2026-11-14, `knowledge/infrastructure/` and its
+runbooks): `[ACCOUNT_ID]` (an AWS account ID) · `[SUBSCRIPTION_ID]` (an Azure subscription
+ID) · `[PROJECT_ID]` (a Google Cloud project ID) · `[RESOURCE_GROUP]` (an Azure resource
+group) · `[REGION]` (a cloud region name) · `[RESOURCE_ID]` (one cloud resource's ID or full
+resource ID: an instance, a disk, an address, a snapshot) · `[PRINCIPAL]` (one IAM principal:
+an AWS role or user ARN, an Azure object ID of a user, group, service principal or managed
+identity, or a Google Cloud member string such as `serviceAccount:` plus its address) ·
+`[SECURITY_GROUP_ID]` (an AWS security group ID) · `[FIREWALL_RULE]` (an Azure NSG rule or a
+Google Cloud VPC firewall rule name) · `[SOURCE_CIDR]` (the narrowest source address range a
+rule allows) · `[PORT]` (one destination port or port range) · `[CLUSTER_NAME]` (a Kubernetes
+cluster) · `[NAMESPACE]` (a Kubernetes namespace) · `[WORKLOAD_NAME]` (a Kubernetes
+Deployment or StatefulSet name) · `[POD_NAME]` (one pod) · `[NODE_NAME]` (one Kubernetes
+node) · `[RESOURCE_ADDRESS]` (a Terraform resource address such as `module.db.aws_db_instance.main`)
+· `[TF_WORKSPACE]` (a Terraform working directory, workspace or HCP Terraform workspace) ·
+`[LOCK_ID]` (the lock ID a Terraform state lock error prints) · `[HOST_NAME]` (one Linux
+server) · `[UNIT_NAME]` (one systemd unit) · `[SNAPSHOT_ID]` (one backup recovery point or
+snapshot) · `[RESTORE_TARGET]` (the new, alternate-location name a restore writes to, never the
+live resource).
+
+Security lane (batch 12, 2026-11-14): `[CREDENTIAL_ID]` (the ID a platform shows for one
+credential, never its secret value: an AWS access key ID, a Google Cloud service account key ID,
+an Azure client secret's ID, a GitHub token's name, a Slack app token's label) ·
+`[CLOUD_PRINCIPAL]` (the identity a cloud credential belongs to: an AWS IAM user or role name, an
+Azure app registration's name, or a Google Cloud service account's name written without its `@`
+part) · `[CLOUD_ACCOUNT_ID]` (an AWS account ID, an Azure subscription ID or a Google Cloud project
+ID) · `[MAIL_RULE_NAME]` (one inbox rule's name as Outlook shows it, kept as evidence before the
+rule is turned off) · `[MESSAGE_COUNT]` (the number of messages a purge selects, written in the
+ticket before the gate). `[APP_NAME]` and `[APP_ID]` also cover an Entra enterprise app and an
+Okta app integration.
+
+Software engineering lane (batch 12, 2026-11-14, `knowledge/software-engineering/`): `[COMMIT_SHA]` (one git
+commit id, full or abbreviated, as `git log` or `git reflog` prints it) · `[PR_NUMBER]` (one pull request
+number in `[REPO_NAME]`) · `[RUN_ID]` (one GitHub Actions workflow run id, as the run's page address shows
+it) · `[PACKAGE_NAME]` (one npm or PyPI package name) · `[PACKAGE_VERSION]` (one exact version of that
+package, such as 4.2.1). `[FILE_NAME]` also covers a script file or a CI workflow file in this lane.
+
 These describe individuals, devices, or transient values. Templates never substitute
 real data; the operator types real values in their messages and the agent responds in
 placeholders (SR-8).

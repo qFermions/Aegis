@@ -1,0 +1,19 @@
+// Checks the security lane's answer fixtures against the desk's expert rows: good passes every row, flawed fails one.
+const fs = require('fs'); const path = require('path');
+const ROOT = process.argv[2];
+const e = require(path.join(ROOT, 'scripts/demo/expert-rules.js'));
+const s = require(path.join(ROOT, 'scripts/demo/senior-rules.js'));
+const dir = path.join(ROOT, 'scripts/demo/fixtures/batch12/security');
+const index = JSON.parse(fs.readFileSync(path.join(dir, 'fixtures.json'), 'utf8'));
+let bad = 0;
+for (const [name, f] of Object.entries(index)) {
+  const answer = fs.readFileSync(path.join(dir, `${name}.md`), 'utf8');
+  const rows = [e.modeRow(answer, { ticket: f.ticket }), ...e.expertRows(answer, { ticket: f.ticket, evidence: f.evidence }), s.assumedSetup(answer, { setup: '', ticket: f.ticket })].filter((r) => r.applies !== false);
+  const failed = rows.filter((r) => r.verdict === 'fail');
+  const ok = f.expect === 'pass' ? failed.length === 0 : failed.length > 0;
+  if (!ok) bad += 1;
+  console.log(`${ok ? 'OK  ' : 'BAD '} ${name} (expect ${f.expect}): ${rows.map((r) => `${r.check}=${r.verdict}`).join(', ')}`);
+  for (const r of failed) console.log(`       ${r.check}: ${r.detail}`);
+}
+console.log(bad ? `${bad} fixture(s) not as expected` : 'every fixture as expected');
+process.exit(bad ? 1 : 0);

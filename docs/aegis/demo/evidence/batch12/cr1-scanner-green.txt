@@ -1,0 +1,9 @@
+✔ batch 12, code review 1: winget aliases, assigned force pushes, option values, double-dash terraform flags and git global options (3.1215ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 891.688833

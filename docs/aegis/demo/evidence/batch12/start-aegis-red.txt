@@ -1,0 +1,204 @@
+$ node --test scripts/start-aegis.test.js   (red: the new tests against a stub start-aegis.js that exports the names and does nothing, on f1b00b8; exit 1)
+✖ first run asks the one question once, saves the answer and starts the chat with exactly --setup <answer> (1.428792ms)
+✖ an email address and a phone number in the answer become placeholders before they are saved or passed on (0.222625ms)
+✖ a password in the answer is refused and nothing is saved; it asks again, and after 3 refusals starts with no setup (0.218375ms)
+✖ the saved file is outside the repository, mode 0600 in a 0700 folder; a home folder inside the repository saves nothing (0.286083ms)
+✖ a later run shows the saved answer in one line; Enter keeps it, c or change asks again, clear removes the file (0.225416ms)
+✖ with no terminal it asks nothing and starts with the saved answer, or with none (0.2055ms)
+✖ a saved file it cannot read starts with no setup and says so; a home folder it cannot write still starts (0.196292ms)
+✖ Ctrl-C at the question exits cleanly: nothing saved and no chat (0.197916ms)
+✖ the chat's exit code is the launcher's; Ctrl-C is ignored only while the chat runs; a chat that cannot start is exit 2 (0.218709ms)
+✖ parseSaved reads the saved file as one line, or null when it holds nothing (0.073541ms)
+✖ a saved answer that holds a password is not used, and a saved address is masked (0.188375ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 0
+ℹ fail 11
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39.311167
+
+✖ failing tests:
+
+test at scripts/start-aegis.test.js:77:1
+✖ first run asks the one question once, saves the answer and starts the chat with exactly --setup <answer> (1.428792ms)
+  AssertionError [ERR_ASSERTION]: one prompt
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:81:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/start-aegis.test.js:98:1
+✖ an email address and a phone number in the answer become placeholders before they are saved or passed on (0.222625ms)
+  Error: ENOENT: no such file or directory, open ''
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:102:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: ''
+  }
+
+test at scripts/start-aegis.test.js:113:1
+✖ a password in the answer is refused and nothing is saved; it asks again, and after 3 refusals starts with no setup (0.218375ms)
+  AssertionError [ERR_ASSERTION]: asked again after the refusal
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:117:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/start-aegis.test.js:136:1
+✖ the saved file is outside the repository, mode 0600 in a 0700 folder; a home folder inside the repository saves nothing (0.286083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + ''
+  - '/var/folders/7k/7l8yml8s0vb6d0g58ttx0kzh0000gn/T/start-aegis-test-3nxlOh/.aegis/company-setup.txt'
+  
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:139:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: '/var/folders/7k/7l8yml8s0vb6d0g58ttx0kzh0000gn/T/start-aegis-test-3nxlOh/.aegis/company-setup.txt',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/start-aegis.test.js:160:1
+✖ a later run shows the saved answer in one line; Enter keeps it, c or change asks again, clear removes the file (0.225416ms)
+  Error: ENOENT: no such file or directory, open ''
+      at Object.writeFileSync (node:fs:2482:20)
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:164:6)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: ''
+  }
+
+test at scripts/start-aegis.test.js:192:1
+✖ with no terminal it asks nothing and starts with the saved answer, or with none (0.2055ms)
+  TypeError: Cannot read properties of undefined (reading 'args')
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:197:36)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at scripts/start-aegis.test.js:208:1
+✖ a saved file it cannot read starts with no setup and says so; a home folder it cannot write still starts (0.196292ms)
+  Error: ENOENT: no such file or directory, open ''
+      at Object.writeFileSync (node:fs:2482:20)
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:212:6)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: ''
+  }
+
+test at scripts/start-aegis.test.js:234:1
+✖ Ctrl-C at the question exits cleanly: nothing saved and no chat (0.197916ms)
+  AssertionError [ERR_ASSERTION]: no folder made
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:240:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/start-aegis.test.js:247:1
+✖ the chat's exit code is the launcher's; Ctrl-C is ignored only while the chat runs; a chat that cannot start is exit 2 (0.218709ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 3
+  
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:249:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/start-aegis.test.js:275:1
+✖ parseSaved reads the saved file as one line, or null when it holds nothing (0.073541ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'Google Workspace, Okta'
+  
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:276:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'Google Workspace, Okta',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/start-aegis.test.js:283:1
+✖ a saved answer that holds a password is not used, and a saved address is masked (0.188375ms)
+  Error: ENOENT: no such file or directory, open ''
+      at Object.writeFileSync (node:fs:2482:20)
+      at TestContext.<anonymous> (<repo>/scripts/start-aegis.test.js:287:6)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: ''
+  }

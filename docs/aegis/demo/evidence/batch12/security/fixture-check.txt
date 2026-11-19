@@ -1,0 +1,19 @@
+OK   incident-good (expect pass): answer-mode=pass, answer-mode=pass, escalate-on-compromise=pass, assumed-setup=pass
+OK   incident-flawed-no-escalation (expect fail): answer-mode=pass, answer-mode=pass, escalate-on-compromise=fail, assumed-setup=pass
+       escalate-on-compromise: the ticket smells of compromise and the answer names no escalation to a security role (the security lead, the security on-call, incident response)
+OK   incident-flawed-no-decider (expect fail): answer-mode=fail, answer-mode=fail, escalate-on-compromise=pass, assumed-setup=pass
+       answer-mode: Incident answer: a containment decision does not say who decides it
+       answer-mode: Incident answer: a containment decision does not say who decides it
+OK   fixcard-good (expect pass): answer-mode=pass, answer-mode=pass, escalate-on-compromise=pass, assumed-setup=pass
+OK   fixcard-flawed-no-escalation (expect fail): answer-mode=pass, answer-mode=pass, escalate-on-compromise=fail, assumed-setup=pass
+       escalate-on-compromise: the ticket smells of compromise and the answer names no escalation to a security role (the security lead, the security on-call, incident response)
+OK   askfirst-good (expect pass): answer-mode=pass, answer-mode=pass
+OK   askfirst-flawed-gives-steps (expect fail): answer-mode=fail, answer-mode=fail, assumed-setup=pass
+       answer-mode: Ask first: it is not one question and nothing else
+       answer-mode: Ask first: it is not one question and nothing else
+OK   engineer-good (expect pass): answer-mode=pass, answer-mode=pass, assumed-setup=pass
+OK   engineer-flawed-score-only (expect fail): answer-mode=fail, answer-mode=fail, assumed-setup=pass
+       answer-mode: Engineer answer: a hypothesis has no test that splits it from the next; the blast radius gives no rollback or no stop condition
+       answer-mode: Engineer answer: a hypothesis has no test that splits it from the next; the blast radius gives no rollback or no stop condition
+every fixture as expected
+exit 0

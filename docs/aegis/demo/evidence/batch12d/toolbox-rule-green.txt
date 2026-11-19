@@ -1,0 +1,40 @@
+✔ every SAFETY GATE in every runbook carries an R class on its Reversibility line (30.41225ms)
+✔ the check fails when one class is removed (25.864208ms)
+✔ the 58 gates classed in this batch carry their class first and cite the row of CLAUDE.md's table (7.520666ms)
+✔ relative Markdown file links resolve inside the repository (83.085917ms)
+✔ PowerShell casts and invocations inside fenced code are not parsed as Markdown links (0.119584ms)
+✔ every /mfa-issue gate carries one R class from CLAUDE.md's risk table and cites the row (1.514083ms)
+✔ Require re-register MFA is gated R3 as the alternative to the one-method delete, never both (0.3765ms)
+✔ verify-mfa-cleared is the bound read-back of the re-register gate, and its change record is named (0.179625ms)
+✔ vendor fact B-18 quotes the page as re-read on 2026-10-31 (0.578292ms)
+✔ /mfa-issue R2 and R3 actions capture pre-state and a rollback path, and each path has its own proof (0.37ms)
+✔ every R2 and R3 gate in /mfa-issue has a read-back bound to its change (0.941042ms)
+✔ the New phone / re-register list starts at step 1 and counts on (0.1555ms)
+✔ each step of the New phone / re-register list after the first renders as a list item (0.095ms)
+✔ the change-record paragraph names every gate a read-back below binds (3.671583ms)
+✔ /mfa-issue verifies the requester first, before its first gate (0.254709ms)
+✔ /mfa-issue gives a new way in before the old way out on the lost-or-replaced-device path (2.141042ms)
+✔ all command files have valid description frontmatter (25.527333ms)
+✔ the bundled Claude plugin uses the canonical manifest and resolvable command paths (0.539417ms)
+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (15.009708ms)
+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (15.882875ms)
+✔ working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text (291.074083ms)
+✔ Markdown fences are balanced (26.2105ms)
+✔ working-tree text files end with a newline and have no UTF-8 BOM (52.922875ms)
+✔ legacy parallel tenant and operator placeholders are absent (104.0155ms)
+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (94.877791ms)
+✔ the six networking placeholders the lane runbooks use are in the placeholder dictionary (0.160333ms)
+✔ the toolbox rule is in CLAUDE.md and in the answer format: this repository is never the asker's environment (0.19175ms)
+✔ CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized) (0.063833ms)
+✔ CLAUDE.md stays under 20,000 bytes so every session loads it whole (batch 1, A5b) (0.049584ms)
+✔ the Extended Confirmation Gate quotes the SR-2 list exactly as the security doctrine states it (0.296125ms)
+✔ CLAUDE.md keeps the always-on script gates every turn needs (review round 1 of batch 1) (0.088792ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 664.630875
+exit 0

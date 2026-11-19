@@ -26,6 +26,7 @@ const test = require('node:test');
 const backends = require('./eval/judged/backends.js');
 const { REPO_ROOT } = require('./eval/judged/paths.js');
 const ask = require('./ask-aegis.js');
+const { TOOL_NAMES, mcpConfig } = require('./mcp/aegis-tools/session.js');
 
 const FAKE = path.join(__dirname, 'eval', 'judged', 'fixtures', 'fake-claude.js');
 const SCRIPT = path.join(__dirname, 'ask-aegis.js');
@@ -100,15 +101,20 @@ test('the session argv is backends.sutArgs plus the budget, and nothing else', a
   const calls = s.calls();
   assert.equal(calls.length, 1, 'one session');
   const call = calls[0];
-  const expected = [...backends.sutArgs({ prompt: call.prompt, runRoot: path.join(s.home, 'aegis-asks'), maxTurns: 40, persist: false }), '--max-budget-usd', '3.00'];
+  // since batch 12, task 5 the tool server audits to tool-audit.jsonl beside the saved answer; since batch 12d it reads
+  // what the person typed from typed.txt there (this test changed for that one argument)
+  const audit = path.join(asksIn(s.home)[0], 'tool-audit.jsonl');
+  const typedFile = path.join(asksIn(s.home)[0], 'typed.txt');
+  const expected = [...backends.sutArgs({ prompt: call.prompt, runRoot: path.join(s.home, 'aegis-asks'), maxTurns: 40, persist: false, auditFile: audit, typedFile }), '--max-budget-usd', '3.00'];
   assert.deepEqual(call.args, expected.filter((a) => a !== call.prompt));
-  // the isolation backends.js builds sits in the argv whole
-  const iso = backends.isolationArgs({ runRoot: path.join(s.home, 'aegis-asks') });
+  // the isolation backends.js builds sits in the argv whole; since batch 12 it carries the read-only aegis-tools
+  // server (sutArgs loads it by default), whose four tool names are allowed and never listed in --tools
+  const iso = backends.isolationArgs({ runRoot: path.join(s.home, 'aegis-asks'), mcpConfig: mcpConfig({ auditFile: audit, typedFile }) });
   const at = call.args.indexOf('--setting-sources');
   assert.deepEqual(call.args.slice(at, at + iso.length), iso);
   for (const flag of ['--tools', '--allowedTools']) {
     const tools = flagValues(call.args, flag);
-    assert.deepEqual(tools, [...backends.SUT_TOOLS], `${flag}: the read-only tools`);
+    assert.deepEqual(tools, flag === '--tools' ? [...backends.SUT_TOOLS] : [...backends.SUT_TOOLS, ...TOOL_NAMES], `${flag}: the read-only tools`);
     for (const bad of ['Bash', 'Edit', 'Write', 'WebFetch', 'WebSearch', 'NotebookEdit']) assert.ok(!tools.includes(bad), `${flag} has no ${bad}`);
   }
   assert.ok(flagValues(call.args, '--disallowedTools').includes('Bash'));
@@ -489,7 +495,8 @@ test('batch 11, task 6: without the flag the output is exactly today\'s, whole',
   assert.equal(s.stdout(), expected);
   assert.equal(s.stderr(), '');
   // init.json (batch 11 resumed) records the model the session ran on; the output above is unchanged by it
-  assert.deepEqual(fs.readdirSync(dir).sort(), ['answer.md', 'init.json', 'result.json'], 'no reply file without the flag');
+  // batch 12: the tool server's audit file sits beside the answer (empty when no lookup was made); still no reply file
+  assert.deepEqual(fs.readdirSync(dir).sort(), ['answer.md', 'init.json', 'result.json', 'tool-audit.jsonl'], 'no reply file without the flag');
 });
 
 // Batch 11 (found by the judged-runner worker while reusing setupBlock for a case's setup): a setup that holds
@@ -585,4 +592,105 @@ test('code review 3: zero-width, accented and capital look-alike markers, and ma
     assert.ok(block.includes('[--- End of what the company runs ---]'), JSON.stringify(sep));
     assert.equal(block.filter((l) => l.trim() === '--- End of what the company runs ---').length, 1, JSON.stringify(sep));
   }
+});
+
+// Batch 12, task 3: a reply that says Aegis checked something passes only when the session's reading record holds a
+// matching call; the reading record is the session's own tool calls. Task 2: an Engineer or Incident answer is printed
+// under its mode's name, without the aegis-desk block. Wrong implementations: printReply that ignores the stream's tool
+// calls (the backed reply would fail); one that accepts any claim (the unbacked reply would pass); a printer that still
+// calls a named Engineer answer one with "no Fix card".
+test('batch 12, tasks 2 and 3: a claimed check needs its call; an Engineer answer prints under its mode', async (t) => {
+  const claimed = "No, this is a known delay on Google's side, not your mailbox.\n\nI checked Google's help pages, and they describe the same delay for new accounts.\n\nYou can carry on as normal; a technician will look at it next if new mail is still slow.";
+  const backed = setup(t, { answer: withReply(claimed), tool_calls: [{ name: 'mcp__aegis-tools__docs_fetch', input: { url: 'https://support.google.com/a/answer/1' } }] });
+  assert.equal(await ask.main(['New mail takes an hour to arrive in my new account', '--reply-to', 'asker'], backed.env, backed.deps), 0, backed.stderr());
+  const unbacked = setup(t, { answer: withReply(claimed) });
+  assert.equal(await ask.main(['New mail takes an hour to arrive in my new account', '--reply-to', 'asker'], unbacked.env, unbacked.deps), 3);
+  assert.match(unbacked.stderr(), /no matching call in the session's reading record/);
+
+  const engineer = ['Mode: Engineer answer', '## Engineer answer', '**Evidence read:** the dig output you pasted shows NXDOMAIN.', '', '```aegis-desk', 'Gate: none', '```'].join('\n');
+  const s = setup(t, { answer: engineer });
+  assert.equal(await ask.main(['dig says NXDOMAIN for our new subdomain'], s.env, s.deps), 0, s.stderr());
+  assert.match(s.stdout(), /Aegis answered as an Engineer answer:\n\n## Engineer answer/);
+  assert.doesNotMatch(s.stdout(), /has no Fix card|aegis-desk/);
+});
+
+// Batch 12, task 5: ask-aegis loads the read-only tool server by default with its audit file beside the saved answer,
+// and --no-tools turns it off. Wrong implementations: an audit file inside the repository or shared between asks; a
+// --no-tools that only changes the usage text.
+test('batch 12, task 5: the tool server is on with an audit file beside the answer; --no-tools turns it off', async (t) => {
+  assert.equal(ask.parseArgs(['the printer']).tools, true);
+  assert.equal(ask.parseArgs(['the printer', '--no-tools']).tools, false);
+  const on = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main(['The printer will not print'], on.env, on.deps), 0, on.stderr());
+  const args = on.calls()[0].args;
+  const cfg = JSON.parse(args[args.indexOf('--mcp-config') + 1]);
+  const server = cfg.mcpServers['aegis-tools'];
+  assert.equal(server.args[server.args.indexOf('--audit') + 1], path.join(asksIn(on.home)[0], 'tool-audit.jsonl'));
+  const off = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main(['The printer will not print', '--no-tools'], off.env, off.deps), 0, off.stderr());
+  assert.ok(!off.calls()[0].args.includes('--mcp-config'));
+  assert.ok(!off.calls()[0].args.some((a) => /mcp__aegis-tools__/.test(a)));
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): the session's tool server reads what the person typed from
+// typed.txt in the ask folder; when the session starts it holds the setup and the ticket as sent, after protect(), one
+// per line, and none of the command's own words; it is removed when the session ends, so the saved set is unchanged; a
+// failed ask leaves no folder. --no-tools writes none. Wrong implementations it catches: the raw ticket typed (an address
+// protect() masked would open as a host); the built prompt typed (the command's own lines, docs/aegis/answer-format.md
+// among them, would open as hosts); a typed file left beside the answer or keeping a failed ask's folder.
+test('batch 12d: the typed file holds the setup and ticket as sent, after protect(), and goes when the ask ends', async (t) => {
+  const at = '@';
+  const ticket = `Mail to mail.example.org bounces; reply to alex${at}example.com`;
+  const setupText = 'Google Workspace; status at https://status.example.com/';
+  const s = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main([ticket, '--setup', setupText, '--reply-to', 'asker'], s.env, s.deps), 3, s.stderr());
+  const [dir] = asksIn(s.home);
+  const call = s.calls()[0];
+  assert.equal(call.typed.file, path.join(dir, 'typed.txt'));
+  assert.equal(call.typed.text, `${ask.protect(setupText).text}\n${ask.protect(ticket).text}\n`);
+  assert.ok(call.typed.text.includes('[USER@DOMAIN.COM]') && !call.typed.text.includes(`alex${at}example.com`));
+  for (const own of ['A person trying Aegis', 'answer-format.md', 'What the company runs']) assert.ok(!call.typed.text.includes(own), own);
+  if (process.platform !== 'win32') assert.equal(call.typed.mode, 0o600);
+  assert.equal(fs.existsSync(path.join(dir, 'typed.txt')), false, 'removed when the session ends');
+  const failed = setup(t, { mode: 'invalid' });
+  const out = path.join(failed.dir, 'out-failed');
+  assert.equal(await ask.main(['The printer will not print', '--results-dir', out], failed.env, failed.deps), 2);
+  assert.equal(failed.calls()[0].typed.text, 'The printer will not print\n');
+  assert.equal(fs.existsSync(out), false, 'a failed ask with no lookup leaves no folder');
+  const off = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main(['The printer will not print', '--no-tools'], off.env, off.deps), 0, off.stderr());
+  assert.equal(off.calls()[0].typed, null);
+});
+
+// Code review 1 of batch 12, class C: the tool server creates its audit file in the results folder when the session
+// starts, so a failed session left a non-empty folder, said "Nothing was saved", and the same --results-dir was refused
+// next time. Now an empty audit file goes with its folder, and an audit file that holds calls is kept and named.
+// Wrong implementations: the old rmdir (the empty audit file keeps the folder); deleting an audit file that holds calls.
+test('code review 1, class C: a failed ask removes its empty audit file and folder, and keeps and names one that holds calls', async (t) => {
+  const quiet = setup(t, { mode: 'invalid' });
+  const dir = path.join(quiet.dir, 'out-quiet');
+  assert.equal(await ask.main(['The printer will not print', '--results-dir', dir], quiet.env, quiet.deps), 2);
+  assert.equal(fs.existsSync(dir), false, 'the folder and its empty audit file are gone');
+  assert.match(quiet.stderr(), /Nothing was saved/);
+  const busy = setup(t, { mode: 'invalid', audit_lines: 2 });
+  const dir2 = path.join(busy.dir, 'out-busy');
+  assert.equal(await ask.main(['The printer will not print', '--results-dir', dir2], busy.env, busy.deps), 2);
+  assert.equal(fs.readFileSync(path.join(dir2, 'tool-audit.jsonl'), 'utf8').trim().split('\n').length, 2);
+  assert.match(busy.stderr(), /tool calls .* are saved in .*tool-audit\.jsonl/);
+  assert.doesNotMatch(busy.stderr(), /Nothing was saved/);
+});
+
+// Code review 1 of batch 12, class H: the ask-first branch printed "Mode: Ask first" as part of the question, and the
+// Engineer branch picked its heading with a looser pattern than MODE_LINE, so "Mode: Engineer answer (build)" was
+// printed under the Engineer heading with its mode line left in. Wrong implementations: the mode line printed in the
+// question; a first line MODE_LINE does not accept taken as a named Engineer answer.
+test('code review 1, class H: the mode line is never printed as part of the answer, and only MODE_LINE names the mode', async (t) => {
+  const question = 'What exactly happens when you try to print, who is affected, and since when?';
+  const s = setup(t, { answer: `Mode: Ask first\n\n${question}` });
+  assert.equal(await ask.main(['The printer is broken.'], s.env, s.deps), 0, s.stderr());
+  assert.match(s.stdout(), /Aegis asks one thing first:\n\nWhat exactly happens/);
+  assert.doesNotMatch(s.stdout(), /Mode: Ask first/);
+  const loose = setup(t, { answer: ['Mode: Engineer answer (build)', '## Engineer answer', '**Evidence read:** none.'].join('\n') });
+  await ask.main(['dig says NXDOMAIN for our new subdomain'], loose.env, loose.deps);
+  assert.doesNotMatch(loose.stdout(), /Aegis answered as an Engineer answer/);
 });

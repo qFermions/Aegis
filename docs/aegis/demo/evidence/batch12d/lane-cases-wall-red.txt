@@ -1,0 +1,45 @@
+✔ the deny rules name .git itself and everything under it (0.473625ms)
+✔ every sealed session carries the .git rules: first turn, follow-up, ask-aegis and the chat (0.843084ms)
+✔ gitDirs: a checkout gives .git; a linked worktree adds the folder its .git file names and the shared one (1.719125ms)
+✔ the agent worktrees inside the repository are denied whole, to every sealed session (0.5825ms)
+✔ no sealed session gets the git status snapshot: the setting is off in every session and in the environment (0.501083ms)
+✖ every tracked case file is under a deny rule, the lane case files of batch 12 included (8.4275ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 61.605834
+
+✖ failing tests:
+
+test at scripts/eval/judged/git-wall.test.js:109:1
+✖ every tracked case file is under a deny rule, the lane case files of batch 12 included (8.4275ms)
+  AssertionError [ERR_ASSERTION]: case files no deny rule covers
+  + actual - expected
+  
+  + [
+  +   'docs/aegis/batch12/lanes/infrastructure-dev-cases.jsonl',
+  +   'docs/aegis/batch12/lanes/networking-dev-cases.jsonl',
+  +   'docs/aegis/batch12/lanes/security-dev-cases.jsonl',
+  +   'docs/aegis/batch12/lanes/software-engineering-dev-cases.jsonl'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/git-wall.test.js:118:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'docs/aegis/batch12/lanes/infrastructure-dev-cases.jsonl', 'docs/aegis/batch12/lanes/networking-dev-cases.jsonl', 'docs/aegis/batch12/lanes/security-dev-cases.jsonl', 'docs/aegis/batch12/lanes/software-engineering-dev-cases.jsonl' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit 1

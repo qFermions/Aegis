@@ -26,6 +26,7 @@ const path = require('node:path');
 
 const { REPO_ROOT, effectivePath, isInside, repoRoots, foldCase } = require('./paths.js');
 const { systemTempDir } = require('../../temp-dir.js');
+const aegisTools = require('../../mcp/aegis-tools/session.js');
 
 const SUT_TOOLS = Object.freeze(['Read', 'Grep', 'Glob', 'Agent']);
 const WEB_TOOLS = Object.freeze(['WebFetch', 'WebSearch']);
@@ -62,16 +63,43 @@ function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge 
 // rules only: the CLI warns that a Glob(path) rule is not matched and says Read rules cover Grep and Glob.
 // That the CLI loads them: docs/aegis/demo/evidence/batch7/isolation-probe.txt. That it refuses a read is
 // shown only by a real session: docs/aegis/demo/evidence/full-run-1/.
-const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/**', 'docs/evidence/**', 'docs/aegis/**/evidence/**', '.aegis-state/**', 'docs/aegis/**/baseline/**', 'docs/baseline/**']);
+const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/**', 'docs/evidence/**', 'docs/aegis/**/evidence/**', '.aegis-state/**', 'docs/aegis/**/baseline/**', 'docs/baseline/**',
+  // agent worktrees are whole copies of the checkout, the case file and every denied record included (security review of batch 12d)
+  '.claude/worktrees/**',
+  // the lane builders' own folder of batch 12: the four lane case files (58 cases with their expected decisions) and the
+  // notes that describe them; a real session's root Grep found one (batch 12d)
+  'docs/aegis/batch12/lanes/**']);
 const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
 
 // The CLI's absolute form: // then the path from the file system root, with forward slashes.
 const absoluteReadRule = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;
 
+// This repository's own .git (batch 12d, task 2): its history, branches and commits are Aegis's, never the asker's,
+// and in a linked worktree the .git file and the folder it names hold a local path. The entry is always listed; a
+// linked worktree adds the git folder its .git file names and the shared folder behind that one.
+function gitDirs(repoRoot = REPO_ROOT) {
+  const dirs = [path.join(repoRoot, '.git')];
+  try {
+    const m = /^gitdir:\s*(.+)$/m.exec(fs.readFileSync(dirs[0], 'utf8'));
+    if (m) {
+      const gitDir = path.resolve(repoRoot, m[1].trim());
+      dirs.push(gitDir);
+      dirs.push(path.resolve(gitDir, fs.readFileSync(path.join(gitDir, 'commondir'), 'utf8').trim()));
+    }
+  } catch { /* a checkout (.git is a folder), no .git, or no commondir file: what was found so far stands */ }
+  return dirs;
+}
+
 // caseDirs: the folders a judged run's case file is read from (paths.caseFolders), denied like the results
 // folder, so a session cannot read the expected decisions it is graded against (batch 11, task 7).
 function readDenyRules(runRoot = null, caseDirs = []) {
   const rules = READ_DENIED.map((p) => absoluteReadRule(path.join(REPO_ROOT, p)));
+  // .git as given and as resolved, the entry itself and everything under it
+  for (const dir of gitDirs()) {
+    for (const form of [dir, effectivePath(dir)]) {
+      for (const rule of [absoluteReadRule(form), absoluteReadRule(path.join(form, '**'))]) if (!rules.includes(rule)) rules.push(rule);
+    }
+  }
   // both forms of a folder behind a link, since the CLI may match either; effectivePath resolves the nearest
   // folder that exists, so a dry run lists what the real run will
   for (const root of [path.join(os.homedir(), DEFAULT_RUN_ROOT), ...(runRoot ? [path.resolve(runRoot)] : [])]) {
@@ -89,8 +117,16 @@ function readDenyRules(runRoot = null, caseDirs = []) {
   return rules;
 }
 
-function isolationArgs({ judge = false, runRoot = null, caseDirs = [] } = {}) {
-  return ['--setting-sources', 'project', '--strict-mcp-config', '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot, caseDirs) } })];
+// mcpConfig (batch 12): the --mcp-config text of the read-only aegis-tools server, placed right after
+// --strict-mcp-config so it is the one MCP server the session loads. The judge grades with no tools, so it never
+// takes one. hooks (batch 12d): the chat's prompt hook (session.typedHooks), added to the inline --settings only when
+// given; the judge never takes one either.
+// includeGitInstructions false (batch 12d, task 2): Claude Code gives a session a git status snapshot when it starts (the
+// current branch, the main branch, the status, the recent commits), so denying .git to the tools alone left this
+// repository's branch and commits in every session's context; scrubEnv sets the environment variable that does the same.
+function isolationArgs({ judge = false, runRoot = null, caseDirs = [], mcpConfig = null, hooks = null } = {}) {
+  if (judge && (mcpConfig || hooks)) throw new Error('the judge session takes no MCP server and no hook');
+  return ['--setting-sources', 'project', '--strict-mcp-config', ...(mcpConfig ? ['--mcp-config', mcpConfig] : []), '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, includeGitInstructions: false, permissions: { deny: readDenyRules(runRoot, caseDirs) }, ...(hooks ? { hooks } : {}) })];
 }
 // The model every session names (batch 11 resumed): the one the commander's correctness run was measured on. With no
 // --model the CLI takes the settings file's default model, which can change from one day to the next, so a run
@@ -140,6 +176,8 @@ function scrubEnv(env, exampleNames) {
     if (exampleNames.has(name) || SECRET_SUFFIX.test(name)) continue;
     out[name] = value;
   }
+  // no git status snapshot of this repository in a session's context, whatever the caller's own value (see isolationArgs)
+  out.CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS = '1';
   return out;
 }
 
@@ -158,15 +196,24 @@ function buildSutPrompt(c) {
 }
 
 // model: the session's model, PINNED_MODEL when none is given; it comes last, after --tools, so aegis-chat keeps it.
-function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, caseDirs = [], persist = true, model = null }) {
+// tools (batch 12, default true): load the read-only aegis-tools MCP server (scripts/mcp/aegis-tools/) and allow its
+// four tools; --tools lists built-in tools only, so the names go in --allowedTools alone. auditFile: the file the
+// server appends one line per call to (stderr when none). tools false is the argv from before batch 12, byte for byte.
+// typedFile (batch 12d): the file of what the person typed, named to the server by --typed (scope rule c). promptHook:
+// the chat's UserPromptSubmit hook, which appends each later message to typedFile; a print-mode session never takes it,
+// since its one prompt holds the runner's own words. Both need the tools on.
+function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, caseDirs = [], persist = true, model = null, tools = true, auditFile = null, typedFile = null, promptHook = false }) {
   if (resume && !persist) throw new Error('a session with no persistence cannot resume');
-  const tools = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
+  const builtIn = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
+  const allowed = tools ? [...builtIn, ...aegisTools.TOOL_NAMES] : builtIn;
   const disallowed = web ? ['Bash'] : ['Bash', ...WEB_TOOLS];
+  const mcpConfig = tools ? aegisTools.mcpConfig({ auditFile, typedFile }) : null;
+  const hooks = tools && promptHook && typedFile ? aegisTools.typedHooks(typedFile) : null;
   const args = ['-p', positional(prompt)];
   if (resume) args.push('--resume', resume);
   if (!persist) args.push('--no-session-persistence');
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
-    '--tools', ...tools, '--allowedTools', ...tools, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot, caseDirs }), ...modelArgs(model));
+    '--tools', ...builtIn, '--allowedTools', ...allowed, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot, caseDirs, mcpConfig, hooks }), ...modelArgs(model));
   return args;
 }
 
@@ -190,6 +237,11 @@ function toolCall(part, inSubagent) {
   } else if (call.tool === 'Agent' || call.tool === 'Task') {
     call.label = `${str(input.subagent_type) || 'agent'}: ${str(input.description) || '(no description)'}`;
   }
+  // the tool server's calls (batch 12): what each looked up, so a claimed check or a cited page can be held to it
+  if (call.tool.startsWith(`mcp__${aegisTools.SERVER_NAME}__`)) {
+    const target = str(input.url) || str(input.name) || str(input.host);
+    if (target) call.target = target;
+  }
   return call;
 }
 
@@ -199,9 +251,31 @@ const MAX_CALL_TEXT = 300;
 const cutText = (s) => (s.length > MAX_CALL_TEXT ? `${s.slice(0, MAX_CALL_TEXT)} [cut]` : s);
 function toolCallRecord(call) {
   const rec = { tool: call.tool.slice(0, 60) };
-  for (const key of ['pattern', 'path', 'label']) if (typeof call[key] === 'string') rec[key] = cutText(call[key]);
+  for (const key of ['pattern', 'path', 'label', 'target']) if (typeof call[key] === 'string') rec[key] = cutText(call[key]);
   rec.subagent = Boolean(call.subagent);
   rec.error = Boolean(call.error);
+  return rec;
+}
+
+// What the tool server decided for a session (batch 12d), from its audit file (one JSON line per call): allowed, a call
+// it answered (decision ok); refused, every decision that starts with refused_; other, the rest (bad input, the call
+// cap, a timeout, a DNS, HTTP or TLS failure); and each refused call's tool, input as the audit keeps it, decision and
+// reason, in order. No file named or none written: every count 0. A line that is not JSON is skipped.
+function toolServerRecord(file) {
+  const rec = { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] };
+  let text = '';
+  try { text = file ? fs.readFileSync(file, 'utf8') : ''; } catch { return rec; }
+  for (const line of text.split('\n')) {
+    let e;
+    try { e = JSON.parse(line); } catch { continue; }
+    if (!e || typeof e !== 'object' || typeof e.decision !== 'string') continue;
+    rec.calls += 1;
+    if (e.decision === 'ok') rec.allowed += 1;
+    else if (e.decision.startsWith('refused_')) {
+      rec.refused += 1;
+      rec.refused_calls.push({ tool: e.tool, input: e.input, decision: e.decision, reason: e.reason });
+    } else rec.other += 1;
+  }
   return rec;
 }
 
@@ -267,6 +341,9 @@ function summarizeTurn(stream, run) {
     exit_code: run.code,
     signal: run.signal,
     invalid_lines: stream.invalidLines,
+    // what the session could use, as its init event listed it (batch 12): null when there was no init event
+    tools_available: init && Array.isArray(init.tools) ? init.tools.filter((x) => typeof x === 'string').map((x) => x.slice(0, 80)) : null,
+    mcp_servers: init && Array.isArray(init.mcp_servers) ? init.mcp_servers.filter((x) => x && typeof x === 'object').map((x) => ({ name: String(x.name).slice(0, 60), status: String(x.status).slice(0, 30) })) : null,
   };
   if (run.state !== 'OK') { turn.state = run.state; turn.reason = run.reason; return turn; }
   if (!r) { turn.state = 'ERROR'; turn.reason = 'no result event in the stream'; return turn; }
@@ -334,26 +411,39 @@ function promptTooLong(prompt) {
 }
 
 // Runs one case through the system under test. opts: { command, prefixArgs, spawn, env,
-// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot, caseDirs, model }. env is already scrubbed; model names the model of
+// repoRoot, maxTurns, web, timeoutMs, graceMs, runRoot, caseDirs, model, tools, auditFile }. tools and auditFile go to
+// sutArgs for both turns (batch 12). env is already scrubbed; model names the model of
 // both turns (PINNED_MODEL when none is given); runRoot, the run's
 // results folder, is denied to both turns (batch 8, task 10b), and so are caseDirs, the folders the case file
-// is read from (batch 11, task 7).
+// is read from (batch 11, task 7). typedFile (batch 12d): with the tools on, the case's setup, ticket and evidence (what
+// the person typed, none of the runner's framing) are written to it before the first turn, and the follow-up appended
+// before the second.
 async function runSut(c, opts) {
   const repoRoot = opts.repoRoot || REPO_ROOT;
   const base = { command: opts.command, prefixArgs: opts.prefixArgs, spawn: opts.spawn, env: opts.env, cwd: repoRoot, timeoutMs: opts.timeoutMs, graceMs: opts.graceMs };
-  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model };
+  let typedFile = opts.tools !== false && opts.typedFile ? opts.typedFile : null;
   const turns = [];
   const prompt = buildSutPrompt(c);
+  // the server appends to the audit file, so a results folder used before would give this case the earlier run's calls;
+  // cleared before any return, so a case whose session never starts holds none either (code review 2, finding 5)
+  if (opts.auditFile) { try { fs.rmSync(opts.auditFile, { force: true }); } catch { /* left as it is */ } }
   if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c, repoRoot);
+  // a typed file that cannot be written does not stop the run: the session then names none and reaches only the two lists
+  const typed = (text, how) => { try { aegisTools.writeTyped(typedFile, text, how); return true; } catch { return false; } };
+  const asked = Boolean(typedFile);
+  if (typedFile && !typed([c.setup, c.ticket, c.evidence].filter((s) => typeof s === 'string' && s !== '').join('\n'))) typedFile = null;
+  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model, tools: opts.tools, auditFile: opts.auditFile, typedFile };
   turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web, ...wall }), base));
   if (c.follow_up !== '' && turns[0].state === 'OK') {
     if (!turns[0].session_id) {
       turns.push({ state: 'ERROR', reason: 'no session id to resume for the follow-up', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null });
     } else {
+      if (typedFile) typed(c.follow_up, { append: true }); // not appended: the follow-up opens no host of its own
       turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id, ...wall }), base));
     }
   }
-  return sutRecord(turns, c, repoRoot);
+  // a case that ran with no typed file says so, so its refused lookups are read as a harness fault (code review 2, finding 7)
+  return asked && !typedFile ? { ...sutRecord(turns, c, repoRoot), typed_file: 'not written' } : sutRecord(turns, c, repoRoot);
 }
 
 function sutRecord(turns, c, repoRoot = REPO_ROOT) {
@@ -372,6 +462,9 @@ function sutRecord(turns, c, repoRoot = REPO_ROOT) {
     model: turns[0] ? turns[0].model : null,
     session_id: turns[0] ? turns[0].session_id : null,
     turns: turns.map((t) => ({ state: t.state, reason: t.reason, num_turns: t.num_turns, duration_ms: t.duration_ms, cost_usd: t.cost_usd, model: t.model, session_id: t.session_id })),
+    // the tools the first turn's session listed and the MCP servers it connected (batch 12, task 5)
+    tools_available: turns[0] && turns[0].tools_available !== undefined ? turns[0].tools_available : null,
+    mcp_servers: turns[0] && turns[0].mcp_servers !== undefined ? turns[0].mcp_servers : null,
     // the reading record: every tool call of every turn, and the paths read outside the repository
     tool_calls: calls.flatMap((list, i) => list.map((call) => ({ turn: i + 1, ...toolCallRecord(call) }))),
     outside_reads: outsideReads(calls.flat(), repoRoot),
@@ -379,7 +472,7 @@ function sutRecord(turns, c, repoRoot = REPO_ROOT) {
 }
 
 module.exports = {
-  SUT_TOOLS, WEB_TOOLS, PINNED_MODEL, isModelName, OUTPUT_CAP_REASON, ranUnpriced, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
-  envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, outsideReads,
+  SUT_TOOLS, WEB_TOOLS, PINNED_MODEL, isModelName, OUTPUT_CAP_REASON, ranUnpriced, isolationArgs, excludedMemoryFiles, readDenyRules, gitDirs, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
+  envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, toolServerRecord, outsideReads,
   runChild, runTurn, runSut, promptTooLong,
 };

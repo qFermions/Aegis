@@ -1,0 +1,8 @@
+staged for commit "card-rows-narrow" on worktree-agent-aadc7d2f97259d5ca at parent 3b529a25:
+M	docs/aegis/answer-format.md
+A	docs/aegis/demo/evidence/batch12d/card-rows-narrow-green.txt
+M	scripts/demo/answer.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

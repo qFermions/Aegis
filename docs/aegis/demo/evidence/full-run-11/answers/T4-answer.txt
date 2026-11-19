@@ -1,0 +1,38 @@
+I found the runbook (`.claude/commands/shared-mailbox.md`), which has a gate for each grant. Here's the answer for the ticket.
+
+Mode: Fix card
+## Fix
+**What's wrong:** Nothing is broken. [UPN] needs Full Access and Send As on the [SHARED_MAILBOX] shared mailbox.
+**Do this:**
+1. Get the managing partner's approval in the ticket. Confirm the request by calling [FIRST_NAME] back on the number in the staff list. Write down an end date if the access is temporary.
+2. Go to Exchange admin center → Recipients → Mailboxes → [SHARED_MAILBOX] → **Mailbox Delegation**. Copy the current "Read and manage" and "Send as" lists into the ticket.
+3. Click **Read and manage (Full Access)** → Edit → Add members → [UPN] → Save → Confirm.
+4. Click **Send as** → Edit → Add members → [UPN] → Save → Confirm.
+
+**Done when:** Aegis reads back both grants, and a test email from [FIRST_NAME] shows only [SHARED_MAILBOX] as the sender.
+**Stop if:** there's no approval, the callback doesn't match the request, or the mailbox isn't listed as Shared.
+**Tell the user now:** IT has your request and is getting it approved.
+**Tell the user when done:** [SHARED_MAILBOX] now shows in your Outlook, and you can send as it. If it doesn't appear, restart Outlook and let us know.
+
+## Details
+- **Runbook and setup:** `/shared-mailbox`, with Customer E's profile: cloud-only Microsoft 365, the managing partner approves, and identity is confirmed by calling back. The runbook writes the mailbox as [MAILBOX]. Here that's [SHARED_MAILBOX].
+- **Least privilege:**
+  - **Full Access:** only if [FIRST_NAME] has to read the mailbox.
+  - **Send As vs Send on Behalf:** Send on Behalf is the lower right, but Send As is what the ticket asks for. If "on behalf of" in the From line is enough, ask the managing partner. The runbook only has a preview for Send on Behalf, so it would be a separate reviewed change.
+  - **End date:** if the access is temporary, put the end date in the ticket. On that date, remove both grants under `/mailbox-permissions`.
+- **Step 3 (Full Access grant):** R2. Double-check: Aegis reads that [UPN] has Full Access on the mailbox.
+- **Step 4 (Send As grant):** R2. Double-check: Aegis reads that [UPN] has Send As on the mailbox.
+- **Rollback:** pre-state is from step 2. Undo with `/mailbox-permissions`, gates [mailbox-permission-remove-portal] and [mailbox-send-as-remove-portal]. Mail already read or sent while the grants stood can't be undone.
+- **Risk:** auto-mapping can be slow to show in Outlook, and the profile may need re-adding. The mailbox needs no license unless it's over 50 GB, archived or on hold.
+- **Jira note:** Resolved [date/time]. Managing partner approved; requester confirmed by callback. Pre-state recorded. Full Access and Send As on [SHARED_MAILBOX] granted to [UPN] and read back. Send As test passed. End date: [none/date]. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: shared-mailbox-send-as-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

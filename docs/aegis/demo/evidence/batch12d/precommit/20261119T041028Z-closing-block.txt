@@ -1,0 +1,19 @@
+staged for commit "closing-block" on worktree-agent-aadc7d2f97259d5ca at parent 09172f16:
+M	docs/aegis/answer-format.md
+A	docs/aegis/demo/evidence/batch12d/closing-block-green.txt
+M	scripts/demo/fixtures/batch12/infrastructure/engineer-gke-dns-good.md
+M	scripts/demo/fixtures/batch12/infrastructure/engineer-terraform-bucket-module-good.md
+M	scripts/demo/fixtures/batch12/infrastructure/incident-azure-unknown-gpu-vms-good.md
+M	scripts/demo/fixtures/batch12/networking/engineer-good.md
+M	scripts/demo/fixtures/batch12/networking/incident-good.md
+M	scripts/demo/fixtures/batch12/security/engineer-good.md
+M	scripts/demo/fixtures/batch12/security/incident-good.md
+M	scripts/demo/fixtures/batch12/software-engineering/engineer-build-good.md
+M	scripts/demo/fixtures/batch12/software-engineering/engineer-good.md
+M	scripts/demo/fixtures/batch12/software-engineering/incident-good.md
+A	scripts/demo/fixtures/batch12d/engineer-closing-block.md
+A	scripts/demo/fixtures/batch12d/incident-closing-block.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

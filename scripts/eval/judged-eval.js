@@ -11,7 +11,7 @@
 //
 // Usage:
 //   node scripts/eval/judged-eval.js run --cases <file.jsonl> [--execute]
-//        [--web] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
+//        [--web] [--no-tools] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
 //        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
 //        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
 //        [--budget-usd N]
@@ -51,13 +51,32 @@ const thresholds = require('./judged/thresholds.js');
 const { protect } = require('../ask-aegis.js');
 // the desk's own counter of a Fix card's words, read only (batch 11, task 7)
 const { fixCard } = require('../demo/answer.js');
+// batch 12: the answer mode, the judgment rule rows and the checks of tasks 1, 3 and 6
+const expert = require('../demo/expert-rules.js');
+// The lane a case belongs to, from its capability (batch 12, task 13); the platform says where, the lane says what kind.
+const LANES = Object.freeze({ security: 'security', networking: 'networking', infrastructure: 'infrastructure', 'software-engineering': 'software-engineering', 'it-support': 'helpdesk' });
+const laneOf = (c) => LANES[c.capability] || 'other';
+// What one case's answer shows of batch 12: its mode (named on the first line, shown by its shape, against the case's
+// expected mode), its judgment rule rows, and its tool calls counted by tool.
+function batch12Record(c, sut) {
+  const answered = typeof sut.answer === 'string';
+  const mode = answered ? expert.answerMode(sut.answer, c.ticket) : { named: null, shown: null };
+  const counts = {};
+  for (const call of Array.isArray(sut.tool_calls) ? sut.tool_calls : []) counts[call.tool] = (counts[call.tool] || 0) + 1;
+  return {
+    lane: laneOf(c),
+    mode: { named: mode.named, shown: mode.shown, expected: c.expected.mode || '', match: c.expected.mode ? mode.named === c.expected.mode : null },
+    expert_rows: answered ? expert.expertRows(sut.answer, { ticket: c.ticket, evidence: c.evidence }).map((x) => ({ check: x.check, verdict: x.verdict, detail: x.detail })) : [],
+    tool_call_counts: counts,
+  };
+}
 
 const { EXIT } = thresholds;
 const SMOKE_USD_PER_SESSION = 2.5;
 
 const USAGE = `Usage:
   node scripts/eval/judged-eval.js run --cases <file.jsonl> [--execute]
-       [--web] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
+       [--web] [--no-tools] [--max-turns N] [--timeout-ms N] [--model <model>] [--judge-model <model>]
        [--results-dir <dir>] [--baseline <results.json>] [--calibration-sheet N]
        [--pass-threshold 0..1] [--agreement-threshold -1..1] [--thresholds <file.json>]
        [--budget-usd N]
@@ -75,7 +94,7 @@ Exit codes: 0 PASS, 2 FAIL, 3 no threshold given, 4 dry run, 1 input error or re
 const SPECS = {
   run: {
     values: ['--cases', '--max-turns', '--timeout-ms', '--model', '--judge-model', '--results-dir', '--baseline', '--calibration-sheet', '--pass-threshold', '--agreement-threshold', '--thresholds', '--budget-usd'],
-    flags: ['--execute', '--web'],
+    flags: ['--execute', '--web', '--no-tools'],
   },
   calibrate: {
     values: ['--sheet', '--run', '--agreement-threshold', '--thresholds'],
@@ -116,7 +135,7 @@ function intFlag(opts, name, def, lo, hi) {
 }
 
 function commandPreview(config) {
-  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model }).join(' ');
+  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: '<results>/<case>-tool-audit.jsonl', typedFile: '<results>/<case>-typed.txt' }).join(' ');
   const jud = backends.judgeArgs({ prompt: '<judge prompt>', model: config.judge_model }).map((a) => (a === '' ? '""' : a)).join(' ');
   return { sut: `claude ${sut}`, judge: `claude ${jud}` };
 }
@@ -152,6 +171,8 @@ function notRunRecord(c, reason) {
     setup_given: c.setup !== '', fix_card_words: null,
     change_class: c.expected.change_class, escalate: c.expected.escalate,
     sut, checks: [], judge: null, rows: null, total: null, max: null, verdict: 'INCONCLUSIVE', reasons: [reason], off_model: false,
+    ...batch12Record(c, sut),
+    tool_server: backends.toolServerRecord(null),
   };
 }
 
@@ -183,6 +204,8 @@ async function runCommand(opts, io, deps) {
     max_turns: intFlag(opts, '--max-turns', backends.DEFAULT_MAX_TURNS, 1, 200),
     timeout_ms: intFlag(opts, '--timeout-ms', backends.DEFAULT_TIMEOUT_MS, 1, 3600000),
     web: Boolean(opts['--web']),
+    // the read-only tool server (batch 12, task 5): on unless --no-tools
+    tools: !opts['--no-tools'],
     // both pinned (batch 11 resumed): a session never takes the settings file's default model
     model: opts['--model'] === undefined ? backends.PINNED_MODEL : opts['--model'],
     judge_model: opts['--judge-model'] === undefined ? backends.PINNED_MODEL : opts['--judge-model'],
@@ -230,6 +253,9 @@ async function runCommand(opts, io, deps) {
   // the first case on another model than the pin: no later case would count, so none starts (code review 2, finding 12)
   let offModel = null;
   for (const c of list) {
+    // a results folder used before: this case's audit and typed files of the earlier run go before anything is decided,
+    // so a case the run does not start leaves none behind (code review 2 of batch 12d, finding 5)
+    for (const name of ['tool-audit.jsonl', 'typed.txt']) { try { fs.rmSync(path.join(dir, `${c.id}-${name}`), { force: true }); } catch { /* left as it is */ } }
     if (offModel) {
       const r = notRunRecord(c, `not run: ${offModel} was not measured on the pinned model (its session ran on another model or did not say which), so no later case would count`);
       results.push(r);
@@ -246,10 +272,13 @@ async function runCommand(opts, io, deps) {
       io.out(report.terminalLine(r));
       continue;
     }
-    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model });
+    // each case's tool calls are audited to a file of its own in the results folder (batch 12, task 5), and what the
+    // person typed (the case's setup, ticket, evidence and follow-up) goes to the server in a typed file there (batch 12d)
+    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: path.join(dir, `${c.id}-tool-audit.jsonl`), typedFile: path.join(dir, `${c.id}-typed.txt`) });
     // the Fix card's words by the desk's own counter; null when the answer has no card. A measure, never a pass or fail.
     const card = typeof sut.answer === 'string' ? fixCard(sut.answer) : null;
-    const det = sut.state === 'OK' ? checks.runChecks(c, sut) : [];
+    // the batch 12 checks (fix-card-fits, claims-match-calls, fetched-citations) count like any check: one that fails fails the case
+    const det = sut.state === 'OK' ? [...checks.runChecks(c, sut), ...expert.judgedChecks(c, sut)] : [];
     const jr = sut.state === 'OK' ? await judge.judgeCase(c, sut, { ...backend, repoRoot, judgeModel: config.judge_model, random: deps.random }) : null;
     const v = judge.caseVerdict(c, sut, det, jr, { sut: config.model, judge: config.judge_model });
     const r = {
@@ -257,6 +286,9 @@ async function runCommand(opts, io, deps) {
       setup_given: c.setup !== '', fix_card_words: card && card.present ? card.words : null,
       change_class: c.expected.change_class, escalate: c.expected.escalate,
       sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons, off_model: Boolean(v.off_model),
+      ...batch12Record(c, sut),
+      // the tool server's calls allowed and refused, and each refused one with its reason, from the case's audit (batch 12d)
+      tool_server: backends.toolServerRecord(path.join(dir, `${c.id}-tool-audit.jsonl`)),
     };
     results.push(r);
     io.out(report.terminalLine(r));
@@ -276,7 +308,7 @@ async function runCommand(opts, io, deps) {
   const uniq = (xs) => [...new Set(xs.filter(Boolean))];
   const payload = {
     run_id: runId, started, finished: new Date().toISOString(),
-    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, model: config.model, judge_model: config.judge_model, budget_usd: config.budget_usd },
+    config: { max_turns: config.max_turns, timeout_ms: config.timeout_ms, web: config.web, tools: config.tools, model: config.model, judge_model: config.judge_model, budget_usd: config.budget_usd },
     spent_usd: spent,
     sut_models: uniq(results.map((r) => r.sut && r.sut.model)),
     judge_models: uniq(results.map((r) => r.judge && r.judge.model)),

@@ -1,0 +1,7 @@
+staged for commit "red-git-snapshot" on feat/batch12-expert-lanes at parent 78e51540:
+A	docs/aegis/demo/evidence/batch12d/git-snapshot-red.txt
+M	scripts/eval/judged/git-wall.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

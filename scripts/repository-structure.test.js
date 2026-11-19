@@ -24,7 +24,12 @@ function textFiles() {
 test('all command files have valid description frontmatter', () => {
   const directory = path.join(ROOT, '.claude', 'commands');
   const files = fs.readdirSync(directory).filter(file => file.endsWith('.md')).sort();
-  assert.strictEqual(files.length, 108);
+  // batch 12: 108, plus the networking lane's five runbooks (dns-troubleshoot, tls-certificate, vpn-tunnel-down,
+  // zero-trust-block, mtu-path-issue), the infrastructure and cloud lane's seven, the security lane's seven
+  // (incident-triage, identity-compromise, leaked-key, phishing-bec, ransomware-first-hour, oauth-app-review, vuln-triage)
+  // and the software engineering lane's six (debug-stack-trace, ci-failure, dependency-problem, code-review-checklist,
+  // safe-script, git-recovery)
+  assert.strictEqual(files.length, 133);
 
   const failures = [];
   for (const file of files) {
@@ -151,6 +156,37 @@ test('every [@Aegion_*] org token used in a tracked file is defined in the place
     }
   }
   assert.deepStrictEqual(undefinedUses, [], `Org tokens used but not defined in the dictionary:\n${undefinedUses.join('\n')}`);
+});
+
+// Batch 12d, task 5. Wrong implementations this catches: a networking placeholder used in a runbook and missing from
+// the dictionary; a token listed without its backticks, which the dev-case test (cases.test.js) does not find.
+test('the six networking placeholders the lane runbooks use are in the placeholder dictionary', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
+  for (const token of ['[SITE_A]', '[SITE_B]', '[SITE_B_HOST]', '[SITE_B_GATEWAY]', '[SWITCH_NAME]', '[VLAN_ID]']) {
+    assert.ok(dictionary.includes(`\`${token}\``), `${token} is a dictionary placeholder`);
+  }
+});
+
+// Batch 12d, task 2. Wrong implementations this catches: a later trim of CLAUDE.md (it sits at its byte limit) that
+// drops the rule; the rule kept in one of the two files only; a rule that names the repository and not what it forbids.
+test("the toolbox rule is in CLAUDE.md and in the answer format: this repository is never the asker's environment", () => {
+  for (const file of ['CLAUDE.md', path.join('docs', 'aegis', 'answer-format.md')]) {
+    const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    assert.match(text, /This repository is Aegis's toolbox, never the asker's environment/, file);
+    assert.match(text, /files, paths, branches or commits/, file);
+    assert.match(text, /what (?:you|it would) need from (?:them|the asker)/, file);
+  }
+});
+
+// Batch 12d, task 3. Wrong implementations this catches: the closing section and the slot-built card written in the
+// answer format only, so a session that never opens that file does not know them; a different heading in the two files.
+test('CLAUDE.md names the closing section of Engineer and Incident answers and the slot-built Fix card', () => {
+  const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8');
+  const format = fs.readFileSync(path.join(ROOT, 'docs', 'aegis', 'answer-format.md'), 'utf8');
+  for (const text of [claude, format]) assert.match(text, /`## Human-run and read-back`/);
+  assert.match(claude, /Mode: Incident answer`[^.]*close: `## Human-run and read-back`\)/, 'the Incident answer names its close');
+  assert.match(claude, /Mode: Engineer answer`[^.]*same close\)/, 'the Engineer answer has the same close');
+  assert.match(claude, /six slots, at most 150 words/);
 });
 
 test('CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized)', () => {

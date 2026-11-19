@@ -17,6 +17,8 @@ disable-model-invocation: true
 - Is this one phone or all phones at a site? → All phones = network/trunk issue. One phone = device or extension config issue.
 - Is the phone showing "No Service," "Unregistered," or ringing with no audio?
 - Did this start after a network change, Meraki config update, or ISP event?
+- **A smell of compromise** (answer-format section 2, rule a): calls nobody made (international or premium numbers, calls out of hours), an extension registered from an address that is not ours, or a burst of failed registrations. That is toll fraud until shown otherwise: name the escalation to the security lead or the security on-call (they need the extension, the call records, the source addresses, and when it started) and tell `[@Aegion_VOIP]`.
+- **Ask first** (rule d): a request to open SIP ports on the firewall to the internet, with no failing registration or one-way-audio test in the ticket, gets one question first: "Which phones fail, what does the phone show, and is the audio one-way or gone?" An open SIP port is how toll fraud gets in.
 - Is the affected site still on the legacy VoIP system ([@Aegion_SITE_2], [@Aegion_SITE_3], [@Aegion_SITE_4])? Check migration status first — `/unite-migration-status`.
 
 ---

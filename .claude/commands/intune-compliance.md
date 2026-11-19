@@ -12,6 +12,8 @@ disable-model-invocation: true
 ## What to check first
 - Intune → Devices → All devices → `[DEVICE_NAME]` → **Device compliance** → which policy + which setting is failing.
 - When did it flip? (Recent policy change vs. device drift.)
+- **Ask first** (answer-format section 2, rule d): a request to exempt the device or the user from a compliance policy, or to loosen the policy, with no failed setting in the ticket gets one question first: "Which policy and which setting does the device's compliance page show as failing?" An exemption or a policy change is only for a cause that page shows.
+- **A smell of compromise** (rule a): a device non-compliant because Defender rates its threat or risk level too high, malware found on it, or encryption turned off by someone other than IT. Name the escalation to the security lead or the security on-call (they need `[DEVICE_NAME]`, the user, the failing setting, when it flipped, and the Defender alert); the device stays blocked until they have looked.
 
 ## Step-by-step fix (portal first — intune.microsoft.com)
 
@@ -51,6 +53,7 @@ $d | Select DeviceName,ComplianceState,OperatingSystem,OsVersion,LastSyncDateTim
 - [ ] Device shows **Compliant** after Sync (allow a few min to re-evaluate); `verify-device-synced` passes
 - [ ] User regained access (if CA was blocking)
 - [ ] No other devices regressed (if a policy was changed)
+- [ ] No exemption or policy change without the failing setting read first; a threat-level or malware failure went to the security lead or on-call (rules d and a)
 
 ## 📝 Jira-ready note
 > Resolved [date/time]. `[DEVICE_NAME]` was non-compliant on [setting] in [policy]. Remediated by [action]; forced Sync; device re-evaluated **Compliant**. [User access restored.] Time spent: [X] min.

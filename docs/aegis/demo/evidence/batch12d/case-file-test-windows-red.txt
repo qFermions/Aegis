@@ -1,0 +1,11 @@
+The Windows job of Release Gate run 44482861405 at 0cde5f81 (windows-latest): 2598 tests, 2596 pass, 1 fail, 1 skipped. Its one failing test and the assertion, from the job log:
+Tests and full-tree scan (windows-latest)	Run the repository test suite	2026-11-19T07:59:30.7032126Z ✖ every tracked case file is under a deny rule, the lane case files of batch 12 included (62.928ms)
+Tests and full-tree scan (windows-latest)	Run the repository test suite	2026-11-19T07:59:30.7623955Z ✖ every tracked case file is under a deny rule, the lane case files of batch 12 included (62.928ms)
+Tests and full-tree scan (windows-latest)	Run the repository test suite	2026-11-19T07:59:30.7624163Z   AssertionError [ERR_ASSERTION]: case files no deny rule covers
+Tests and full-tree scan (windows-latest)	Run the repository test suite	2026-11-19T07:59:30.7624631Z   +   'docs/aegis/batch12/lanes/infrastructure-dev-cases.jsonl',
+Tests and full-tree scan (windows-latest)	Run the repository test suite	2026-11-19T07:59:30.7624804Z   +   'docs/aegis/batch12/lanes/networking-dev-cases.jsonl',
+Tests and full-tree scan (windows-latest)	Run the repository test suite	2026-11-19T07:59:30.7624971Z   +   'docs/aegis/batch12/lanes/security-dev-cases.jsonl',
+Tests and full-tree scan (windows-latest)	Run the repository test suite	2026-11-19T07:59:30.7625185Z   +   'docs/aegis/batch12/lanes/software-engineering-dev-cases.jsonl',
+Tests and full-tree scan (windows-latest)	Run the repository test suite	2026-11-19T07:59:30.7625342Z   +   'scripts/eval/judged/dev-cases.jsonl'
+Tests and full-tree scan (windows-latest)	Run the repository test suite	2026-11-19T07:59:30.7628306Z     actual: [ 'docs/aegis/batch12/lanes/infrastructure-dev-cases.jsonl', 'docs/aegis/batch12/lanes/
+Cause: the test built each file's path with an upper-case drive letter (D:/...), and the deny rules write the drive the CLI's way (d/...), so on Windows no file looked covered. The rules themselves were right.

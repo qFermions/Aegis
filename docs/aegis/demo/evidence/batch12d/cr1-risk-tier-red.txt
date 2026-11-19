@@ -1,0 +1,67 @@
+✔ A: a docs-only change is tier A and lists no path (130.19825ms)
+✔ B: evaluation code is tier B and only the B paths are listed (110.840625ms)
+✔ C: a CI workflow change is tier C (103.206666ms)
+✔ C: the checklist command runner modules/automation/scripts/deploy-check.js is tier C, not modules/** B (104.0645ms)
+✔ C: scripts/init-memory.js, which writes Claude Code memory files, is tier C like scripts/memory/** (104.632459ms)
+✔ C: scripts/audit/** (the hash-chained audit trail and change records) is tier C, not scripts/** B (103.769875ms)
+✔ C: scripts/intake/** (outside content into a graph case, with tenant binding) is tier C, not scripts/** B (106.365041ms)
+✔ C: the batch G3 connector scripts/adapters/github-client.js is tier C (107.189125ms)
+✔ C: the batch G3 connector scripts/adapters/okta-client.js is tier C (107.558958ms)
+✔ C: the batch G3 connector scripts/adapters/msgraph-client.js is tier C (105.697875ms)
+✔ C: scripts/demo/** (spawns the claude CLI, writes change records and a simulated tenant) is tier C, not scripts/** B (batch 7, task 6) (107.415125ms)
+✔ C: scripts/ask-aegis.js and scripts/aegis-chat.js (they start the claude CLI) are tier C; their tests stay B (319.044167ms)
+✖ C: config/** (the hosts a sealed session may reach) and scripts/mcp/** (the tool server that enforces them) are tier C (108.211667ms)
+✔ one C path wins over many B paths, and only the C path is listed (113.217916ms)
+✔ ** matches nested paths at any depth (108.785583ms)
+✔ uncommitted and untracked changes count toward the tier (109.858875ms)
+✔ the base defaults to the default branch and falls back to origin/<default> when the local ref is missing (183.395875ms)
+✔ a missing base ref fails closed with exit 1 and a named ref (95.178416ms)
+✔ glob grammar: * stays in one segment, ? is one character, matching is case-sensitive (0.841125ms)
+✔ a path git would quote (non-ASCII) still matches its tier glob (103.967791ms)
+✔ a file moved out of a C path still sets tier C (both sides of the rename are listed) (143.013875ms)
+✔ a malformed tier file fails closed with exit 1 instead of reporting tier A (307.292666ms)
+✔ the CLI runs when invoked through a symlinked path (105.41825ms)
+✔ C: scripts/adapters/readonly-contract.js is tier C, not scripts/** B (110.896375ms)
+✔ C: scripts/adapters/fleet-client.js is tier C, not scripts/** B (113.007042ms)
+✔ C: scripts/adapters/jamf-client.js is tier C, not scripts/** B (105.252ms)
+✔ C: scripts/adapters/slack-client.js is tier C, not scripts/** B (104.864458ms)
+✔ C: scripts/adapters/linear-client.js is tier C, not scripts/** B (109.149875ms)
+✔ C: scripts/adapters/gws-client.js is tier C, not scripts/** B (110.056292ms)
+✔ C: scripts/gws-posture-audit.js is tier C, not scripts/** B (102.955417ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 29
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3764.305375
+
+✖ failing tests:
+
+test at scripts/risk_tier.test.js:137:1
+✖ C: config/** (the hosts a sealed session may reach) and scripts/mcp/** (the tool server that enforces them) are tier C (108.211667ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'tier=A'
+  -   'tier=C',
+  -   'config/probe-allowlist.json'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/risk_tier.test.js:141:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'tier=A' ],
+    expected: [ 'tier=C', 'config/probe-allowlist.json' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit 1

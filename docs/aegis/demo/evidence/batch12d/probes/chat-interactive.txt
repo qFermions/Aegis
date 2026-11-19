@@ -1,0 +1,4 @@
+The typed file of one real interactive chat, read once a second while the chat ran (node scripts/aegis-chat.js --setup "Google Workspace" under a pseudo-terminal; a message typed after 14 seconds; lines joined with |). Distinct states:
+ 101 bytes: Google Workspace|Reply with the single word ok. The host chat-probe.example.org is typed here.|/exit|
+ 17 bytes: Google Workspace|
+Then SIGTERM to the launcher: seven seconds later the chat's folder, its typed file included, was gone and no launcher or claude process was left.

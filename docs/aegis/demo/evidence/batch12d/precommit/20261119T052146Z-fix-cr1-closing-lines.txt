@@ -1,0 +1,9 @@
+staged for commit "fix-cr1-closing-lines" on feat/batch12-expert-lanes at parent 4cd5151b:
+M	docs/aegis/answer-format.md
+A	docs/aegis/demo/evidence/batch12d/cr1-closing-lines-green.txt
+M	scripts/demo/closing-block.test.js
+M	scripts/eval/judged/checks.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

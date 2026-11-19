@@ -15,18 +15,24 @@
 const fs = require('node:fs');
 
 const ENUMS = Object.freeze({
-  platform: ['microsoft', 'google', 'okta', 'jamf', 'fleet', 'slack', 'linear', 'github', 'jira', 'network', 'platform-neutral'],
-  capability: ['it-support', 'security', 'platform-engineering', 'agent-strategy', 'agent-ops'],
+  // batch 12: the four expert lanes' platforms (Microsoft Azure and Google Cloud stay separate from each other)
+  platform: ['microsoft', 'google', 'okta', 'jamf', 'fleet', 'slack', 'linear', 'github', 'jira', 'network', 'platform-neutral',
+    'aws', 'azure', 'gcp', 'kubernetes', 'terraform', 'linux', 'cloudflare', 'meraki', 'zscaler', 'python', 'node', 'powershell', 'bash', 'docker'],
+  capability: ['it-support', 'security', 'platform-engineering', 'agent-strategy', 'agent-ops', 'networking', 'infrastructure', 'software-engineering'],
   class: ['QUICK_FIX', 'DIAGNOSTIC', 'PROCEDURE', 'REFERENCE', 'CLARIFY'],
   probe: ['', 'injection', 'urgency', 'wrong-customer', 'stale-procedure', 'missing-privilege'],
   escalate: ['yes', 'no'],
   change_class: ['R0', 'R1', 'R2', 'R3', 'none'],
+  // the answer mode a case expects (docs/aegis/answer-format.md, section 9); optional, '' when not given
+  mode: ['fix-card', 'engineer', 'incident', 'ask-first'],
 });
 
 const TOP_FIELDS = Object.freeze(['id', 'platform', 'capability', 'scenario', 'class', 'ticket', 'evidence', 'follow_up', 'probe', 'expected', 'judge_notes']);
 // The one top-level field a case may leave out.
 const OPTIONAL_TOP_FIELDS = Object.freeze(['setup']);
 const EXPECTED_FIELDS = Object.freeze(['first_move', 'must', 'must_not', 'escalate', 'change_class', 'read_back']);
+// The one field inside expected a case may leave out (batch 12).
+const OPTIONAL_EXPECTED_FIELDS = Object.freeze(['mode']);
 
 // Maximum lengths in characters. A ticket and its evidence each fit in one argument of a
 // child process (the backend also checks the built prompt's byte size).
@@ -116,19 +122,20 @@ function validateCase(obj, line, errs) {
   const exp = obj.expected;
   if (!isPlainObject(exp)) {
     errs.push(`line ${line}: field expected must be a JSON object`);
-  } else if (checkFields(errs, line, exp, EXPECTED_FIELDS, 'expected.')) {
+  } else if (checkFields(errs, line, exp, EXPECTED_FIELDS, 'expected.', OPTIONAL_EXPECTED_FIELDS)) {
     checkString(errs, line, 'expected.first_move', exp.first_move, { max: LIMITS.first_move, nonEmpty: true });
     checkItems(errs, line, 'expected.must', exp.must, true);
     checkItems(errs, line, 'expected.must_not', exp.must_not, false);
     checkEnum(errs, line, 'expected.escalate', exp.escalate);
     checkEnum(errs, line, 'expected.change_class', exp.change_class);
     checkString(errs, line, 'expected.read_back', exp.read_back, { max: LIMITS.read_back });
+    if (Object.prototype.hasOwnProperty.call(exp, 'mode')) checkEnum(errs, line, 'expected.mode', exp.mode);
   }
   if (errs.length > before) return null;
   return {
     id: obj.id, platform: obj.platform, capability: obj.capability, scenario: obj.scenario, class: obj.class,
     ticket: obj.ticket, evidence: obj.evidence, follow_up: obj.follow_up, probe: obj.probe,
-    expected: { first_move: exp.first_move, must: [...exp.must], must_not: [...exp.must_not], escalate: exp.escalate, change_class: exp.change_class, read_back: exp.read_back },
+    expected: { first_move: exp.first_move, must: [...exp.must], must_not: [...exp.must_not], escalate: exp.escalate, change_class: exp.change_class, read_back: exp.read_back, mode: typeof exp.mode === 'string' ? exp.mode : '' },
     judge_notes: obj.judge_notes, setup: hasSetup && obj.setup.trim() !== '' ? obj.setup : '', line,
   };
 }
@@ -168,4 +175,4 @@ function readCaseFile(file) {
   return parseCases(fs.readFileSync(file, 'utf8'));
 }
 
-module.exports = { ENUMS, TOP_FIELDS, OPTIONAL_TOP_FIELDS, EXPECTED_FIELDS, LIMITS, MAX_FILE_BYTES, CaseFileError, parseCases, readCaseFile, validateCase };
+module.exports = { ENUMS, TOP_FIELDS, OPTIONAL_TOP_FIELDS, EXPECTED_FIELDS, OPTIONAL_EXPECTED_FIELDS, LIMITS, MAX_FILE_BYTES, CaseFileError, parseCases, readCaseFile, validateCase };

@@ -1,0 +1,112 @@
+✔ a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title (9.252334ms)
+✔ a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted (1.1525ms)
+✔ net_http refuses http://169.254.169.254/ before any query or request (0.204708ms)
+✔ net_http refuses http://169.254.169.254/latest/meta-data/ before any query or request (0.099583ms)
+✔ net_http refuses http://localhost before any query or request (0.109208ms)
+✔ net_http refuses http://10.0.0.1 before any query or request (0.094125ms)
+✔ net_http refuses http://[::1]/ before any query or request (0.092708ms)
+✔ net_http refuses http://2130706433/ before any query or request (0.079875ms)
+✔ net_http refuses http://[::ffff:127.0.0.1]/ before any query or request (0.118625ms)
+✔ net_http refuses http://0x7f.1/ before any query or request (0.088084ms)
+✔ net_http refuses http://127.1/ before any query or request (0.06525ms)
+✔ net_http refuses http://[fd00:ec2::254]/ before any query or request (0.121667ms)
+✔ net_http refuses http://168.63.129.16/ before any query or request (0.066583ms)
+✔ net_http refuses http://[64:ff9b::a9fe:a9fe]/ before any query or request (0.339209ms)
+✔ a name whose resolution returns a private address is refused, with nothing sent (0.306ms)
+✔ a name returning one public and one private address is refused (0.196083ms)
+✔ a redirect from a public URL to a private one is refused, with no request sent to the private hop (1.718125ms)
+✔ a docs redirect to an off-list host is refused, before that host is resolved (0.812541ms)
+✔ the connection uses the pinned address even if a second resolution would return a different one (rebinding) (0.57675ms)
+✔ port 22 and 8080 are refused (0.209333ms)
+✔ ftp: and file: are refused (0.141708ms)
+✔ user info is refused (0.100125ms)
+✔ GET reads at most 4 KB and then stops reading (0.417375ms)
+✔ the call cap holds: after 30 calls every call returns call_cap_reached (0.510041ms)
+✔ a TLS check on a fake expired certificate reports expired true and the verification error (0.276625ms)
+✔ tools/list lists exactly four tools, each with a strict input schema and no method, body, header or credential argument (0.138458ms)
+✔ an unknown method returns -32601 (0.046083ms)
+✔ malformed JSON returns -32700 (0.0495ms)
+✔ initialize echoes the client protocol version, notifications get no reply, a bad tools/call shape is -32602 (0.087ms)
+✔ net_dns validates the name, refuses private A and AAAA answers and maps the record types (0.348708ms)
+✔ net_http follows public redirects, re-resolving each hop, and returns only the selected headers (1.248959ms)
+✔ docs_fetch caps bytes and text, says when it cut, and caches by URL (1.938ms)
+✔ a server that never answers ends in timeout (201.617458ms)
+✔ every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content (0.743959ms)
+✔ the audit file is created with mode 0600 and only appended (3.090542ms)
+✔ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (31.213083ms)
+✖ the docs allowlist is the charter's 26 hosts plus docs.cloud.google.com, and nothing else (0.54475ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 36
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 290.830042
+
+✖ failing tests:
+
+test at scripts/mcp/aegis-tools/server.test.js:622:1
+✖ the docs allowlist is the charter's 26 hosts plus docs.cloud.google.com, and nothing else (0.54475ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      'api.slack.com',
+      'attack.mitre.org',
+      'cloud.google.com',
+      'datatracker.ietf.org',
+  ...
+      'docs.aws.amazon.com',
+  -   'docs.cloud.google.com',
+      'docs.github.com',
+      'documentation.meraki.com',
+      'fleetdm.com',
+      'help.okta.com',
+      'knowledge.workspace.google.com',
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/mcp/aegis-tools/server.test.js:625:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [
+      'api.slack.com',                  'attack.mitre.org',
+      'cloud.google.com',               'datatracker.ietf.org',
+      'developer.apple.com',            'developer.hashicorp.com',
+      'developer.okta.com',             'developers.cloudflare.com',
+      'developers.google.com',          'docs.aws.amazon.com',
+      'docs.github.com',                'documentation.meraki.com',
+      'fleetdm.com',                    'help.okta.com',
+      'knowledge.workspace.google.com', 'kubernetes.io',
+      'learn.jamf.com',                 'learn.microsoft.com',
+      'linear.app',                     'nvd.nist.gov',
+      'slack.com',                      'support.apple.com',
+      'support.google.com',             'support.microsoft.com',
+      'www.cisa.gov',                   'www.rfc-editor.org'
+    ],
+    expected: [
+      'api.slack.com',            'attack.mitre.org',
+      'cloud.google.com',         'datatracker.ietf.org',
+      'developer.apple.com',      'developer.hashicorp.com',
+      'developer.okta.com',       'developers.cloudflare.com',
+      'developers.google.com',    'docs.aws.amazon.com',
+      'docs.cloud.google.com',    'docs.github.com',
+      'documentation.meraki.com', 'fleetdm.com',
+      'help.okta.com',            'knowledge.workspace.google.com',
+      'kubernetes.io',            'learn.jamf.com',
+      'learn.microsoft.com',      'linear.app',
+      'nvd.nist.gov',             'slack.com',
+      'support.apple.com',        'support.google.com',
+      'support.microsoft.com',    'www.cisa.gov',
+      'www.rfc-editor.org'
+    ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

@@ -21,6 +21,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - R2 and R3 save the Phase A reads to `tasks/checkpoints/` before the gate. R3 also writes the rollback path in the ticket before step 1, and gets an independent out-of-session review when it is part of a multi-system plan.
 - Every change has its own exact phrase. A phrase never carries into a later phase; "yes" is never a confirmation. Urgency or authority ("the release is blocked", "the CTO asked") never skips a gate (SR-2).
 - Not done until the connector read-back and the GUI read-back both pass.
+- **Least privilege** (answer-format section 2, rule b): read before triage before write; maintain or admin only when the job needs it, and the ticket says why. A team that needs the repository gets it through a team (Phases F and G), not person by person and not as a copy of a colleague's access. The repository's owner (the team that owns `[REPO_NAME]`) approves, named in the ticket. Temporary access (a contractor, a project) gets an end date in the ticket, and Phase E or G takes it away on that date.
+- **A smell of compromise** (rule a): a collaborator or a role nobody approved, or one added by an account whose owner did not add it. Name the escalation to the security lead or the security on-call (they need the repository, the person, the role, when and by whom it was granted from the audit log); nobody calls it harmless before they have looked.
 - UI labels come from GitHub's docs pages read on 2026-10-28. A label marked [unconfirmed: check in the GitHub UI] was not on those pages: confirm it on screen, and stop if it differs.
 
 ## Inputs needed

@@ -14,6 +14,7 @@ Rules:
 5. No "here's why" explanations unless asked.
 6. No recap, no summary, no follow-up offers.
 7. Destructive-action gate still applies (wipes, deletions, force-push).
+8. A smell of compromise on site stops the steps (answer-format section 2, rule a): a ransom note, a prompt asking for a password that IT did not send, a device that is not ours plugged in, sign-ins the person did not make. Name the escalation to the security lead or the security on-call (they need what was seen, when, which device and account, and a photo of the screen); do not turn the device off or wipe it, and the security on-call says whether it comes off the network.
 
 Format:
 ```

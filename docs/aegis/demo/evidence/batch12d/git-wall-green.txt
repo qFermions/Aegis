@@ -1,0 +1,12 @@
+✔ the deny rules name .git itself and everything under it (0.472792ms)
+✔ every sealed session carries the .git rules: first turn, follow-up, ask-aegis and the chat (0.816875ms)
+✔ gitDirs: a checkout gives .git; a linked worktree adds the folder its .git file names and the shared one (1.455417ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44.244791
+exit 0

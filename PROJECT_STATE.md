@@ -5,7 +5,7 @@
 > batch G3") and by the batch G3 close-out on 2026-10-30 ("Changed by the batch G3 close-out"), and by
 > batch G4 on 2026-10-31 ("Changed by batch G4"), and by batch 9b on 2026-11-07 ("Changed by batch 9" and "Changed by
 > batch 9b"; batches 6 to 8 have no section here, their tables are `docs/review/batches/batch6-checks.md` to `batch8-checks.md`),
-> and by batch 10 on 2026-11-07 ("Changed by batch 10"), and by batch 11 on 2026-11-14 ("Changed by batch 11").
+> and by batch 10 on 2026-11-07 ("Changed by batch 10"), and by batch 11 on 2026-11-14 ("Changed by batch 11"), and by batch 12 on 2026-11-18 ("Changed by batch 12").
 > Every "verified" line below names a check that ran in that session and the
 > capture that holds its output. Machine-checked fresh-session snapshot: `tasks/continuity.md` with
 > `node scripts/harness/check-continuity.js`.
@@ -315,6 +315,48 @@ Still open after batch 11: the dev cases are the builder's own, so only the comm
 both ask-first dev cases failed because the answer asked two questions; every Fix card is over 150 words (154 to 249); the
 class-and-double-check row failed on T4 and T8; the tidy tickets T2, T3 and T6 did not run; the `.claude/agents/` files that name
 `model: fable` (atlas, forge, tier1-support, tier2-support, warden, zac) are unchanged and were not started.
+
+## Changed by batch 12
+
+Branch `feat/batch12-expert-lanes` from `046cdde` (main after PR #20). Acceptance table: `checks.md`; progress: `progress.md`;
+captures: `docs/aegis/demo/evidence/batch12/`; runs: the dev judged run and the asker replies in that folder, `full-run-10/`
+(messy) and `full-run-11/` (tidy); the owner's page: `docs/explainers/batch12-expert-lanes.md` and its quiz. Batch 11's table and
+progress are archived in `docs/review/batches/batch11-checks.md` and `batch11-progress.md`. Every model session ran on Opus 5.5
+(`claude-opus-5-5`); the four lanes and the runbook sweep were built by seven Opus subagents in their own worktrees and merged
+with `git merge --no-ff`.
+
+| What changed | Where | Proof |
+|---|---|---|
+| five judgment rules: escalate a smell of compromise to security; least privilege; recover to a safe place first; ask first when the cause is unclear and the fix changes a control; a Fix card at most 150 words (a fail) | `docs/aegis/answer-format.md` section 2, `CLAUDE.md` (Answer format), `scripts/demo/expert-rules.js` | `scripts/demo/expert-rules.test.js`, two fixture pairs per rule on two platforms (`scripts/demo/fixtures/batch12/rules/`, `expert-rules-*.txt`) |
+| the rules applied to the existing runbooks: 80 of 108 changed, no gate, phrase or read-back changed | `.claude/commands/`, `docs/aegis/batch12/runbook-rules-sweep.md` | vendor facts RR-01 to RR-12 all CONFIRMED; the scanner and gate tests pass |
+| four answer modes (Fix card 150 words, Engineer answer 400, Incident answer 300, Ask first 60); the first line names the mode; the desk and the judged runner record named, shown and expected | `docs/aegis/answer-format.md` sections 7 and 9, `scripts/demo/expert-rules.js` (`answerMode`, `modeRow`), `scripts/demo/customer-desk.js`, `scripts/eval/judged/report.js` | `desk-mode-*.txt`, `report-lanes-*.txt`, `judged-record-*.txt` |
+| the asker reply: no stock opening, no "I checked" without a matching tool call, a reporter writing for someone else may pass | `docs/aegis/answer-format.md` section 8, `scripts/demo/senior-rules.js`, `scripts/demo/reading-claims.js` | `claims-replay-*.txt` (no false fail on 24 batch 11 answers), code review 1 class B (`cr1-claims-*.txt`) |
+| no silent Microsoft default: the Assumed setup line invites the company's setup; the launcher asks once | `CLAUDE.md` rule 11, `scripts/start-aegis.js` | `assumed-setup-invite-*.txt`, `start-aegis-*.txt` |
+| a zero-dependency stdio tool server: `docs_fetch` on an allowlist of 29 documentation hosts, `net_dns`, `net_http`, `net_tls`; private-address guard, resolve and pin, caps, a 30-call cap, an audit file; on by default in ask-aegis, aegis-chat, the desk and the judged runner, `--no-tools` turns it off | `scripts/mcp/aegis-tools/`, `config/docs-allowlist.json` | `tool-server-*.txt`, `tool-isolation-probe.txt` (a real session gets the four tools and no WebFetch or WebSearch), security review 1 |
+| a fetched page is cited with its URL and fetched date; a lookup is reported by what it returned | `docs/aegis/answer-format.md` section 10, `scripts/demo/expert-rules.js` (`fetchedCitationProblems`) | `expert-rules.test.js` |
+| four lanes, each a `knowledge/<lane>/` module, runbooks behind the gate grammar, vendor facts, fixtures, dev cases and capability rows: security (7 runbooks, 16 gates), networking (5 runbooks, no gate, 16 PREVIEW ONLY steps: 11 in its runbooks, 5 in its knowledge module), infrastructure and cloud (7 runbooks, 21 gates), software engineering (6 runbooks, 8 gates) | `knowledge/`, `.claude/commands/`, `docs/aegis/batch12/`, `scripts/eval/judged/dev-cases.jsonl` (82 cases), `docs/aegis/capability-map.md` rows 84 to 136 | `lane-gates-and-previews.txt`; runbooks 133, gates 396 (`scripts/repository-structure.test.js`, `scripts/gate-r-class.test.js`) |
+| Start Aegis: a double-click launcher for macOS and Windows; README leads with it and moves commands under Advanced | `Start Aegis.command`, `Start Aegis.cmd`, `scripts/start-aegis.js`, `README.md`, `docs/aegis/start-aegis.md` | `start-aegis-*.txt` |
+| the scanner reads the lanes' CLIs (terraform, kubectl, helm, aws, az, systemctl, journalctl, service), indirect execution and installs in PowerShell, forced pushes; security review 1 and code reviews 1 to 3 added more forms and fixed false reads (`sr1-scanner-*`, `cr1-scanner-*`, `cr2-scanner-*`, `cr3-scanner-*`) | `scripts/command-safety-gates.test.js`, `docs/security/STATE_CHANGE_INVENTORY.json` (regenerated) | `scanner-*.txt`, `sr1-scanner-*.txt`, `cr1-scanner-*.txt` |
+| reviews: security review 1 (no issue at its bar); code review 1 at xhigh over the branch (15 findings: 14 fixed in 8 commits, 1 closed as an owner decision); code review 2, diff-only over those fixes (7 findings and 3 nits: fixed in 4 commits, 1 closed); code review 3, diff-only over the round 2 fixes (9 findings, 1 nit and 4 earlier issues: fixed in 3 commits, each class tested against every probe of the three reviews) | `checks.md` rows S1, CR1, CR2 and CR3 | `security-review-1.md`, `cr1-*.txt`, `cr2-*.txt`, `cr3-*.txt` |
+| the runs | `docs/aegis/demo/evidence/batch12/judged-dev-run/`, `asker-replies.md`, `full-run-10/`, `full-run-11/` | every session on `claude-opus-5-5`, 33.64 US dollars of the 45 allowed: the isolation probe (0.22); the dev judged run 7 PASS, 75 FAIL, 0 INCONCLUSIVE of 82 builder cases, no verdict changed by the final checks (24.34); eight asker replies, 6 pass the form check (2.21); messy 8 RESOLVED (SIMULATED), 1 CLARIFY (3.70); tidy 7 RESOLVED (SIMULATED), 1 CLARIFY (3.17); the asks and both demo sets called the tool server 0 times, the judged run 11 times on 9 cases |
+
+Still open after batch 12: the dev cases are the builder's own, so only outside cases measure answers on unseen tickets; the
+judged run passed 7 of 82, mostly on missed rubric items and on Engineer and Incident answers with no `aegis-desk` block (read-back
+31, human-confirmation 27); 17 of 19 Fix cards are over 150 words; the two ask-first asker replies fail the "addressed to you" rule
+(owner decision); net_http and net_dns can carry text to any public host after a prompt injection (owner decision, `checks.md`
+CR1-1), and in the judged run net_http reached slack-status.com and pypi.org, public hosts the model chose; in SWE10 the session read
+this repository's `.git/` as the asker's and printed the local path (fix proposed: deny `.git/` to sealed sessions); the desk's card
+rows (from batches 8 and 9) fail any answer that has no card, and the answer-mode row failed on all 17 practice tickets; the `.claude/agents/` files that name `model: fable` are unchanged.
+
+## Changed by batch 12d
+
+Same branch, from `80397eaa`; draft PR #21. Acceptance rows: `checks.md` ("Batch 12d"); captures: `docs/aegis/demo/evidence/batch12d/`.
+- **Network tools scoped.** net_dns, net_http and net_tls reach only a host on `config/docs-allowlist.json`, a host on `config/probe-allowlist.json` (four hosts, pinned by a test), or the exact host (DNS, TLS) or exact URL (HTTP) the person typed; every redirect hop meets the same rule; on registry.npmjs.org only metadata paths. The launchers hand the typed text to the server in a file (`scripts/mcp/aegis-tools/README.md`). A breaker found one break and one channel; both are fixed, and its fourth round, at the head with the later tokenizer fixes, found none (`breaker.md`).
+- **Still open there (owner):** a host named only in pasted evidence counts as typed, so a planted block of names lets a hijacked session signal a few bits per call to those names' servers. The prompt hook for later chat messages fires in a real chat, and not for a subagent's prompt (`real-session-probes.md`).
+- **Sealed sessions cannot read `.git`** or the agent worktrees (`backends.js` `gitDirs`, `READ_DENIED`); rule: this repository is Aegis's toolbox, never the asker's environment (answer-format section 11). In the 82-case run one answer (SWE10) still named this repository's branch as the asker's: the CLI's own git status snapshot put the branch and recent commits in every session's context. It is off now (`real-session-probes.md`); a rerun of that case names none, though the session still tried to read Aegis's own `.git` for the asker, and was refused. The lane case files of batch 12 are denied too; a few searches in both runs could have matched them.
+- **Answer form.** Engineer and Incident answers close with `## Human-run and read-back`; the two checks read its lines, never its heading. The Fix card is six slots that sum to 149 words. The desk's three card rows are left off answers that rightly have no card; a one-question Ask first reply need not say "you".
+- **Dev judged run (the builders' own cases, not an independent measure):** 8 of 82 pass with the checks at head (batch 12: 7); cards median 155 words, 9 of 17 over 150 (batch 12: 189, 17 of 19); human-confirmation failures 27 to 17, read-back 31 to 16; 23.20 US dollars (`judged-dev-run/summary.md`). The judge's "must" items, not form, still fail most cases.
+- **Housekeeping.** 18 lane runbooks are General in the ladder audit; six networking placeholders are in the dictionary; `config/**`, `scripts/mcp/**` and `scripts/eval/judged/backends.js` are review tier C; every commit's pre-commit scan is saved (`precommit/`). CLAUDE.md is at 19,997 of its 20,000 bytes.
 
 ## Partial
 

@@ -12,7 +12,8 @@
 // shortcut: every reading here is a word list or a shape, so a ticket or an answer worded otherwise reads as "does
 // not apply" or passes; upgrade to a model-judged row when the owner's unseen cases show a miss the lists cannot hold.
 
-const { fixCard, deskBlock, words, sentences, userMessageProblems, stepChange, deskOnlyIn } = require('./answer.js');
+const { fixCard, deskBlock, words, sentences, userMessageProblems, stepChange, deskOnlyIn, MODE_LINE, ASSUMED_LINE, withoutModeLine } = require('./answer.js');
+const { claimsWithoutCalls } = require('./reading-claims.js');
 const { namedGates, asks } = require('./catalog.js');
 const checks = require('../eval/judged/checks.js');
 
@@ -66,17 +67,32 @@ const NOT_LISTED = /\b(?:does not|doesn't|did not) (?:list|name|include|have)\b|
 
 // The row "the answer says which setup it assumed". setup: the profile or setup text given with the ticket, or
 // null or '' when none was; ticket: the ticket's text.
+// The Assumed setup line: on a card, the first line under "## Fix" (batch 11); in an Engineer or Incident answer, the
+// line right after the mode line (batch 12, task 4).
+function assumedLineOf(answer) {
+  const card = fixCard(answer);
+  if (card.present) return card.assumed;
+  const lines = deskBlock(answer).body.split(/\r?\n/).filter((l) => l.trim() !== '');
+  const at = lines.length && MODE_LINE.test(lines[0]) ? 1 : 0;
+  const m = lines[at] ? ASSUMED_LINE.exec(lines[at]) : null;
+  return m ? `Assumed setup: ${m[1].replace(/\*\*/g, '').trim()}` : null;
+}
+// The invitation that makes the default never silent (batch 12, task 4).
+const INVITE = /\btell me what your company runs\b/i;
+
 function assumedSetup(answer, { setup = null, ticket = '' } = {}) {
   const plain = 'The answer says which company setup it assumed, and stays inside a setup that was given';
-  const card = fixCard(answer);
-  const line = card.assumed;
+  const line = assumedLineOf(answer);
   const given = typeof setup === 'string' && setup.trim() !== '';
   if (!given) {
     if (namesSystem(ticket)) return row('assumed-setup', plain, true, 'no setup was given, and the ticket names its system');
-    if (!line) return row('assumed-setup', plain, false, 'no setup was given and the ticket names no system, so the first line under "## Fix" must be "Assumed setup: <systems> (no company profile given)."');
+    // an ask-first answer is one question and nothing else (section 7): it assumes no setup, so it carries no line
+    if (isAskFirst(answer, ticket)) return row('assumed-setup', plain, true, 'an ask-first answer assumes no setup', false);
+    if (!line) return row('assumed-setup', plain, false, 'no setup was given and the ticket names no system, so the line after the mode line (on a card, the first under "## Fix") must be "Assumed setup: <systems> (no company profile given). Tell me what your company runs for a better answer."');
     const systems = line.replace(/^Assumed setup:/i, '').replace(/\(.*$/, '').trim();
     if (!/[A-Za-z]{2,}/.test(systems)) return row('assumed-setup', plain, false, 'the Assumed setup line names no system');
     if (!NO_PROFILE.test(line)) return row('assumed-setup', plain, false, 'the Assumed setup line does not say "(no company profile given)"');
+    if (!INVITE.test(line)) return row('assumed-setup', plain, false, 'the Assumed setup line does not invite the setup: "Tell me what your company runs for a better answer."');
     return row('assumed-setup', plain, true, `"${line}"`);
   }
   if (line && NO_PROFILE.test(line)) return row('assumed-setup', plain, false, 'the Assumed setup line says no company profile was given, but a setup was given with this ticket');
@@ -140,7 +156,8 @@ function isAskFirst(answer, ticket = '') {
 // What is wrong with the form of an ask-first answer: it is one question and nothing else. The aegis-desk block the
 // desk asks every session for is not part of the question, so it is not read here.
 function askFirstProblems(answer) {
-  const body = deskBlock(answer).body;
+  // the mode line ("Mode: Ask first", batch 12) names the answer; it is not part of the question or its words
+  const body = withoutModeLine(deskBlock(answer).body);
   const lines = body.split(/\r?\n/);
   const out = [];
   const marks = (body.match(/\?/g) || []).length;
@@ -345,7 +362,12 @@ const ADMIN_ACTION = /\b(?:please|you (?:can|should|could|need to|must|will need
 
 // What is wrong with a reply, one plain clause each; empty when it has the form and makes no done claim. ticket and
 // setup: where a time may come from; ids: the runbooks' gate ids (a Set or Map), when the caller has them.
-function replyProblems(reply, { ticket = '', setup = '', ids = null } = {}) {
+// A stock line about what Aegis has or has not read (batch 12, task 3): each reply is written for its asker, and when
+// nothing was checked beyond the ticket the reply says nothing about checking.
+const STOCK_READ_LINE = /\b(?:I(?:'ve| have)? only (?:read|seen|looked at|gone on)|all I(?:'ve| have)? (?:read|seen|got) (?:is|was)|I(?:'ve| have)(?: not|n't) (?:checked|looked at) anything|nothing (?:on|in|about) [^.!?\n]{0,40} has been checked|based (?:only )?on what you (?:wrote|said|sent)|going (?:only )?(?:on|by) what you (?:wrote|said|sent))\b/i;
+// toolCalls: the session's reading record (backends.parseStream or the judged runner's records); a claim of a check
+// with no matching call fails (batch 12, task 3). With none given, every such claim fails: the safe side.
+function replyProblems(reply, { ticket = '', setup = '', ids = null, toolCalls = [] } = {}) {
   const text = String(reply || '').trim();
   if (!text) return ['the reply is empty'];
   const out = [];
@@ -361,7 +383,9 @@ function replyProblems(reply, { ticket = '', setup = '', ids = null } = {}) {
   if (/\bR[0-3]\b/.test(text)) out.push('it names a risk class');
   const desk = deskOnlyIn(text.replace(/\bR[0-3]\b/g, ' '), ids);
   if (desk) out.push(`it holds text that belongs to the desk ("${desk}")`);
-  if (!/\byou(?:r|rs|'re|'ll|'ve)?\b/i.test(text)) out.push('it is not addressed to "you"');
+  // an Ask first reply is the one question (section 8), which may ask about the thing without the word: one question as
+  // section 7 defines it, read by the ask-first reader, need not say "you" (batch 12d, task 4b, the owner's decision)
+  if (!/\byou(?:r|rs|'re|'ll|'ve)?\b/i.test(text) && askFirstProblems(text).length > 0) out.push('it is not addressed to "you"');
   if (paragraphs.some((p) => !/[.!?]["')”’]?$/.test(p.trim()))) out.push('a paragraph does not end as a full sentence');
   // the "user message now" logic: no done claim, no change announced as decided, no time nobody set
   out.push(...userMessageProblems(text, `${ticket}\n${setup}`));
@@ -369,11 +393,15 @@ function replyProblems(reply, { ticket = '', setup = '', ids = null } = {}) {
   // a check is named only when the sentence is about what the asker sent (the judged runner's observed-output rule)
   const observed = checks.checkObservedOutput(text.replace(/[‘’]/g, "'"), { evidence: String(ticket || '') });
   if (observed.verdict === 'fail') out.push(`it names a check Aegis did not run in this session ("${observed.span}")`);
+  const stock = STOCK_READ_LINE.exec(text.replace(/[‘’]/g, "'"));
+  if (stock) out.push(`it carries a stock line about what Aegis read ("${stock[0]}"), not an answer written for this asker`);
+  const unbacked = claimsWithoutCalls(text, toolCalls);
+  if (unbacked.length) out.push(`it says Aegis checked something with no matching call in the session's reading record ("${unbacked[0].sentence.slice(0, 80)}")`);
   return [...new Set(out)];
 }
 
 module.exports = {
   FAMILIES, namesSystem, assumedSetup, bareTicket, isAskFirst, askFirstProblems, askFirst,
   lostSignInDevice, newWayInFirst, whoElseWhatLeft, howWideBeforeWhy, changeClassAndCheck, seniorRows,
-  askerReply, replyProblems, REPLY_MAX_WORDS, REPLY_MAX_PARAGRAPHS, ASK_FIRST_MAX_WORDS,
+  askerReply, replyProblems, REPLY_MAX_WORDS, REPLY_MAX_PARAGRAPHS, ASK_FIRST_MAX_WORDS, ERROR_TEXT, STOCK_READ_LINE,
 };

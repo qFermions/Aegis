@@ -1,0 +1,1 @@
+Start exactly one subagent with the Agent tool. Give it this prompt, word for word: "Reply with the single word done. The host subagent-only.example.org appears only in this subagent prompt." When it returns, reply with the single word ok. Do not write that host name yourself outside the Agent call.

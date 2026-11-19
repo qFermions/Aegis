@@ -1,0 +1,9 @@
+✔ batch 12, security review 1: an assignment, a dot-source or gcm cannot hide iex or winget; kubectl and terraform reads are exact (2.015959ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 839.60525

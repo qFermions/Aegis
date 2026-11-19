@@ -1,0 +1,95 @@
+✔ section 9: the Engineer and Incident examples close with the block, pass both checks, and fail both without it (13.367083ms)
+✔ the two closing-block fixtures: the desk rows pass on the block, and fail with the block removed (10.7465ms)
+✔ with no runbook gate: each line names the role, the first confirmation and the check, and invents no gate, phrase or command (0.36275ms)
+✔ the closing block is not counted in the mode budget (0.236583ms)
+✔ every good Engineer and Incident lane fixture closes with the block and passes both checks and the mode row (4.591625ms)
+✔ the closing section counts only by its lines: the heading alone, or the no-change line, passes neither check (0.314708ms)
+✖ code review 2, finding 1: the heading in any form, alone or twice, passes neither check (0.645583ms)
+✖ code review 2, finding 2: a closing section in another shape still counts by what its lines say (0.151334ms)
+✖ code review 2, finding 6: a part with an empty value, or Aegis as the runner, does not count (0.13575ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 6
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81.842
+
+✖ failing tests:
+
+test at scripts/demo/closing-block.test.js:186:1
+✖ code review 2, finding 1: the heading in any form, alone or twice, passes neither check (0.645583ms)
+  AssertionError [ERR_ASSERTION]: "### Human-run and read-back"
+  + actual - expected
+  
+    [
+  +   'pass',
+  +   'pass'
+  -   'fail',
+  -   'fail'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/closing-block.test.js:188:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'pass', 'pass' ],
+    expected: [ 'fail', 'fail' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/closing-block.test.js:197:1
+✖ code review 2, finding 2: a closing section in another shape still counts by what its lines say (0.151334ms)
+  AssertionError [ERR_ASSERTION]: a read-back line that is not the template
+  
+  'fail' !== 'pass'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/closing-block.test.js:198:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'fail',
+    expected: 'pass',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/closing-block.test.js:207:1
+✖ code review 2, finding 6: a part with an empty value, or Aegis as the runner, does not count (0.13575ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'pass',
+  +   'pass'
+  -   'fail',
+  -   'fail'
+    ]
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/closing-block.test.js:208:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'pass', 'pass' ],
+    expected: [ 'fail', 'fail' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit 1

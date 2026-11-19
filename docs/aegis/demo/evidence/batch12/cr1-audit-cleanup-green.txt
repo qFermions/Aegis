@@ -1,0 +1,12 @@
+✔ code review 1, class C (batch 10): ordinary password tickets pass; invisible characters, plurals and split tokens stop the ask (3.382042ms)
+✔ code review 2, class C2 (batch 10): letter-only passwords after an arrow, "'s" or " - " stop the ask; ordinary phrasings pass (0.16675ms)
+✔ code review 3, class C3 (batch 10): digits after "'s" or " - " stop the ask in mid-sentence; menu paths and subject lines pass (0.47875ms)
+✔ code review 1, class C: a failed ask removes its empty audit file and folder, and keeps and names one that holds calls (42.87125ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80.994791

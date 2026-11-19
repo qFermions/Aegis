@@ -1,0 +1,35 @@
+Mode: Fix card
+## Fix
+**What's wrong:** [FIRST_NAME] needs access to the billing shared mailbox to read and answer client email, with the same rights the colleague already has.
+**Do this:**
+1. In the Exchange admin center, go to Recipients → Mailboxes → billing mailbox → **Mailbox Delegation**. Copy the colleague's rights into the ticket.
+2. Phone the requester back on the number in the firm's staff list. Get the managing partner's approval in the ticket.
+3. Give [FIRST_NAME] **Read and manage (Full Access)**. Do not give more than the colleague has.
+4. Give **Send as** too, but only if the colleague has it.
+
+**Done when:** the mailbox shows up in [FIRST_NAME]'s Outlook, and a test reply shows the billing address as the sender. Aegis then checks both rights.
+**Stop if:** the callback or the approval fails, or the colleague has fewer rights than this.
+**Tell the user now:** We've got your request and are getting it approved.
+**Tell the user when done:** You can open the billing inbox in Outlook and reply from it.
+
+## Details
+- **Setup used:** Customer E's profile (cloud-only Microsoft 365, one office). No hybrid AD and no sync wait.
+- **Runbook:** `.claude/commands/shared-mailbox.md`. Both rights are R2 changes: they open a whole mailbox to another person, and mail sent while they stand can't be recalled. The colleague's rights in step 1 are the "before" picture for rollback.
+- **Least privilege:**
+  - "Answer client emails" means she must be able to read the mailbox (Full Access) and send from it.
+  - Send on Behalf would be a smaller right, but this runbook only has it as a preview. The admin center doesn't offer it for shared mailboxes. If the colleague only has Send on Behalf, stop and raise it as its own reviewed change.
+  - If the access is temporary, put an end date in the ticket.
+- **Timing:** she starts Monday, so make the change during business hours (Mon–Fri 08:30–17:30) before then. It can take a while to show up in Outlook. If it still hasn't appeared after a reasonable wait, restart Outlook or re-add the profile.
+- **Undo:** remove the rights through `/mailbox-permissions` (gates `mailbox-permission-remove-portal` and `mailbox-send-as-remove-portal`).
+- **Jira note:** Gave [UPN] Full Access and Send As on [MAILBOX], copying the colleague's rights. Requester confirmed by callback; managing partner approved. Delegation checked and test send passed. Time spent: [X] min.
+
+```aegis-desk
+Gate: shared-mailbox-full-access-portal
+Phrase: GRANT FULL ACCESS TO [MAILBOX] FOR [UPN]
+Change record: R2, read-back exo:verify-mailbox-permission
+Read-back: exo-client.js verify-mailbox-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+Gate: shared-mailbox-send-as-portal
+Phrase: GRANT SEND AS ON [MAILBOX] TO [UPN]
+Change record: R2, read-back exo:verify-recipient-permission
+Read-back: exo-client.js verify-recipient-permission --mailbox [MAILBOX] --delegate [UPN] --change [CHANGE_ID] --execute
+```

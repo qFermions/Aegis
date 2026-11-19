@@ -12,6 +12,9 @@ disable-model-invocation: true
 ## What to check first
 - SharePoint admin center → Active sites → `[SITE_NAME]` → **Sharing** level (and tenant-level Sharing policy). External fails silently if either is "Only people in your org."
 - What scope: whole site, a library, or a single folder?
+- **Least privilege** (answer-format section 2, rule b): Visitors (read) before Members (edit), and Owners only for someone who runs the site; the narrowest scope that does the job; through the site's group, not a one-off share. The site owner (or the data owner for sensitive libraries) approves, named in the ticket. A guest or a contractor gets an end date: the tenant's guest access expiry, where it is set, ends guest access after its number of days (`docs/aegis/batch12/vendor-facts-runbook-rules.md` RR-03); otherwise the end date goes in the ticket and the removal gate below runs on it.
+- **Ask first** (rule d): "access denied" for a guest tempts a change to the tenant or site sharing level. With no error text and no read of the current sharing level in the ticket, Aegis asks first: "What exactly does the guest see, and on which site or file?" Opening sharing is a setting change for everyone on that site, and turning tenant sharing back on gives old guests their access back (RR-04).
+- **A smell of compromise** (rule a): a share or a guest that the account's owner says they never made, or a site opened to anyone by an account that was not in use. Name the escalation to the security lead or the security on-call (they need the site, the share or guest, when it was made and by which account, and the audit log entries), and nobody calls it harmless before they have looked.
 
 ## Step-by-step fix (portal first)
 
@@ -73,6 +76,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 
 ## ✅ Verification checklist
 - [ ] User can open `[SITE_NAME]` / the library / folder at the intended permission level
+- [ ] Lowest level granted through the site's group, the site owner's approval named, and a guest's or contractor's end date set (rule b)
 - [ ] External: guest accepted invite and appears in Entra → External Identities
 - [ ] "Access denied after granting" → confirm external sharing enabled at tenant **and** site; allow propagation (a few min)
 - [ ] Access removed cleanly when revoking

@@ -1,0 +1,10 @@
+$ git diff 80397eaa..HEAD --stat -- scripts/mcp/aegis-tools/guard.js
+(empty: guard.js is unchanged)
+
+$ pin, docsTarget, docsFetch and exchange of scripts/mcp/aegis-tools/tools.js at 80397eaa and at 34e90096, function body against function body
+async function pin( identical
+function docsTarget( identical
+async function docsFetch( identical
+function exchange( identical
+
+Changed beside them, in server.js: loadAllowlist now names the file in its parse error (it loads both allowlists); the docs allowlist's content and docs_fetch's behaviour are unchanged.

@@ -1,0 +1,340 @@
+# red run before the scope code: TMPDIR=/private/tmp node --test scripts/mcp/aegis-tools/*.test.js (v24.21.0, base e0b512cf plus the batch 12d tests in server.test.js only)
+# 56 tests, 16 fail: the 15 new batch 12d tests, and the stdio test, which now passes --typed (the old server refuses the option); every other test passes
+✔ every private and special address is refused, every public one passes (4.353875ms)
+✔ a name is refused before any query when it is single-label, IP-looking or under a private suffix (2.922917ms)
+✔ a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title (8.854709ms)
+✔ a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted (1.282625ms)
+✔ net_http refuses http://169.254.169.254/ before any query or request (0.17875ms)
+✔ net_http refuses http://169.254.169.254/latest/meta-data/ before any query or request (0.097125ms)
+✔ net_http refuses http://localhost before any query or request (0.108292ms)
+✔ net_http refuses http://10.0.0.1 before any query or request (0.08775ms)
+✔ net_http refuses http://[::1]/ before any query or request (0.089166ms)
+✔ net_http refuses http://2130706433/ before any query or request (0.076042ms)
+✔ net_http refuses http://[::ffff:127.0.0.1]/ before any query or request (0.095666ms)
+✔ net_http refuses http://0x7f.1/ before any query or request (0.084166ms)
+✔ net_http refuses http://127.1/ before any query or request (0.061041ms)
+✔ net_http refuses http://[fd00:ec2::254]/ before any query or request (0.073458ms)
+✔ net_http refuses http://168.63.129.16/ before any query or request (0.060792ms)
+✔ net_http refuses http://[64:ff9b::a9fe:a9fe]/ before any query or request (0.056375ms)
+✔ a name whose resolution returns a private address is refused, with nothing sent (0.257292ms)
+✔ a name returning one public and one private address is refused (0.144167ms)
+✔ a redirect from a public URL to a private one is refused, with no request sent to the private hop (1.756458ms)
+✔ a docs redirect to an off-list host is refused, before that host is resolved (0.701458ms)
+✔ the connection uses the pinned address even if a second resolution would return a different one (rebinding) (0.537083ms)
+✔ port 22 and 8080 are refused (0.220417ms)
+✔ ftp: and file: are refused (0.146375ms)
+✔ user info is refused (0.104875ms)
+✔ GET reads at most 4 KB and then stops reading (0.420875ms)
+✔ the call cap holds: after 30 calls every call returns call_cap_reached (0.551792ms)
+✔ a TLS check on a fake expired certificate reports expired true and the verification error (0.549334ms)
+✔ tools/list lists exactly four tools, each with a strict input schema and no method, body, header or credential argument (0.156458ms)
+✔ an unknown method returns -32601 (0.049042ms)
+✔ malformed JSON returns -32700 (0.046084ms)
+✔ initialize echoes the client protocol version, notifications get no reply, a bad tools/call shape is -32602 (0.08575ms)
+✔ net_dns validates the name, refuses private A and AAAA answers and maps the record types (0.284125ms)
+✔ net_http follows public redirects, re-resolving each hop, and returns only the selected headers (0.902125ms)
+✔ docs_fetch caps bytes and text, says when it cut, and caches by URL (1.783209ms)
+✔ a server that never answers ends in timeout (201.935541ms)
+✔ every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content (1.903125ms)
+✔ the audit file is created with mode 0600 and only appended (4.381625ms)
+✖ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (42.530667ms)
+✔ the docs allowlist is the charter's 26 hosts plus docs.cloud.google.com, docs.slack.dev and tools.slack.dev, and nothing else (0.503791ms)
+✖ batch 12d: the probe allowlist is exactly pypi.org, registry.npmjs.org, slack-status.com and www.githubstatus.com (0.112458ms)
+✖ batch 12d: a docs-allowlist host and a probe-allowlist host are allowed for net_dns, net_tls and net_http on any path, with nothing typed (1.480875ms)
+✖ batch 12d: the exact typed host is allowed for net_dns and net_tls, and the exact typed URL for net_http (0.940125ms)
+✖ batch 12d: refused: a typed host with a path or query that was not typed (net_http), and a typed bare host for any URL (0.207792ms)
+✖ batch 12d: refused: a subdomain that was not typed, a long label in front of a typed domain included (net_dns, net_tls, net_http) (0.127708ms)
+✖ batch 12d: refused: a host that only a fetched page mentions (0.738666ms)
+✖ batch 12d: refused: a host that only a file in the repository mentions (2.462417ms)
+✖ batch 12d: a typed private address passes the scope check and the address guard refuses it (0.33875ms)
+✖ batch 12d: refused: a redirect from an allowed URL to a host or URL out of scope, before that hop is resolved or requested (0.657667ms)
+✖ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added (0.2645ms)
+✖ batch 12d: no typed file, an empty, missing, linked or unreadable one, or a directory: only the two lists apply, and stderr says so (0.737291ms)
+✖ batch 12d: a message appended to the typed file after the server started is honoured on the next call (0.554291ms)
+✖ batch 12d: --typed takes a file; with no value, or an empty one, the server refuses to start (exit 2) (26.1715ms)
+✖ batch 12d: with the probe allowlist missing or malformed the server refuses to start (25.436041ms)
+✖ batch 12d: net_dns, net_http and net_tls describe their scope: the docs list, the probe list, or what the person typed (0.148ms)
+✔ TOOL_NAMES are the four mcp__aegis-tools__ names, the same four the server lists (2.554625ms)
+✔ mcpConfig is one stdio server: this Node binary, the server file by absolute path, and --audit only when given (0.164916ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 40
+ℹ fail 16
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 366.58075
+
+✖ failing tests:
+
+test at scripts/mcp/aegis-tools/server.test.js:602:1
+✖ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (42.530667ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:622:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:680:1
+✖ batch 12d: the probe allowlist is exactly pypi.org, registry.npmjs.org, slack-status.com and www.githubstatus.com (0.112458ms)
+  Error: ENOENT: no such file or directory, open '<repo>/config/probe-allowlist.json'
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:681:35)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/config/probe-allowlist.json'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:688:1
+✖ batch 12d: a docs-allowlist host and a probe-allowlist host are allowed for net_dns, net_tls and net_http on any path, with nothing typed (1.480875ms)
+  AssertionError [ERR_ASSERTION]: {"name":"example.com","type":"A"}: state dns_failed (example.com does not exist (NXDOMAIN)), expected refused_out_of_scope
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:153:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:703:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:708:1
+✖ batch 12d: the exact typed host is allowed for net_dns and net_tls, and the exact typed URL for net_http (0.940125ms)
+  AssertionError [ERR_ASSERTION]: {"url":"https://mail.example.org/"}: state http_error (the request failed (ECONNREFUSED)), expected refused_out_of_scope
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:153:10)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:724:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:731:1
+✖ batch 12d: refused: a typed host with a path or query that was not typed (net_http), and a typed bare host for any URL (0.207792ms)
+  AssertionError [ERR_ASSERTION]: {"url":"https://www.example.com/status?x=1"}: state dns_failed (www.example.com does not exist (NXDOMAIN)), expected refused_out_of_scope
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:153:10)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:734:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:747:1
+✖ batch 12d: refused: a subdomain that was not typed, a long label in front of a typed domain included (net_dns, net_tls, net_http) (0.127708ms)
+  AssertionError [ERR_ASSERTION]: {"name":"x.example.com","type":"A"}: state dns_failed (x.example.com does not exist (NXDOMAIN)), expected refused_out_of_scope
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:153:10)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:751:38)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:760:1
+✖ batch 12d: refused: a host that only a fetched page mentions (0.738666ms)
+  AssertionError [ERR_ASSERTION]: {"url":"https://leak.example.org/collect?d=1"}: state http_error (the request failed (ECONNREFUSED)), expected refused_out_of_scope
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:153:10)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:768:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:778:1
+✖ batch 12d: refused: a host that only a file in the repository mentions (2.462417ms)
+  AssertionError [ERR_ASSERTION]: {"name":"health.aws.amazon.com","type":"A"}: state dns_failed (health.aws.amazon.com does not exist (NXDOMAIN)), expected refused_out_of_scope
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:153:10)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:792:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:801:1
+✖ batch 12d: a typed private address passes the scope check and the address guard refuses it (0.33875ms)
+  AssertionError [ERR_ASSERTION]: {"host":"10.0.0.2"}: state refused_private_address (10.0.0.2 is in private space: private (10.0.0.0/8)), expected refused_out_of_scope
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:153:10)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:808:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:816:1
+✖ batch 12d: refused: a redirect from an allowed URL to a host or URL out of scope, before that hop is resolved or requested (0.657667ms)
+  AssertionError [ERR_ASSERTION]: {"url":"https://www.example.com/a"}: state http_error (the request failed (ECONNREFUSED)), expected refused_redirect
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:153:10)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:827:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:846:1
+✖ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added (0.2645ms)
+  AssertionError [ERR_ASSERTION]: {"name":"ail.example.com","type":"A"}: state dns_failed (ail.example.com does not exist (NXDOMAIN)), expected refused_out_of_scope
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:153:10)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:849:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:860:1
+✖ batch 12d: no typed file, an empty, missing, linked or unreadable one, or a directory: only the two lists apply, and stderr says so (0.737291ms)
+  AssertionError [ERR_ASSERTION]: {"name":"example.com","type":"A"}: a tool error
+  
+  false !== true
+  
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:151:10)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:882:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:894:1
+✖ batch 12d: a message appended to the typed file after the server started is honoured on the next call (0.554291ms)
+  AssertionError [ERR_ASSERTION]: {"name":"later.example.com","type":"A"}: a tool error
+  
+  false !== true
+  
+      at refusedWith (<repo>/scripts/mcp/aegis-tools/server.test.js:151:10)
+      at async outOfScope (<repo>/scripts/mcp/aegis-tools/server.test.js:671:16)
+      at async TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:901:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:908:1
+✖ batch 12d: --typed takes a file; with no value, or an empty one, the server refuses to start (exit 2) (26.1715ms)
+  AssertionError [ERR_ASSERTION]: Usage: node scripts/mcp/aegis-tools/server.js [--audit <file>]
+  
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:923:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:935:1
+✖ batch 12d: with the probe allowlist missing or malformed the server refuses to start (25.436041ms)
+  AssertionError [ERR_ASSERTION]: missing: refused to start
+      at TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:949:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 0,
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:961:1
+✖ batch 12d: net_dns, net_http and net_tls describe their scope: the docs list, the probe list, or what the person typed (0.148ms)
+  AssertionError [ERR_ASSERTION]: net_dns
+      at TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:965:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Look up public DNS records through public resolvers. Internal names (single-label, .local, .corp, .internal and the like) and A or AAAA answers in private address space are refused.',
+    expected: /docs allowlist/,
+    operator: 'match',
+    diff: 'simple'
+  }
+exit 1

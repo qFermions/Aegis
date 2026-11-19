@@ -9,13 +9,17 @@ const CARD_HEADING = /^##[ \t]+Fix[ \t]*$/;
 const NEXT_SECTION = /^#{1,2}[ \t]+\S/;
 // The six parts, in their order (batch 9, task 2: "Tell the user" became two lines, the message to send now
 // and the one to send when the double-check passed). A part is a line that starts with its label, bold or not.
+// budget: the part's slot in words, its label not counted (batch 12d, answer-format section 1); "Do this" is five steps
+// of STEP_BUDGET. With the labels' 17 words the budgets sum to 149, so a card that keeps every slot keeps the 150-word
+// cap. Nothing fails a single slot: the desk row and the judged check still read only the card's total.
+const STEP_BUDGET = 14;
 const PARTS = Object.freeze([
-  { key: 'wrong', label: "What's wrong" },
-  { key: 'doThis', label: 'Do this' },
-  { key: 'doneWhen', label: 'Done when' },
-  { key: 'stopIf', label: 'Stop if' },
-  { key: 'tellNow', label: 'Tell the user now' },
-  { key: 'tellDone', label: 'Tell the user when done' },
+  { key: 'wrong', label: "What's wrong", budget: 12 },
+  { key: 'doThis', label: 'Do this', budget: 5 * STEP_BUDGET },
+  { key: 'doneWhen', label: 'Done when', budget: 16 },
+  { key: 'stopIf', label: 'Stop if', budget: 10 },
+  { key: 'tellNow', label: 'Tell the user now', budget: 14 },
+  { key: 'tellDone', label: 'Tell the user when done', budget: 10 },
 ]);
 // The two parts that speak to the customer, not to the tech: no step is read in them, and the boundary
 // check does not read them either (scripts/eval/judged/checks.js).
@@ -49,6 +53,8 @@ const POINTER_LINE = /\b(?:see|in|under)\s+(?:the\s+)?Details\b(?!\s+(?:field|ta
 // not. It counts only as the first line under the heading; fixCard leaves it out of the card's word count.
 const ASSUMED_LINE = /^[\s>*_-]*(?:\*\*)?Assumed setup(?:\*\*)?[ \t]*:[ \t]*(?:\*\*)?[ \t]*(.*)$/i;
 const DESK_FENCE = /^[ \t]*```[ \t]*aegis-desk[ \t]*$/;
+// The line that opens every answer since batch 12 (docs/aegis/answer-format.md, section 9): "Mode: <name>", bold allowed.
+const MODE_LINE = /^[\s>]*(?:\*\*)?Mode(?:\*\*)?[ \t]*:[ \t]*(?:\*\*)?[ \t]*(Fix card|Engineer answer|Incident answer|Ask first)[ \t]*(?:\*\*)?[ \t]*\.?[ \t]*$/i;
 const FENCE_END = /^[ \t]*```[ \t]*$/;
 
 // Words a reader reads: markdown marks, list numbers and arrows are not words. An underscore stays, so
@@ -77,7 +83,8 @@ function fixCard(answer) {
   const lines = deskBlock(answer).body.split(/\r?\n/);
   const at = lines.findIndex((l) => CARD_HEADING.test(l));
   if (at < 0) return { present: false, first: false, text: '', parts: {}, order: [], steps: [], words: 0, lines: [], pointer: null, assumed: null };
-  const firstLine = lines.findIndex((l) => l.trim() !== '');
+  // the mode line names the card and comes before it, so the card is still the first thing in the answer (batch 12)
+  const firstLine = lines.findIndex((l) => l.trim() !== '' && !MODE_LINE.test(l));
   let end = lines.length;
   for (let i = at + 1; i < lines.length; i += 1) if (NEXT_SECTION.test(lines[i])) { end = i; break; }
   const own = lines.slice(at + 1, end);
@@ -136,6 +143,14 @@ function fixCard(answer) {
   }
   const text = own.join('\n').trim();
   return { present: true, first: at === firstLine, text, parts, order, steps, words: words(text) - (pointer ? words(pointer) : 0) - (assumedAt < 0 ? 0 : words(own[assumedAt])), lines: tagged, pointer, assumed };
+}
+
+// The labels' words as the card's count counts them, and each part's words against its slot (batch 12d): the measure
+// the card-words tool prints. "Do this" is the text on its label line and every step; words outside any part (a line
+// after a blank one) are in the card's count but in no slot.
+const CARD_LABEL_WORDS = PARTS.reduce((n, p) => n + words(`${p.label}:`), 0);
+function cardSlots(card) {
+  return PARTS.map((p) => ({ key: p.key, label: p.label, budget: p.budget, words: words(p.key === 'doThis' ? [card.parts.doThis || '', ...card.steps].join(' ') : card.parts[p.key] || '') }));
 }
 
 // What is wrong with a card's shape, one plain clause each; empty when it has the five parts in order
@@ -322,10 +337,17 @@ function answerChecks(answer, { profile = '', ticket = '' } = {}) {
   const facts = defaultFactsIn(block.body, profile);
   const now = card.present && card.parts.tellNow !== undefined ? userMessageProblems(card.parts.tellNow, ticket) : null;
   const row = (check, ok, plain, detail) => ({ check, verdict: ok ? 'pass' : 'fail', plain, detail });
+  // The three card rows read an answer that has a card. An answer whose mode line names Ask first, Engineer answer or
+  // Incident answer and that has no card rightly has none: the rows do not apply and are left off, as the desk leaves
+  // off every answer row that does not apply (batch 12d, task 4a, the owner's decision). With no mode line, or with
+  // "Mode: Fix card", a missing card still fails them.
+  const first = block.body.split(/\r?\n/).find((l) => l.trim() !== '') || '';
+  const named = (MODE_LINE.exec(first) || [])[1];
+  const noCardMode = !card.present && Boolean(named) && !/^fix card$/i.test(named);
   return [
-    row('fix-card-first', card.present && card.first, 'The Fix card comes first', card.present ? (card.first ? 'the answer opens with "## Fix"' : 'the card is not the first thing in the answer') : 'there is no "## Fix" card'),
+    ...(noCardMode ? [] : [row('fix-card-first', card.present && card.first, 'The Fix card comes first', card.present ? (card.first ? 'the answer opens with "## Fix"' : 'the card is not the first thing in the answer') : 'there is no "## Fix" card'),
     row('fix-card-parts', card.present && shape.length === 0, 'The Fix card has its five parts in order', shape.length ? shape.join('; ') : 'what is wrong, do this (3 to 5 steps), done when, stop if, tell the user'),
-    row('fix-card-words', card.present && card.words <= 150, 'The Fix card is 150 words or fewer', card.present ? `${card.words} words${card.pointer ? ', not counting the line that points to Details' : ''}` : 'there is no "## Fix" card'),
+    row('fix-card-words', card.present && card.words <= 150, 'The Fix card is 150 words or fewer', card.present ? `${card.words} words${card.pointer ? ', not counting the line that points to Details' : ''}` : 'there is no "## Fix" card')]),
     row('no-command', command === null, 'The answer asks the tech to run no command', command ? `a command outside the aegis-desk block: ${command}` : 'none outside the aegis-desk block'),
     row('customer-facts', facts.length === 0, "The answer uses only this customer's facts", facts.length ? `names ${facts.join('; ')}, which the customer profile does not have` : 'no default-environment fact the profile lacks'),
     row('user-message-now', now !== null && now.length === 0, 'The message to the user now makes no done claim', now === null ? 'there is no "Tell the user now" line' : (now.length ? `"${card.parts.tellNow}": ${now.join('; ')}` : 'it says what happens next, with no done claim and no time the tech does not control')),
@@ -498,4 +520,13 @@ function onlyLooks(raw) {
   return { steps, looks: steps.length > 0 && change === null, change, where };
 }
 
-module.exports = { defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };
+// The text without its first non-blank line when that line is the mode line (answer-format section 9): one pass, shared
+// by the printers and the reply check (code review 1 of batch 12).
+function withoutModeLine(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  const at = lines.findIndex((l) => l.trim() !== '');
+  if (at >= 0 && MODE_LINE.test(lines[at])) lines.splice(at, 1);
+  return lines.join('\n');
+}
+
+module.exports = { MODE_LINE, withoutModeLine, ASSUMED_LINE, defaultOrgTokens, PARTS, STEP_BUDGET, CARD_LABEL_WORDS, cardSlots, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };

@@ -1,0 +1,6 @@
+{"url":"https://registry.npmjs.org/is-number/is-number-7.0.0.tgz","decision":"ok"}
+{"url":"https://registry.npmjs.org/is-number/-","decision":"ok"}
+{"url":"https://registry.npmjs.org/@x/is-number/is-number-7.0.0.tgz","decision":"ok"}
+{"url":"https://registry.npmjs.org/is-number/7.0.0?download=1","decision":"ok"}
+{"url":"https://registry.npmjs.org/-/x","decision":"refused_out_of_scope"}
+{"url":"https://registry.npmjs.org/is-number/7.0.0/x","decision":"refused_out_of_scope"}

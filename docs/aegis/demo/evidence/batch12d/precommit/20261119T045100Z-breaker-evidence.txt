@@ -1,0 +1,100 @@
+staged for commit "breaker-evidence" on feat/batch12-expert-lanes at parent 1aa47a39:
+A	docs/aegis/demo/evidence/batch12d/breaker.md
+A	docs/aegis/demo/evidence/batch12d/breaker/harness.js
+A	docs/aegis/demo/evidence/batch12d/breaker/r1.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r1b.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r5.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r5b.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r6.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r6b.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r7.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r8.out
+A	docs/aegis/demo/evidence/batch12d/breaker/real-npm-3.out
+A	docs/aegis/demo/evidence/batch12d/breaker/real-npm.out
+A	docs/aegis/demo/evidence/batch12d/breaker/t1-ask-email.js
+A	docs/aegis/demo/evidence/batch12d/breaker/t1.out
+A	docs/aegis/demo/evidence/batch12d/breaker/t2-idna.js
+A	docs/aegis/demo/evidence/batch12d/breaker/t2.out
+A	docs/aegis/demo/evidence/batch12d/breaker/t3-parsers.js
+A	docs/aegis/demo/evidence/batch12d/breaker/t3.out
+A	docs/aegis/demo/evidence/batch12d/breaker/t5-protect.js
+A	docs/aegis/demo/evidence/batch12d/breaker/t6-npm.js
+A	docs/aegis/demo/evidence/batch12d/breaker/t7-sep.js
+A	docs/aegis/demo/evidence/batch12d/breaker/t8-npm2.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+
+╔══════════════════════════════════════════════╗
+║  Aegis Pre-Commit Safety Check               ║
+╚══════════════════════════════════════════════╝
+
+  File: docs/aegis/demo/evidence/batch12d/breaker/r5.out
+    🔴 BLOCK  Line 11: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 15: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 16: Phone number pattern (use [PHONE_NUMBER] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 17: Phone number pattern (use [PHONE_NUMBER] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 19: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 21: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 29: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 31: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+
+  File: docs/aegis/demo/evidence/batch12d/breaker/r5b.out
+    🔴 BLOCK  Line 11: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 15: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 16: Phone number pattern (use [PHONE_NUMBER] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 17: Phone number pattern (use [PHONE_NUMBER] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 21: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 29: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 31: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+
+  File: docs/aegis/demo/evidence/batch12d/breaker/t1-ask-email.js
+    🔴 BLOCK  Line 15: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+
+  File: docs/aegis/demo/evidence/batch12d/breaker/t1.out
+    🔴 BLOCK  Line 1: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+
+  File: docs/aegis/demo/evidence/batch12d/breaker/t3-parsers.js
+    🔴 BLOCK  Line 15: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+
+  File: docs/aegis/demo/evidence/batch12d/breaker/t3.out
+    🔴 BLOCK  Line 16: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+
+  File: docs/aegis/demo/evidence/batch12d/breaker/t5-protect.js
+    🔴 BLOCK  Line 9: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 10: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 11: Phone number pattern (use [PHONE_NUMBER] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 12: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+    🔴 BLOCK  Line 14: Real email address detected (use [USER@DOMAIN.COM] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+
+  File: docs/aegis/demo/evidence/batch12d/breaker/t7-sep.js
+    🔴 BLOCK  Line 8: Phone number pattern (use [PHONE_NUMBER] placeholder)
+      Guidance: Replace the value with the canonical placeholder for this data category.
+
+🔴 COMMIT BLOCKED - 25 critical issue(s) found.
+   Fix the issues above, then re-stage and commit.
+
+exit 1

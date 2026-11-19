@@ -1,0 +1,80 @@
+✔ a section whose heavy gate comes after a lighter gate passes (1.546667ms)
+✔ a section whose first heavy gate has nothing lighter before it fails, and the reason names the gate (0.217375ms)
+✔ a "No lighter step: <reason>" line passes the section, and an empty one does not (0.295333ms)
+✔ heavy means R3, or a reset, wipe, erase, delete or re-register in the id or the Effect line (0.184375ms)
+✔ a lighter PREVIEW ONLY marker or a user check counts; a heavy PREVIEW ONLY marker does not (0.138375ms)
+✔ a heading inside a code fence does not start a section (0.068417ms)
+✔ Microsoft and Google are separate vendors, by runbook name (0.036916ms)
+✔ on the real runbooks, --check exits 0: the saved audit is fresh and the fixed scope passes (25.909333ms)
+✔ the runbook's own name in a gate id does not make the gate heavy (0.231ms)
+✔ code review 1, finding 9: a <details> summary starts its own section (0.191458ms)
+✔ code review 2: a <details> twin inherits the lighter steps listed before it; a Try first line is an admin step only when it names a gate or phase (0.44825ms)
+✔ code review 2: an R3 scripted twin stays heavy even when its portal twin is lighter (0.078542ms)
+✔ code review 3: twins pair by the runbook's own read-back lines, each heavy gate inherits only its own twin's steps, and nothing after it counts (0.159125ms)
+✖ the 18 vendor-neutral lane runbooks of batch 12 are General, and each is a real runbook (0.483333ms)
+✔ all command files have valid description frontmatter (28.076875ms)
+✔ the bundled Claude plugin uses the canonical manifest and resolvable command paths (0.581041ms)
+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (18.889791ms)
+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (15.147167ms)
+✔ working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text (317.383916ms)
+✔ Markdown fences are balanced (23.60025ms)
+✔ working-tree text files end with a newline and have no UTF-8 BOM (45.720458ms)
+✔ legacy parallel tenant and operator placeholders are absent (92.575792ms)
+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (84.903417ms)
+✖ the six networking placeholders the lane runbooks use are in the placeholder dictionary (0.356ms)
+✔ CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized) (0.081083ms)
+✔ CLAUDE.md stays under 20,000 bytes so every session loads it whole (batch 1, A5b) (0.041458ms)
+✔ the Extended Confirmation Gate quotes the SR-2 list exactly as the security doctrine states it (0.27025ms)
+✔ CLAUDE.md keeps the always-on script gates every turn needs (review round 1 of batch 1) (0.092167ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 26
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 664.44775
+
+✖ failing tests:
+
+test at scripts/lint/ladder-audit.test.js:151:1
+✖ the 18 vendor-neutral lane runbooks of batch 12 are General, and each is a real runbook (0.483333ms)
+  AssertionError [ERR_ASSERTION]: backup-restore-test
+  + actual - expected
+  
+  + 'Microsoft'
+  - 'General'
+  
+      at TestContext.<anonymous> (<repo>/scripts/lint/ladder-audit.test.js:161:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Microsoft',
+    expected: 'General',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/repository-structure.test.js:163:1
+✖ the six networking placeholders the lane runbooks use are in the placeholder dictionary (0.356ms)
+  AssertionError [ERR_ASSERTION]: [SITE_A] is a dictionary placeholder
+      at TestContext.<anonymous> (<repo>/scripts/repository-structure.test.js:166:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit 1

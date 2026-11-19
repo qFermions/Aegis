@@ -1,0 +1,37 @@
+Mode: Incident answer
+## Incident answer
+**Severity:** SEV-3. A work Mac was stolen while signed in to email, but nothing shows the account being used yet. At risk: Gmail and Drive data, any passwords saved on the Mac, and Slack.
+
+**Contain first:**
+1. **Read the Mac's record in Jamf** (no change): FileVault on or off, last check-in, chip, macOS version. If FileVault is off, raise this to SEV-2. *Tech.*
+2. **Lock the Mac in Jamf.** Store the PIN in the password manager first. Nothing is deleted. *The studio manager approves. It costs nothing, because the Mac is already gone.*
+3. **Reset the user's Google password, then reset their sign-in cookies.** This signs the Mac out of Gmail. First confirm who they are: call them back on the number in the staff list. The ticket came in as a forward, so the callback comes before any new password is handed over. *The studio manager approves. The user is signed out everywhere, and Gmail can take up to an hour.*
+4. **Slack:** the user signs out all other sessions from their phone. Our runbooks have no admin step that ends one user's Slack sessions. The only admin option resets the whole workspace, so the security lead decides whether to go further. *Security lead.*
+5. **Wipe the Mac: not now.** The security lead decides, and the studio manager and the user's manager must also approve.
+
+**Preserve:** before step 3, export the user's Google sign-in log and Gmail and Drive activity from the time of the theft. Also save the Jamf record and its history, Slack access logs if the plan has them, and the police report number.
+
+**Escalate to:** the security lead. They need the serial number, the time it went missing, the last check-in, the FileVault state, and the sign-ins since.
+
+**Communications:** the user hears that IT has it, to keep the police report number, and to message IT at once if the Mac turns up. The studio manager is told now.
+
+**Timeline:** stolen last night (exact time unknown) → reported today → containing now.
+
+## Details
+- **Next step, only if the security lead decides the data must not survive:** gate `jamf-lock-erase-wipe-portal`. It needs an independent review first, plus the studio manager and the user's manager.
+- **Gaps to fill:** which password vault holds the lock PIN, and whether Google sign-in goes through single sign-on. If it does, end that session too.
+- The lock and the wipe only reach the Mac the next time it connects to the internet. Until then, FileVault and Activation Lock are what protect it.
+- **Jira note:** stolen Mac, police report filed, Mac locked, Google password and sign-in cookies reset after a callback check, handed to the security lead. Fill in each part only after its double-check passes.
+
+```aegis-desk
+Gate: jamf-lock-erase-lock-portal
+Phrase: LOCK MAC [SERIAL_NUMBER]
+Change record: R2, read-back jamf:verify-command --not-before --type DEVICE_LOCK
+Read-back: jamf-client.js verify-command --management-id [DEVICE_ID] --type DEVICE_LOCK --not-before [NOT_BEFORE] --change [CHANGE_ID] --execute
+Gate: gws-password-reset-password-portal
+Phrase: RESET GOOGLE PASSWORD FOR [USER@DOMAIN.COM]
+Read-back: node scripts/adapters/gws-client.js verify-event --app admin --event CHANGE_PASSWORD --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+Gate: gws-password-reset-cookies-portal
+Phrase: RESET SIGN-IN COOKIES FOR [USER@DOMAIN.COM]
+Read-back: node scripts/adapters/gws-client.js verify-event --app admin --event RESET_SIGNIN_COOKIES --user [UPN] --not-before [NOT_BEFORE] --target [USER@DOMAIN.COM] --execute
+```

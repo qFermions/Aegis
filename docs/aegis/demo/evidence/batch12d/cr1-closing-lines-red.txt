@@ -1,0 +1,38 @@
+✔ section 9: the Engineer and Incident examples close with the block, pass both checks, and fail both without it (11.476042ms)
+✔ the two closing-block fixtures: the desk rows pass on the block, and fail with the block removed (9.6295ms)
+✔ with no runbook gate: each line names the role, the first confirmation and the check, and invents no gate, phrase or command (0.31225ms)
+✔ the closing block is not counted in the mode budget (0.154667ms)
+✔ every good Engineer and Incident lane fixture closes with the block and passes both checks and the mode row (3.856458ms)
+✖ the closing section counts only by its lines: the heading alone, or the no-change line, passes neither check (0.374666ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.494833
+
+✖ failing tests:
+
+test at scripts/demo/closing-block.test.js:148:1
+✖ the closing section counts only by its lines: the heading alone, or the no-change line, passes neither check (0.374666ms)
+  AssertionError [ERR_ASSERTION]: the heading alone: human-confirmation
+  
+  'pass' !== 'fail'
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/closing-block.test.js:158:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'pass',
+    expected: 'fail',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

@@ -16,6 +16,8 @@ disable-model-invocation: true
 - Entra → Users → `[UPN]` → **Authentication methods** → what's registered?
 - Entra → Sign-in logs → filter `[UPN]` → is MFA being prompted/failing, or never triggered?
 - Entra ID → Conditional Access → which policy applies to this user?
+- **A smell of compromise** (answer-format section 2, rule a): MFA prompts or sign-ins `[FIRST_NAME]` did not make, a lost or stolen phone that holds the sign-in method, or a request for a pass sent to a number nobody can verify. Name the escalation to the security lead or the security on-call (they need what was seen, when, `[UPN]`, the device, and the sign-in log entries); the new way in below still follows the identity check, and nobody calls it harmless before that team has looked.
+- **Ask first** (rule d): a request to exclude `[UPN]` from a Conditional Access policy, with no failure reason from the sign-in logs in the ticket, gets one question first: "What does the sign-in log's failure reason say for the latest failed sign-in?" The exclusion is only for a cause that reason shows.
 
 ## Step-by-step fix (portal first)
 
@@ -174,6 +176,7 @@ node scripts/adapters/msgraph-client.js verify-signin --user [USER_ID] --not-bef
 - [ ] Test sign-in prompts for MFA and succeeds
 - [ ] Any CA exclusion has been **removed** (no lingering bypass)
 - [ ] Sign-in logs show successful MFA
+- [ ] Prompts or sign-ins the person did not make, or a stolen phone: escalated to the security lead or on-call with what was seen, when, the account, the device and the log entries (rule a)
 
 ## 📝 Jira-ready note
 > Resolved [date/time]. MFA issue for `[UPN]`: [new-phone re-registration / no-prompt CA diagnosis]. Identity: [proved by a call to the number on file / in person / through the manager]. New way in: [Temporary Access Pass issued under [mfa-temporary-access-pass-portal], `verify-temporary-access-pass` passed under its change, handed over by [the verified channel used] / another registered method still worked, no pass issued]. Sessions: [revoked under [mfa-session-revoke-portal] and `verify-sessions-revoked` passed under its change / not revoked]. Authentication-method state: [one method deleted under [mfa-method-delete-portal] and `verify-method-absent` passed under its change / every phone, Authenticator and software OATH method cleared under [mfa-require-reregister-portal] and `verify-mfa-cleared` passed under its change / unchanged]. Re-registration: [verified at aka.ms/mfasetup and in sign-in logs / not completed]. [If separately authorized and verified: temporary CA exclusion applied, then removed after registration; approval [MANAGER_NAME].] Time spent: [X] min.

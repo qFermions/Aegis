@@ -1,0 +1,55 @@
+✖ code review 3, class B3: the claim reader against every probe of the three reviews (3.527583ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42.04725
+
+✖ failing tests:
+
+test at scripts/demo/expert-rules.test.js:315:1
+✖ code review 3, class B3: the claim reader against every probe of the three reviews (3.527583ms)
+  AssertionError [ERR_ASSERTION]: each must be one claim with no call
+  + actual - expected
+  
+  + [
+  +   'Before suggesting a fix I checked the MX records and they point to the old host.',
+  +   'Once I checked the DNS records it was clear the MX points to the old host.',
+  +   'As soon as I looked up the MX records I saw the old host.',
+  +   'To see if the MX is right I checked the DNS records.',
+  +   'I checked if the MX records changed and I verified the certificate chain.',
+  +   'I checked the TLS certificate chain before I read the runbook.',
+  +   'If it times out rerun the DNS check; the DNS lookup for the domain returned two MX records.',
+  +   'Before the cutover the DNS lookup for the domain returned the old MX host.',
+  +   'net_dns returned two MX records for example.com.',
+  +   'I ran net_dns for example.com and it returned two MX records.',
+  +   'Two MX records point at the old host (net_dns 2026-11-14).',
+  +   'Two MX records point at the old host (net_dns).',
+  +   'Evidence read: a certificate lookup for that host shows the leaf expired yesterday.',
+  +   'The DNS lookup for the domain shows two MX records pointing at the old host.',
+  +   'A TLS check finds the certificate chain is incomplete.',
+  +   'I checked the /api-status endpoint and it responds 503.',
+  +   'I fetched the vendor advisory at /security-advisories and it lists the CVE.',
+  +   'I checked the sender DNS records as /phishing-bec asks and SPF fails.',
+  +   'I checked the MX records against the answer format and they point to the old host.',
+  +   '**Tell the user when done:** The mail records are fixed (net_dns, 2026-11-14).',
+  +   '- **Tell the user now:** a DNS lookup shows your domain points to the new host.',
+  +   'After the outage, I have checked the DNS records.'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:373:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'Before suggesting a fix I checked the MX records and they point to the old host.', 'Once I checked the DNS records it was clear the MX points to the old host.', 'As soon as I looked up the MX records I saw the old host.', 'To see if the MX is right I checked the DNS records.', 'I checked if the MX records changed and I verified the certificate chain.', 'I checked the TLS certificate chain before I read the runbook.', 'If it times out rerun the DNS check; the DNS lookup for the domain returned two MX records.', 'Before the cutover the DNS lookup for the domain returned the old MX host.', 'net_dns returned two MX records for example.com.', 'I ran net_dns for example.com and it returned two MX records.', 'Two MX records point at the old host (net_dns 2026-11-14).', 'Two MX records point at the old host (net_dns).', 'Evidence read: a certificate lookup for that host shows the leaf expired yesterday.', 'The DNS lookup for the domain shows two MX records pointing at the old host.', 'A TLS check finds the certificate chain is incomplete.', 'I checked the /api-status endpoint and it responds 503.', 'I fetched the vendor advisory at /security-advisories and it lists the CVE.', 'I checked the sender DNS records as /phishing-bec asks and SPF fails.', 'I checked the MX records against the answer format and they point to the old host.', '**Tell the user when done:** The mail records are fixed (net_dns, 2026-11-14).', '- **Tell the user now:** a DNS lookup shows your domain points to the new host.', 'After the outage, I have checked the DNS records.' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

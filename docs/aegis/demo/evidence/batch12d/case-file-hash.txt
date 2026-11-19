@@ -1,0 +1,5 @@
+$ shasum -a 256 scripts/eval/judged/dev-cases.jsonl <tmp>/aegis-b12d-cases/dev-cases.jsonl
+f3ec9e37b23b3c3a4c034a9ed77e2793dd3c4682a24b4d8e6bb44d284c00e8ff  scripts/eval/judged/dev-cases.jsonl
+f3ec9e37b23b3c3a4c034a9ed77e2793dd3c4682a24b4d8e6bb44d284c00e8ff  <tmp>/aegis-b12d-cases/dev-cases.jsonl
+$ git log -1 --format=%h -- scripts/eval/judged/dev-cases.jsonl
+1b63137d

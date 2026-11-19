@@ -1,0 +1,9 @@
+staged for commit "ask-first-you" on worktree-agent-aadc7d2f97259d5ca at parent 8601fdc3:
+M	docs/aegis/answer-format.md
+A	docs/aegis/demo/evidence/batch12d/ask-first-you-green.txt
+M	scripts/demo/ask-first-you.test.js
+M	scripts/demo/senior-rules.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

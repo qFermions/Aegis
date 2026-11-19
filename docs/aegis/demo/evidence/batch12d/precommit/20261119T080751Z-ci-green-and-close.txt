@@ -1,0 +1,19 @@
+staged for commit "ci-green-and-close" on feat/batch12-expert-lanes at parent 6362ac87:
+M	checks.md
+A	docs/aegis/demo/evidence/batch12d/battery-head/HEAD.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/command-structure-lint.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/failing-vs-baseline.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/g2-ticket-eval.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/g3-ticket-eval.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/gws-ticket-eval.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/ms-ticket-eval.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/node-test-tripwire.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/node-test.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/pre-commit-check-all.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/release-boundary-check.txt
+A	docs/aegis/demo/evidence/batch12d/battery-head/replay-demo.txt
+M	progress.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

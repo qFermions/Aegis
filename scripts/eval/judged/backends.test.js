@@ -31,7 +31,8 @@ const path = require('node:path');
 const test = require('node:test');
 
 const backends = require('./backends.js');
-const { REPO_ROOT } = require('./paths.js');
+const { REPO_ROOT, effectivePath } = require('./paths.js');
+const { TOOL_NAMES, mcpConfig } = require('../../mcp/aegis-tools/session.js');
 
 const FAKE = path.join(__dirname, 'fixtures', 'fake-claude.js');
 
@@ -47,11 +48,18 @@ function fake(t, config) {
 
 const kase = (over = {}) => ({ id: 'B1', ticket: 'Ticket text for [UPN].', evidence: '', follow_up: '', ...over });
 
+// Batch 12 changed this test on purpose: the aegis-tools server is on by default, so the default argv gains the four
+// tool names in --allowedTools (never in --tools, which lists built-in tools only) and --mcp-config right after
+// --strict-mcp-config. tools: false is the argv this test pinned before batch 12, byte for byte.
 test('the SUT and judge command lines match the spec; --web moves the web tools to the allowed set', () => {
-  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', ...backends.isolationArgs(), '--model', 'claude-opus-5-5']);
+  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24 }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', ...TOOL_NAMES, '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', ...backends.isolationArgs({ mcpConfig: mcpConfig() }), '--model', 'claude-opus-5-5']);
+  assert.deepEqual(backends.sutArgs({ prompt: 'P', maxTurns: 24, tools: false }), ['-p', 'P', '--output-format', 'stream-json', '--verbose', '--max-turns', '24', '--tools', 'Read', 'Grep', 'Glob', 'Agent', '--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', '--disallowedTools', 'Bash', 'WebFetch', 'WebSearch', ...backends.isolationArgs(), '--model', 'claude-opus-5-5']);
   const web = backends.sutArgs({ prompt: 'P', maxTurns: 5, web: true });
-  assert.deepEqual(web.slice(web.indexOf('--allowedTools'), web.indexOf('--disallowedTools')), ['--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', 'WebFetch', 'WebSearch']);
-  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', ...backends.isolationArgs(), '--model', 'claude-opus-5-5']);
+  assert.deepEqual(web.slice(web.indexOf('--allowedTools'), web.indexOf('--disallowedTools')), ['--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', 'WebFetch', 'WebSearch', ...TOOL_NAMES]);
+  assert.deepEqual(web.slice(web.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', ...backends.isolationArgs({ mcpConfig: mcpConfig() }), '--model', 'claude-opus-5-5']);
+  const webOff = backends.sutArgs({ prompt: 'P', maxTurns: 5, web: true, tools: false });
+  assert.deepEqual(webOff.slice(webOff.indexOf('--allowedTools'), webOff.indexOf('--disallowedTools')), ['--allowedTools', 'Read', 'Grep', 'Glob', 'Agent', 'WebFetch', 'WebSearch']);
+  assert.deepEqual(webOff.slice(webOff.indexOf('--disallowedTools')), ['--disallowedTools', 'Bash', ...backends.isolationArgs(), '--model', 'claude-opus-5-5']);
   assert.deepEqual(backends.sutArgs({ prompt: 'F', resume: 'sess-1' }).slice(0, 4), ['-p', 'F', '--resume', 'sess-1']);
   // batch 11 resumed: both end with the pinned model (model-pin.test.js)
   assert.deepEqual(backends.judgeArgs({ prompt: 'J' }), ['-p', 'J', '--output-format', 'stream-json', '--verbose', '--max-turns', '1', '--tools', '', '--no-session-persistence', ...backends.isolationArgs({ judge: true }), '--model', 'claude-opus-5-5']);
@@ -60,12 +68,19 @@ test('the SUT and judge command lines match the spec; --web moves the web tools 
 });
 
 test('both sessions load only the repository\'s own settings, also when resumed, on the web, or with a judge model (batch 6, task 9)', () => {
-  const isolated = (args, label, { judge = false } = {}) => {
+  // batch 12: the system under test gets one MCP server, aegis-tools, unless tools is false; the judge never does
+  const isolated = (args, label, { judge = false, tools = !judge } = {}) => {
     const at = args.indexOf('--setting-sources');
     assert.ok(at > 0, `${label}: --setting-sources`);
     assert.equal(args[at + 1], 'project', `${label}: project settings only, so no user-level CLAUDE.md, plugin, skill or hook`);
-    assert.ok(args.includes('--strict-mcp-config'), `${label}: --strict-mcp-config, so no MCP server`);
-    assert.ok(!args.includes('--mcp-config'), `${label}: no MCP file is given`);
+    assert.ok(args.includes('--strict-mcp-config'), `${label}: --strict-mcp-config, so no MCP server but the one given here`);
+    const mcpAt = args.indexOf('--mcp-config');
+    if (!tools) assert.equal(mcpAt, -1, `${label}: no MCP file is given`);
+    else {
+      assert.equal(mcpAt, args.indexOf('--strict-mcp-config') + 1, `${label}: the one MCP file comes right after --strict-mcp-config`);
+      assert.equal(args.filter((a) => a === '--mcp-config').length, 1, `${label}: one MCP file`);
+      assert.deepEqual(Object.keys(JSON.parse(args[mcpAt + 1]).mcpServers), ['aegis-tools'], `${label}: the aegis-tools server and no other`);
+    }
     assert.ok(!args.includes('--bare'), `${label}: --bare never reads the stored login`);
     const settings = JSON.parse(args[args.indexOf('--settings') + 1]);
     assert.equal(settings.autoMemoryEnabled, false, `${label}: no auto memory`);
@@ -81,8 +96,159 @@ test('both sessions load only the repository\'s own settings, also when resumed,
   isolated(backends.sutArgs({ prompt: 'P' }), 'system under test');
   isolated(backends.sutArgs({ prompt: 'P', resume: 'sess-1' }), 'follow-up turn');
   isolated(backends.sutArgs({ prompt: 'P', web: true }), 'system under test with the web tools');
+  isolated(backends.sutArgs({ prompt: 'P', tools: false }), 'system under test with the tool server off', { tools: false });
   isolated(backends.judgeArgs({ prompt: 'J' }), 'judge', { judge: true });
   isolated(backends.judgeArgs({ prompt: 'J', model: 'judge-x' }), 'judge with a model', { judge: true });
+});
+
+// Batch 12: the aegis-tools server. Wrong implementations it catches: the judge given the tool server (it would grade
+// with network access) or isolationArgs that lets a caller hand it one; the tool names put in --tools, which lists
+// built-in tools only; WebFetch or WebSearch allowed because the tools are on; an off switch that leaves a trace in the
+// argv; an audit file that never reaches the server's arguments; runSut dropping the switch or the file.
+test('the tool server is on by default for the system under test, never for the judge, and off leaves the old argv (batch 12)', async (t) => {
+  const values = (args, flag) => { const out = []; for (let i = args.indexOf(flag) + 1; i > 0 && i < args.length && !args[i].startsWith('--'); i += 1) out.push(args[i]); return out; };
+  const serverOf = (args) => JSON.parse(args[args.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'];
+  const on = backends.sutArgs({ prompt: 'P' });
+  assert.deepEqual(values(on, '--tools'), [...backends.SUT_TOOLS], 'built-in tools only');
+  assert.deepEqual(values(on, '--allowedTools'), [...backends.SUT_TOOLS, ...TOOL_NAMES]);
+  assert.deepEqual(values(on, '--disallowedTools'), ['Bash', ...backends.WEB_TOOLS], 'the web tools stay off');
+  assert.deepEqual(serverOf(on).args, [path.join(REPO_ROOT, 'scripts', 'mcp', 'aegis-tools', 'server.js')], 'no audit file named: the server audits to stderr');
+  const file = path.join(os.tmpdir(), 'aegis-tools-audit.jsonl');
+  assert.deepEqual(serverOf(backends.sutArgs({ prompt: 'P', auditFile: file })).args.slice(1), ['--audit', file]);
+  const off = backends.sutArgs({ prompt: 'P', tools: false, auditFile: file });
+  assert.ok(!off.includes('--mcp-config') && !off.some((a) => a.startsWith('mcp__')), 'off: no server, no tool name, and the audit file is ignored');
+  const web = backends.sutArgs({ prompt: 'P', web: true, resume: 'sess-1' });
+  assert.deepEqual(values(web, '--allowedTools'), [...backends.SUT_TOOLS, ...backends.WEB_TOOLS, ...TOOL_NAMES], 'a follow-up turn with the web tools keeps the server');
+  assert.deepEqual(values(web, '--disallowedTools'), ['Bash']);
+  const judge = backends.judgeArgs({ prompt: 'J' });
+  assert.ok(!judge.includes('--mcp-config') && !judge.some((a) => a.startsWith('mcp__')), 'the judge has no tool server');
+  assert.throws(() => backends.isolationArgs({ judge: true, mcpConfig: mcpConfig() }), /judge/);
+  // runSut passes the switch and the audit file to every turn
+  const f = fake(t, { sut: { answer: 'a', follow_up_answer: 'b' } });
+  await backends.runSut(kase({ follow_up: 'again' }), { ...f.opts, env: { PATH: process.env.PATH }, auditFile: file });
+  await backends.runSut(kase(), { ...f.opts, env: { PATH: process.env.PATH }, tools: false });
+  const [first, second, third] = f.calls();
+  assert.deepEqual([serverOf(first.args).args.slice(1), serverOf(second.args).args.slice(1)], [['--audit', file], ['--audit', file]]);
+  assert.ok(!third.args.includes('--mcp-config'));
+});
+
+// ── Batch 12d: the typed file ───────────────────────────────────────────────────────────────────────────────────────
+// EXPECTED DECISIONS (written before the code)
+// - sutArgs({ typedFile }) hands the tool server --typed <file> when the tools are on. promptHook: true (the chat only)
+//   also puts session.typedHooks(typedFile) in the session's inline --settings as "hooks"; a print-mode session never
+//   gets the hook, since its one prompt holds the runner's own words. With the tools off neither appears, and the judge
+//   never takes a hook.
+// - runSut with opts.typedFile writes what the person typed before the first turn starts: the case's setup, ticket and
+//   evidence, one per line, none of the runner's framing; it appends the follow-up before the second turn.
+const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
+const typedServerArgs = (args) => JSON.parse(args[args.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'].args.slice(1);
+
+// Wrong implementations it catches: a typed file that never reaches the server's arguments; a prompt hook on every
+// session (a judged or ask session's -p prompt, with the runner's framing words, would join the typed set); a hook left in
+// with the tools off; a judge that can be given a hook.
+test('batch 12d: sutArgs hands the server the typed file, and the prompt hook only when asked; off and the judge get neither', () => {
+  const { typedHooks } = require('../../mcp/aegis-tools/session.js');
+  const audit = path.join(os.tmpdir(), 'b12d-audit.jsonl');
+  const file = path.join(os.tmpdir(), 'b12d-typed.txt');
+  const on = backends.sutArgs({ prompt: 'P', auditFile: audit, typedFile: file });
+  assert.deepEqual(typedServerArgs(on), ['--audit', audit, '--typed', file]);
+  assert.ok(!('hooks' in settingsOf(on)), 'a print-mode session gets no prompt hook');
+  const chat = backends.sutArgs({ prompt: '', persist: false, typedFile: file, promptHook: true });
+  assert.deepEqual(settingsOf(chat).hooks, typedHooks(file));
+  assert.ok(!('hooks' in settingsOf(backends.sutArgs({ prompt: '', promptHook: true }))), 'no typed file: no hook');
+  const off = backends.sutArgs({ prompt: 'P', tools: false, typedFile: file, promptHook: true });
+  assert.deepEqual(off, backends.sutArgs({ prompt: 'P', tools: false }), 'off: the typed file and the hook leave no trace');
+  assert.throws(() => backends.isolationArgs({ judge: true, hooks: typedHooks(file) }), /judge/);
+  assert.ok(!('hooks' in settingsOf(backends.judgeArgs({ prompt: 'J' }))));
+});
+
+// Wrong implementations it catches: a typed file written after the session started (the server would read nothing); one
+// that holds the built prompt (the evidence header and the setup's marker lines are the runner's words, and a file name
+// in them would become a typed host); the follow-up typed before the first turn, or never; a file other users can read.
+test('batch 12d: runSut writes the person\'s words to the typed file before the first turn, and the follow-up before the second', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-typed-sut-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const typedFile = path.join(dir, 'B1-typed.txt');
+  const f = fake(t, { sut: { answer: 'a', follow_up_answer: 'b' } });
+  const c = kase({ setup: 'Google Workspace; status page https://status.example.com/', ticket: 'Mail to mail.example.org bounces.', evidence: 'Log: 550 from mx.example.org', follow_up: 'Also check https://www.example.net/health' });
+  await backends.runSut(c, { ...f.opts, env: { PATH: process.env.PATH }, typedFile });
+  const [first, second] = f.calls();
+  assert.equal(first.typed.file, typedFile);
+  assert.equal(first.typed.text, 'Google Workspace; status page https://status.example.com/\nMail to mail.example.org bounces.\nLog: 550 from mx.example.org\n');
+  assert.equal(second.typed.text, `${first.typed.text}Also check https://www.example.net/health\n`);
+  if (process.platform !== 'win32') assert.equal(first.typed.mode, 0o600);
+  for (const framing of [backends.EVIDENCE_HEADER, '--- What the company runs ---', 'It replaces the default environment']) assert.ok(!second.typed.text.includes(framing), framing);
+  // with the tools off, no typed file is written and none is named
+  const g = fake(t, { sut: { answer: 'a' } });
+  const offFile = path.join(dir, 'off-typed.txt');
+  await backends.runSut(kase(), { ...g.opts, env: { PATH: process.env.PATH }, typedFile: offFile, tools: false });
+  assert.equal(fs.existsSync(offFile), false);
+  assert.equal(g.calls()[0].typed, null);
+});
+
+// Code review 1 of batch 12d, findings 2 and 12. Wrong implementations it catches: a results folder used twice gives the
+// second run the first run's tool calls, because the server appends to the case's audit file and nothing empties it; a
+// typed file that cannot be written (a link left at its path, a full disk) throws out of runSut, which ends a paid run
+// before its results are saved, where the session should start with no typed file and reach only the two lists.
+test('batch 12d: runSut starts each case with an empty audit file, and a typed file that cannot be written does not stop the run', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-typed-reuse-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const auditFile = path.join(dir, 'B1-tool-audit.jsonl');
+  fs.writeFileSync(auditFile, `${JSON.stringify({ time: '2026-11-18T00:00:00.000Z', tool: 'net_dns', input: { name: 'old.example.com', type: 'A' }, decision: 'refused_out_of_scope', reason: 'from an earlier run' })}\n`);
+  const f = fake(t, { sut: { answer: 'a' } });
+  await backends.runSut(kase(), { ...f.opts, env: { PATH: process.env.PATH }, auditFile, typedFile: path.join(dir, 'B1-typed.txt') });
+  assert.deepEqual(backends.toolServerRecord(auditFile), { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] }, 'the earlier run\'s line is gone');
+  // the typed file's path is a folder: writeTyped throws, the session still runs, and it names no typed file
+  const blocked = path.join(dir, 'B2-typed.txt');
+  fs.mkdirSync(blocked);
+  const g = fake(t, { sut: { answer: 'a', follow_up_answer: 'b' } });
+  const sut = await backends.runSut(kase({ follow_up: 'And now?' }), { ...g.opts, env: { PATH: process.env.PATH }, typedFile: blocked });
+  assert.equal(sut.state, 'OK');
+  assert.deepEqual(g.calls().map((c) => c.typed), [null, null], 'neither turn names a typed file');
+  // code review 2, finding 7: the record says the case ran with no typed file, so its refused lookups are read as a
+  // harness fault; a case whose typed file was written holds no such field. Wrong implementation it catches: the write
+  // error swallowed with no trace in results.json.
+  assert.equal(sut.typed_file, 'not written');
+  const h = fake(t, { sut: { answer: 'a' } });
+  const fine = await backends.runSut(kase(), { ...h.opts, env: { PATH: process.env.PATH }, typedFile: path.join(dir, 'B3-typed.txt') });
+  assert.ok(!('typed_file' in fine));
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): toolServerRecord(auditFile) reads the tool server's audit file
+// and returns { calls, allowed, refused, other, refused_calls }: allowed is a call the server answered (decision ok),
+// refused every decision that starts with refused_ (out of scope, a refused redirect, a private address, a refused name,
+// port, scheme or user info, off the docs list), other the rest (bad input, the call cap, a timeout, a DNS, HTTP or TLS
+// failure); refused_calls keeps each refused call's tool, its input as the audit keeps it, the decision and the reason,
+// in order. No file, or none named: every count 0. Wrong implementations it catches: refused counted as out-of-scope
+// alone (a refused redirect or a private address left out); the call cap or bad input counted as allowed; a record that
+// drops the reason or the input; one that keeps what the audit has beyond those (addresses, bytes, timing).
+test('batch 12d: toolServerRecord counts allowed, refused and other calls from the audit file and lists each refused call', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-tool-record-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'B1-tool-audit.jsonl');
+  const entry = (tool, input, decision, reason) => ({ time: '2026-11-18T00:00:00.000Z', tool, input, decision, ...(reason ? { reason } : {}), addresses: ['93.184.215.14'], bytes: 10, duration_ms: 3 });
+  const lines = [
+    entry('net_dns', { name: 'pypi.org', type: 'A' }, 'ok'),
+    entry('net_http', { url: 'https://leak.example.net/?d=ticket' }, 'refused_out_of_scope', 'https://leak.example.net/?d=ticket is out of scope: ...'),
+    entry('net_dns', { name: 'x.example.com', type: 'TXT' }, 'dns_failed', 'x.example.com does not exist (NXDOMAIN)'),
+    entry('net_http', { url: 'https://www.example.com/a' }, 'refused_redirect', 'redirect 1 to https://x.example.net/ is refused: out of scope'),
+    entry('net_tls', { host: '10.0.0.1', port: 443 }, 'refused_private_address', '10.0.0.1 is in private space'),
+    entry('net_dns', { name: 'example.com', type: 'A' }, 'call_cap_reached', 'this session has used its 30 tool calls'),
+    entry('docs_fetch', { url: 'https://learn.microsoft.com/x' }, 'ok'),
+    entry('net_dns', { name: 'example.com', type: 'PTR' }, 'bad_input', 'type must be one of A, AAAA'),
+  ];
+  fs.writeFileSync(file, `${lines.map((l) => JSON.stringify(l)).join('\n')}\n`);
+  assert.deepEqual(backends.toolServerRecord(file), {
+    calls: 8, allowed: 2, refused: 3, other: 3,
+    refused_calls: [
+      { tool: 'net_http', input: { url: 'https://leak.example.net/?d=ticket' }, decision: 'refused_out_of_scope', reason: 'https://leak.example.net/?d=ticket is out of scope: ...' },
+      { tool: 'net_http', input: { url: 'https://www.example.com/a' }, decision: 'refused_redirect', reason: 'redirect 1 to https://x.example.net/ is refused: out of scope' },
+      { tool: 'net_tls', input: { host: '10.0.0.1', port: 443 }, decision: 'refused_private_address', reason: '10.0.0.1 is in private space' },
+    ],
+  });
+  const none = { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] };
+  assert.deepEqual(backends.toolServerRecord(path.join(dir, 'missing.jsonl')), none);
+  assert.deepEqual(backends.toolServerRecord(null), none);
 });
 
 test('the exclusions cover the judge\'s temporary folder too, and never the repository\'s own CLAUDE.md (batch 6, code review 1 finding 7)', () => {
@@ -141,6 +307,13 @@ test('the read limits: the deny list is pinned, the rules are absolute, and what
     // batch 8, task 10a: the older baseline folders hold ticket-to-route results (full-run-1 causes.md,
     // "A gap in the deny list")
     repo('docs/aegis/**/baseline/**'), repo('docs/baseline/**'),
+    // security review of batch 12d: agent worktrees are whole copies of the checkout
+    repo('.claude/worktrees/**'),
+    // batch 12d: the lane case files of batch 12 and the notes beside them (git-wall.test.js)
+    repo('docs/aegis/batch12/lanes/**'),
+    // batch 12d, task 2: this repository's own .git, the entry and its contents, as given and as resolved; in a
+    // linked worktree also the git folders its .git file leads to (git-wall.test.js pins what gitDirs returns)
+    ...new Set(backends.gitDirs().flatMap((d) => [d, effectivePath(d)]).flatMap((d) => [abs(d), abs(path.join(d, '**'))])),
     abs(path.join(os.homedir(), 'aegis-demo-runs', '**')),
   ];
   const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
@@ -215,7 +388,8 @@ test('the scrub list is every NAME= of .env.example plus the secret suffixes', (
   const names = backends.envNamesFromExample('# comment\nFLEET_URL=[@Aegion_FLEET_URL]\nX=\n  INDENTED=1\n');
   assert.deepEqual([...names], ['FLEET_URL', 'X']);
   const env = { PATH: '/bin', FLEET_URL: 'h', X: '1', AEGIS_TEST_TOKEN: 't', SOME_API_KEY: 'k', A_SECRET: 's', DB_PASSWORD: 'p', KEEP_ME: 'y' };
-  assert.deepEqual(Object.keys(backends.scrubEnv(env, names)).sort(), ['KEEP_ME', 'PATH']);
+  // batch 12d, task 2: the scrub also sets the variable that keeps the git status snapshot out of a session (git-wall.test.js)
+  assert.deepEqual(Object.keys(backends.scrubEnv(env, names)).sort(), ['CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS', 'KEEP_ME', 'PATH']);
   const real = backends.readExampleNames();
   for (const n of ['FLEET_URL', 'JIRA_API_TOKEN', 'AEGION_DOMAIN', 'GITHUB_TOKEN']) assert.ok(real.has(n), n);
 });
@@ -290,4 +464,18 @@ test('parseStream takes the result text, else the last assistant text, and count
   ].join('\n'));
   const turn = backends.summarizeTurn(s, { state: 'OK', reason: null, code: 0, signal: null, duration_ms: 3 });
   assert.deepEqual([turn.state, turn.answer, turn.model, turn.session_id, turn.num_turns, turn.invalid_lines, turn.cost_usd], ['OK', 'partial', 'm1', 's1', 2, 1, null]);
+});
+
+// Batch 12, task 5: a turn records the tools its session's init event listed and the MCP servers it connected, so a
+// run shows which tools were available. Wrong implementation: a record of the tools asked for in the arguments.
+test('batch 12: summarizeTurn records the tools and MCP servers the init event listed', () => {
+  const stream = backends.parseStream([
+    JSON.stringify({ type: 'system', subtype: 'init', session_id: 's', model: 'm', tools: ['Read', 'mcp__aegis-tools__net_dns'], mcp_servers: [{ name: 'aegis-tools', status: 'connected' }] }),
+    JSON.stringify({ type: 'result', subtype: 'success', result: 'ok', num_turns: 1, total_cost_usd: 0.1 }),
+  ].join('\n'));
+  const turn = backends.summarizeTurn(stream, { state: 'OK', code: 0, signal: null, duration_ms: 1 });
+  assert.deepEqual(turn.tools_available, ['Read', 'mcp__aegis-tools__net_dns']);
+  assert.deepEqual(turn.mcp_servers, [{ name: 'aegis-tools', status: 'connected' }]);
+  const none = backends.summarizeTurn(backends.parseStream(JSON.stringify({ type: 'result', subtype: 'success', result: 'ok' })), { state: 'OK', code: 0, signal: null, duration_ms: 1 });
+  assert.equal(none.tools_available, null, 'no init event: unknown, not empty');
 });

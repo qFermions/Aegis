@@ -33,6 +33,7 @@ const changes = require('../audit/change-record.js');
 const backends = require('../eval/judged/backends.js');
 const checks = require('../eval/judged/checks.js');
 const paths = require('../eval/judged/paths.js');
+const { writeTyped } = require('../mcp/aegis-tools/session.js');
 const { SMOKE_USD_PER_SESSION } = require('../eval/judged-eval.js');
 const intake = require('../intake/intake.js');
 const { clarify } = require('../intake/clarify.js');
@@ -41,6 +42,8 @@ const { onlyLooks, answerChecks, fixCard, words, deskBlock } = require('./answer
 const data = require('./customers.js');
 const { lightestStepFirst } = require('./step-ladder.js');
 const { seniorRows, isAskFirst } = require('./senior-rules.js');
+// batch 12: the answer mode and the judgment rule rows (docs/aegis/answer-format.md, sections 2 and 9)
+const expert = require('./expert-rules.js');
 const render = require('./render.js');
 const { SIM_GATES, notSimulated, applySimulatedGates } = require('./sim/gates.js');
 const vendors = require('./sim/vendors.js');
@@ -51,9 +54,11 @@ const USD_PER_SESSION = SMOKE_USD_PER_SESSION;
 const DESK_MAX_TURNS = 40;
 // What a session will likely cost, from the first real run (1.00 and 2.07 US dollars) and a guess that a
 // four-system offboarding costs about twice that. Used only to stop before a limit, never reported as spent
-// unless a session reports no cost.
+// unless a session reports no cost. Batch 12 (task 13): thirteen sessions on 2026-11-18 cost 0.18 to 0.84 each,
+// and the old default of 2.00 stopped four tickets with money left, so the default is 1.00, still above every
+// measured session but T2's; T2 keeps its own 4.00.
 const LIKELY_USD = Object.freeze({ T2: 4 });
-const LIKELY_USD_DEFAULT = 2;
+const LIKELY_USD_DEFAULT = 1;
 // a messy twin (T2m) costs what its tidy twin (T2) does
 const likelyUsd = (id) => LIKELY_USD[String(id).replace(/m$/, '')] || LIKELY_USD_DEFAULT;
 const DESK_SESSION_TIMEOUT_MS = 1500000;
@@ -108,6 +113,8 @@ function parseArgs(argv) {
       args.model = value(t);
       if (!backends.isModelName(args.model)) throw new InputError('--model takes a model name, such as claude-opus-5-5');
     }
+    // the read-only tool server is on unless --no-tools (batch 12, task 5)
+    else if (t === '--no-tools') args.tools = false;
     else if (t === '--help' || t === '-h') args.help = true;
     else throw new InputError(`unknown argument ${JSON.stringify(t).slice(0, 40)}`);
   }
@@ -143,7 +150,7 @@ function dryRun(selected, customers, dir, io, args) {
     io.out(`${t.id}  ${c.label}: ${t.title}\n    expected: ${t.expected_path}\n`);
   }
   io.out(`Allowance: up to ${sessions} Aegis sessions on your subscription, about ${(sessions * USD_PER_SESSION).toFixed(2)} US dollars of allowance at the ${USD_PER_SESSION.toFixed(2)} per session in docs/evidence/runtime-smoke.md. A cache hit starts no session.\n`);
-  io.out(`Each session: claude ${sessionArgs('<ticket>', dir, '<ticket folder>/<ticket>-debug.log', args.budget === null ? null : '<what is left>', args.model).join(' ')}\n`);
+  io.out(`Each session: claude ${sessionArgs('<ticket>', dir, '<ticket folder>/<ticket>-debug.log', args.budget === null ? null : '<what is left>', args.model, args.tools !== false).join(' ')}\n`);
   if (args.budget !== null) io.out(`Limit: ${args.budget.toFixed(2)} US dollars, ${(args.spent || 0).toFixed(2)} already spent. The run stops before a ticket that could pass it.\n`);
   io.out(`${render.SENTENCE}\n`);
   return 4;
@@ -182,14 +189,21 @@ function sessionEnv(env) {
 // session record, since the desk never resumes one.
 // Each session keeps a debug log, the proof of what the CLI applied, and is capped at what is left of a limit. model: the
 // run's model (batch 11 resumed), so no session takes the settings file's default.
-function sessionArgs(prompt, runRoot, debugFile, maxUsd, model = null) {
-  const args = [...backends.sutArgs({ prompt, runRoot, maxTurns: DESK_MAX_TURNS, persist: false, model }), '--debug-file', debugFile];
+// tools: the read-only tool server (batch 12, task 5), on by default; its calls are audited beside the ticket's debug log,
+// and what the person typed goes to it in the typed file there (batch 12d).
+const typedFileFor = (debugFile) => debugFile.replace(/-debug\.log$/, '-typed.txt');
+function sessionArgs(prompt, runRoot, debugFile, maxUsd, model = null, tools = true) {
+  const auditFile = debugFile.replace(/-debug\.log$/, '-tool-audit.jsonl');
+  const args = [...backends.sutArgs({ prompt, runRoot, maxTurns: DESK_MAX_TURNS, persist: false, model, tools, auditFile, typedFile: typedFileFor(debugFile) }), '--debug-file', debugFile];
   return maxUsd === null ? args : [...args, '--max-budget-usd', maxUsd];
 }
 
-async function askAegis(prompt, ctx, debugFile, maxUsd) {
+// typed: what the person typed (the customer's profile and the ticket text the intake accepted), written to the typed
+// file before the session when the tools are on (batch 12d)
+async function askAegis(prompt, ctx, debugFile, maxUsd, typed = '') {
   const backend = ctx.backend;
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: sessionArgs(prompt, ctx.runDir, debugFile, maxUsd, ctx.model), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
+  if (ctx.tools) writeTyped(typedFileFor(debugFile), typed);
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: sessionArgs(prompt, ctx.runDir, debugFile, maxUsd, ctx.model, ctx.tools), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
   const stream = backends.parseStream(run.stdout);
   return { turn: backends.summarizeTurn(stream, run), stdout: run.stdout, init: stream.init };
 }
@@ -510,7 +524,12 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       const kase = sessionCase(text, customer, lookup.json ? lookup.json.result : `refused (exit ${lookup.code})`, data.profileText(customer));
       const prompt = backends.buildSutPrompt(kase);
       if (backends.promptTooLong(prompt)) { sessionReason = 'session did not finish: the prompt is too long for one argument'; return { result: sessionReason, model_session: false }; }
-      const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`), ctx.maxUsd);
+      const typed = [String(data.profileText(customer) || '').trim(), text].filter(Boolean).join('\n');
+      const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`), ctx.maxUsd, typed);
+      // the tools the session listed (batch 12, task 5): the record shows which were available
+      rec.tools_available = turn.tools_available;
+      // the tool server's calls allowed and refused, and each refused one with its reason, from this ticket's audit (batch 12d)
+      rec.tool_server = backends.toolServerRecord(path.join(tickets, `${ticket.id}-tool-audit.jsonl`));
       // a session that ran and reported no cost (killed at the timeout or the output cap, or started with no result): what
       // it spent is unknown; read through the judged runner's shared reader, never the cap reason's wording (code
       // review 3, finding 14)
@@ -535,6 +554,8 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
   fs.writeFileSync(answerFile, answer);
   rec.answer = answer;
   rec.answer_stats = answerStats(answer);
+  // the mode the answer named on its first line (batch 12, task 2), null when it names none
+  rec.answer_mode = expert.answerMode(answer, text).named;
 
   // 5 CHECKS
   const c5 = { expected: { change_class: ticket.change_class }, probe: ticket.probe, evidence: text };
@@ -546,11 +567,14 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
     // batch 11: the assumed setup and ask-first rows on every answer, and each thinking rule that applies to the ticket
     const profile = data.profileText(customer);
     const format = [...answerChecks(answer, { profile, ticket: text }), lightestStepFirst(answer, ctx.gates), ...seniorRows(answer, { setup: profile, ticket: text })];
+    // batch 12: the mode row and each judgment rule that applies, shown after the earlier rows; none stops the ticket
+    const expertChecks = expert.expertRows(answer, { ticket: text });
     return {
       checks: results.map((r) => ({ check: r.check, verdict: r.verdict, applies: r.applies })),
       answer_checks: format,
-      result: `${results.filter((r) => r.applies).map((r) => `${r.check} ${r.verdict}`).join(', ')}; answer format: ${format.filter((r) => r.verdict === 'pass').length} of ${format.length} pass`,
-      output: [...results.map((r) => `${r.check}: ${r.applies ? r.verdict : 'does not apply'}${r.span ? ` (matched: ${r.span})` : ''}`), ...format.map((r) => `${r.check}: ${r.verdict} (${r.detail})`)].join('\n'),
+      expert_checks: expertChecks,
+      result: `${results.filter((r) => r.applies).map((r) => `${r.check} ${r.verdict}`).join(', ')}; answer format: ${format.filter((r) => r.verdict === 'pass').length} of ${format.length} pass; batch 12 rows: ${expertChecks.filter((r) => r.verdict === 'pass').length} of ${expertChecks.length} pass`,
+      output: [...results.map((r) => `${r.check}: ${r.applies ? r.verdict : 'does not apply'}${r.span ? ` (matched: ${r.span})` : ''}`), ...format.map((r) => `${r.check}: ${r.verdict} (${r.detail})`), ...expertChecks.map((r) => `${r.check}: ${r.verdict} (${r.detail})`)].join('\n'),
     };
   });
   const boundary = results.find((r) => r.check === 'boundary');
@@ -741,6 +765,7 @@ async function deskRun(selected, customers, runDir, deps, env, io) {
     clean: (e) => cleanPaths(String(e && e.message ? e.message : 'unknown error'), [[runDir, '<run folder>'], [REPO_ROOT, '<repo>'], [homeOf(env), '~'], [os.homedir(), '~']]),
     backend: deps.backend || { command: 'claude', prefixArgs: [] }, spawn: deps.spawn, sessionTimeoutMs: deps.sessionTimeoutMs || DESK_SESSION_TIMEOUT_MS,
     model: deps.model || backends.PINNED_MODEL,
+    tools: deps.tools !== false,
     gates: catalog(deps.runbooksDir || RUNBOOKS), simTable: deps.simTable || SIM_GATES, transportFor: deps.transportFor || vendors.transportFor,
   };
   const before = deps.runbooksDir ? changes.useRunbooksForTests(deps.runbooksDir) : null;
@@ -810,7 +835,7 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
     const selected = selectTickets(args.only, tickets);
     const dir = resultsDirFor(args, env);
     if (!args.execute) return dryRun(selected, customers, dir, io, args);
-    return await deskRun(selected, customers, dir, { ...deps, budget: args.budget, spent: args.spent || 0, set: args.set, model: args.model }, env, io);
+    return await deskRun(selected, customers, dir, { ...deps, budget: args.budget, spent: args.spent || 0, set: args.set, model: args.model, tools: args.tools !== false }, env, io);
   } catch (e) {
     if (e instanceof InputError || e instanceof paths.PathRefused) { io.err(`customer-desk: ${e.message}\n`); return 1; }
     throw e;

@@ -1,0 +1,9 @@
+{
+  "about": "Hosts the aegis-tools net_dns, net_http and net_tls tools may reach besides the docs allowlist and what the person typed (scripts/mcp/aegis-tools/README.md). Exact host match, case-insensitive, no wildcard: a subdomain is not covered. Public package registries and status pages only; server.test.js pins the list.",
+  "hosts": [
+    "pypi.org",
+    "registry.npmjs.org",
+    "slack-status.com",
+    "www.githubstatus.com"
+  ]
+}

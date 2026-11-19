@@ -1,0 +1,15 @@
+$ TMPDIR=<tmp> node --test scripts/demo/closing-block.test.js
+✔ section 9: the Engineer and Incident examples close with the block, pass both checks, and fail both without it (11.5425ms)
+✔ the two closing-block fixtures: the desk rows pass on the block, and fail with the block removed (9.060333ms)
+✔ with no runbook gate: each line names the role, the first confirmation and the check, and invents no gate, phrase or command (0.323042ms)
+✔ the closing block is not counted in the mode budget (0.161042ms)
+✔ every good Engineer and Incident lane fixture closes with the block and passes both checks and the mode row (2.659417ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 65.67575
+exit 0

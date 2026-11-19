@@ -13,6 +13,8 @@
 // Run: node --test scripts/lint/ladder-audit.test.js
 
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const test = require('node:test');
 
 const ladder = require('./ladder-audit.js');
@@ -142,4 +144,22 @@ test('code review 3: twins pair by the runbook\'s own read-back lines, each heav
   const scale = ['## B', 'PREVIEW ONLY [x-unlock-preview]: unlock.', gate('x-reset-password-portal', 'R2', 'reset the password'), '## H', gate('x-delete-portal', 'R3', 'delete the user'), '', '<details>', '<summary>API, the scale version</summary>', '', gate('x-reset-password', 'R2', 'reset the password', false), gate('x-delete', 'R3', 'delete the user', false), '</details>'].join('\n');
   const del = ladder.sectionEvents(scale, 'x').flatMap((s) => s.events).find((e) => e.id === 'x-delete');
   assert.deepEqual((del.inherit || []).map((e) => e.id), [], 'the delete inherits nothing from Phase B');
+});
+
+// Batch 12d, task 5. Wrong implementation this catches: a lane runbook with no vendor prefix filed under
+// Microsoft, so the audit's Microsoft row counts cloud, network and software runbooks that name no Microsoft system.
+test('the 18 vendor-neutral lane runbooks of batch 12 are General, and each is a real runbook', () => {
+  const lanes = {
+    infrastructure: ['backup-restore-test', 'cloud-access-denied', 'cloud-cost-spike', 'cloud-network-block', 'k8s-pod-failure', 'linux-server-triage', 'terraform-plan-review'],
+    networking: ['dns-troubleshoot', 'mtu-path-issue', 'tls-certificate', 'vpn-tunnel-down', 'zero-trust-block'],
+    'software engineering': ['ci-failure', 'code-review-checklist', 'debug-stack-trace', 'dependency-problem', 'git-recovery', 'safe-script'],
+  };
+  const names = Object.values(lanes).flat();
+  assert.equal(names.length, 18);
+  for (const name of names) {
+    assert.ok(fs.existsSync(path.join(__dirname, '..', '..', '.claude', 'commands', `${name}.md`)), `${name} is a runbook`);
+    assert.equal(ladder.vendorOf(name), 'General', name);
+  }
+  // a runbook with no prefix that is not on the list is still a Microsoft one
+  assert.equal(ladder.vendorOf('password-reset'), 'Microsoft');
 });

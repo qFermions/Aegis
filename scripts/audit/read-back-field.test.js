@@ -77,7 +77,11 @@ test('D2: every SAFETY GATE in every runbook has one Read-back field, and no run
   // batch 11 (Google, Okta and Jamf lane): okta-mfa-reset-tac-portal, the Temporary Access Code of a lost-phone
   // ticket (349 to 350; R1, it names no read-back); batch 11, task 5 (Microsoft lane): mfa-temporary-access-pass-portal,
   // the new way in of /mfa-issue (350 to 351; R3, it names a read-back)
-  assert.equal(gates, 351, 'every runbook gate');
+  // batch 12: 351 to 396, the 21 gates of the infrastructure and cloud lane's seven runbooks, the 16 gates of the
+  // security lane (/identity-compromise, /leaked-key, /phishing-bec, /ransomware-first-hour, /oauth-app-review) and the
+  // 8 gates of the software engineering lane (/ci-failure, /code-review-checklist, /dependency-problem, /git-recovery,
+  // /safe-script); none names a connector read-back (no connector reads those systems, git or CI)
+  assert.equal(gates, 396, 'every runbook gate');
   // code review round 1 of batch 9, finding 13: jamf-lock-erase-wipe-api names its portal twin's read-back (106 to 107)
   // batch 10, task 3: jamf-lock-erase-lock-portal and its API twin jamf-lock-erase-lock-api name verify-command
   // --type DEVICE_LOCK (107 to 109); task 4: gws-offboard-okta-deactivate-portal and its API twin

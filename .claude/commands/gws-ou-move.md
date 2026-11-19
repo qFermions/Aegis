@@ -16,6 +16,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - **An OU move is a policy change, not a filing change.** A user belongs to exactly one organizational unit and inherits that unit's settings; the unit decides which features and services the user can access. One move swaps every inherited setting at once — Gmail, Drive and Docs, Chrome, 2-Step Verification enforcement, service on/off.
 - R2: one user, but the OU carries policy, so the undo needs data captured first — the source OU and the settings that differ, recorded in Phase 1. The undo is a second move back to that source OU, under its own exact phrase — which is why nothing moves until the source OU is in the ticket.
 - Needs the Organizational unit privilege (and the User management privilege to see the Users list controls). Without them the controls are hidden, not greyed out.
+- **Ask first** (answer-format section 2, rule d): a move asked for to make a symptom go away ("move them to the unit without 2-Step Verification", "the one where sharing works"), with no reason in the ticket beyond the symptom, gets one question first: "What exactly fails for the user now, and which setting in the new unit would fix it?" A move that loosens a security setting is only for a cause that answer shows, and the setting itself is often the narrower fix.
 - Not done until the read-backs in the final checklist pass.
 
 ## Inputs needed

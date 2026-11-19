@@ -155,7 +155,8 @@ node scripts/eval/judged-eval.js calibrate --sheet <filled sheet.csv> --run <res
   the model its sessions reported; a case whose session reports another model, or none, is INCONCLUSIVE, the run
   stops there, either way (no later case would count), and report.md counts those cases (batch 11, resumed).
 - Options (to run a subset, put only those cases in the file): `--max-turns N` (default 24); `--timeout-ms N` (default 600000 per process);
-  `--web` (adds WebFetch and WebSearch to the system under test); `--baseline
+  `--web` (adds WebFetch and WebSearch to the system under test); `--no-tools` (batch 12: the system under
+  test runs without the read-only tool server, as before batch 12); `--baseline
   <results.json>` (lists the cases that passed there and do not now); `--calibration-sheet N`;
   `--pass-threshold 0..1`; `--agreement-threshold -1..1` (Cohen's kappa); `--thresholds
   <file.json>` (keys `pass_rate` and `kappa`, refused inside the repository); `--budget-usd N`
@@ -171,12 +172,15 @@ node scripts/eval/judged-eval.js calibrate --sheet <filled sheet.csv> --run <res
 
 **Case file.** JSONL, one object per line, every field data, unknown fields refused
 (`scripts/eval/judged/cases.js`): `id` (unique), `platform` (microsoft, google, okta, jamf,
-fleet, slack, linear, github, jira, network, platform-neutral), `capability` (it-support,
-security, platform-engineering, agent-strategy, agent-ops), `scenario`, `class`
+fleet, slack, linear, github, jira, network, platform-neutral, and since batch 12 aws, azure, gcp,
+kubernetes, terraform, linux, cloudflare, meraki, zscaler, python, node, powershell, bash, docker),
+`capability` (it-support, security, platform-engineering, agent-strategy, agent-ops, and since batch 12
+networking, infrastructure, software-engineering), `scenario`, `class`
 (QUICK_FIX, DIAGNOSTIC, PROCEDURE, REFERENCE, CLARIFY), `ticket`, `evidence`, `follow_up`
 (a second user turn in the same session), `probe` ("", injection, urgency, wrong-customer,
 stale-procedure, missing-privilege), `expected` (`first_move`, `must`, `must_not`,
-`escalate` yes or no, `change_class` R0 to R3 or none, `read_back`) and `judge_notes`.
+`escalate` yes or no, `change_class` R0 to R3 or none, `read_back`, and optionally since batch 12
+`mode`: fix-card, engineer, incident or ask-first) and `judge_notes`.
 One field may be left out: `setup` (batch 11), what the company runs, in plain words. Absent or
 empty means none. When a case has one, the system under test gets it the way `ask-aegis.js` gives
 `--setup` (the same marker lines, as data that replaces CLAUDE.md's default environment, through the
@@ -197,13 +201,15 @@ nothing under it: `results.json`, `report.md` and, with `--calibration-sheet`,
 `calibration-sheet.csv`.
 
 **System under test.** `claude -p <ticket> --output-format stream-json --verbose --max-turns
-N --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent --disallowedTools Bash
-WebFetch WebSearch --setting-sources project --strict-mcp-config --settings <isolation>`, from
+N --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent mcp__aegis-tools__docs_fetch
+mcp__aegis-tools__net_dns mcp__aegis-tools__net_http mcp__aegis-tools__net_tls --disallowedTools Bash
+WebFetch WebSearch --setting-sources project --strict-mcp-config --mcp-config <the aegis-tools server>
+--settings <isolation>`, from
 the repository root, so Aegis loads only the repository's CLAUDE.md. `<isolation>` is the JSON
 that `backends.js` `isolationArgs` builds: `claudeMdExcludes` (every CLAUDE.md above the repository,
 which the CLI otherwise loads), `autoMemoryEnabled: false`, and `permissions.deny` with `Read` rules
 for this work's records, the demo's code and expected answers, the grader, the DEV cases, the run folders and, since batch 11, the folder the `--cases` file is read from (as given and as resolved). What the CLI
-loads: `docs/aegis/demo/evidence/batch7/isolation-probe.txt`; that it refuses a read of the case folder: `docs/aegis/demo/evidence/batch11/exam-wall-probe.txt`. The child's environment loses every name in `.env.example` and every name
+loads: `docs/aegis/demo/evidence/batch7/isolation-probe.txt`. Since batch 12 (task 5) the session also loads one MCP server, the read-only `scripts/mcp/aegis-tools/` (its README), whose calls each case audits to `<results>/<case id>-tool-audit.jsonl`; `--no-tools` leaves it out, and each case records the tools its session's init event listed (`sut.tools_available`, `sut.mcp_servers`); that it refuses a read of the case folder: `docs/aegis/demo/evidence/batch11/exam-wall-probe.txt`. The child's environment loses every name in `.env.example` and every name
 ending in `_TOKEN`, `_KEY`, `_SECRET` or `_PASSWORD`, so the CLI must be signed in with its
 stored login. A `follow_up` resumes the same session (`--resume`). Recorded per case: the
 answer, turns, duration, the model from the init event and `total_cost_usd` when reported; since batch 11

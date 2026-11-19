@@ -282,7 +282,8 @@ test('the allowance guard stops before a ticket that could pass the limit, and r
   assert.equal(r.calls().length, 1);
   assert.equal(r.code, 3, 'a run the guard stopped says so');
   // money spent before this command counts
-  const earlier = await runDesk(t, { only: ['T1'], argv: ['--budget-usd', '20', '--spent-usd', '18.5'] });
+  // 19.5 spent (18.5 before batch 12 moved the guess from 2.00 to 1.00): one more session could pass 20
+  const earlier = await runDesk(t, { only: ['T1'], argv: ['--budget-usd', '20', '--spent-usd', '19.5'] });
   assert.deepEqual(earlier.run.tickets, []);
   assert.deepEqual(earlier.run.not_run.map((n) => n.id), ['T1']);
   assert.ok(fs.existsSync(path.join(earlier.results, 'desk.html')), 'the page is written even with nothing run');
@@ -1579,4 +1580,85 @@ test('code review 3: the desk reads a session of unknown cost through backends.r
   assert.equal(backends.ranUnpriced({ state: 'TIMEOUT', cost_usd: null }), true);
   assert.equal(backends.ranUnpriced({ state: 'OK', cost_usd: 0.4, model: 'claude-opus-5-5' }), false);
   assert.equal(backends.ranUnpriced({ state: 'ERROR', reason: 'spawn failed (ENOENT)', cost_usd: null, model: null, session_id: null }), false, 'a session that never started spent nothing');
+});
+
+// Batch 12, task 2: the desk records the mode each answer named and shows the batch 12 rows (the mode row and each
+// judgment rule that applies) beside the earlier rows, stopping nothing. Wrong implementations: a desk that records
+// the mode from the shape and not the first line (the unnamed answer would record ask-first); one that drops the batch
+// 12 rows from the page; one that lets a failing batch 12 row change the closing state.
+test('batch 12, task 2: the desk records the named mode and shows the batch 12 rows, which stop nothing', async (t) => {
+  const named = await runDesk(t, { only: ['T7'], answers: { T7: 'Mode: Ask first\nWhat exactly is slow, for whom, and since when?' } });
+  const k = named.ticket('T7');
+  assert.equal(k.answer_mode, 'ask-first');
+  const row = step(k, 5).expert_checks.find((r) => r.check === 'answer-mode');
+  assert.equal(row.verdict, 'pass', row.detail);
+  assert.match(step(k, 5).output, /answer-mode: pass/);
+  const unnamed = await runDesk(t, { only: ['T7'], answers: { T7: 'What exactly is slow, for whom, and since when?' } });
+  const u = unnamed.ticket('T7');
+  assert.equal(u.answer_mode, null);
+  assert.equal(step(u, 5).expert_checks.find((r) => r.check === 'answer-mode').verdict, 'fail');
+  assert.equal(u.closing_state, k.closing_state, 'a failing batch 12 row stops nothing');
+});
+
+// Batch 12, task 5: the desk's sessions load the read-only tool server by default, each ticket audits its tool calls
+// to a file beside its debug log, --no-tools turns the server off, and the record keeps the tools the session listed.
+// Wrong implementations: a desk that ignores --no-tools; one audit file for the whole run; a record of the tools asked
+// for instead of the ones the session listed.
+test('batch 12, task 5: the desk loads the tool server with an audit file per ticket, and --no-tools turns it off', async (t) => {
+  const listed = ['Read', 'Grep', 'Glob', 'Agent', 'mcp__aegis-tools__net_dns'];
+  const on = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, sut: { init_tools: listed } });
+  const [call] = on.calls();
+  const cfg = JSON.parse(call.args[call.args.indexOf('--mcp-config') + 1]);
+  const server = cfg.mcpServers['aegis-tools'];
+  assert.equal(server.args[server.args.indexOf('--audit') + 1], path.join(on.results, 'customers', 'B', 'tickets', 'T7-tool-audit.jsonl'));
+  assert.deepEqual(on.ticket('T7').tools_available, listed);
+  const off = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, argv: ['--no-tools'] });
+  assert.ok(!off.calls()[0].args.includes('--mcp-config'));
+  assert.ok(!off.calls()[0].args.some((a) => /mcp__aegis-tools__/.test(a)));
+  const out = [];
+  await desk.main(['--only', 'T7', '--no-tools'], {}, { out: (s) => out.push(s), err: () => {} });
+  assert.doesNotMatch(out.join(''), /--mcp-config/);
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): each ticket's session gets a typed file beside its debug log,
+// <ticket>-typed.txt, named to the tool server by --typed; when the session starts it holds the customer's profile and
+// the ticket text the intake accepted (the setup and the words the session is given as the person's own), one per line,
+// and none of the desk's framing. It stays with the ticket's other files. --no-tools writes none. Wrong implementations
+// it catches: the raw email or Slack item typed (values the intake hid would open as hosts); the desk's own lines typed;
+// one typed file for the whole run.
+test('batch 12d: the desk hands each session a typed file beside its debug log: the customer profile and the ticket text', async (t) => {
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
+  const [call] = r.calls();
+  const file = path.join(r.results, 'customers', 'B', 'tickets', 'T7-typed.txt');
+  assert.equal(call.typed.file, file);
+  const customer = customersData.loadData().customers.find((c) => c.id === 'B');
+  assert.equal(call.typed.text, `${customersData.profileText(customer).trim()}\n${r.ticket('T7').ticket_text}\n`);
+  for (const own of ['A customer ticket came in', '--- Customer profile ---', 'replay lookup']) assert.ok(!call.typed.text.includes(own), own);
+  if (process.platform !== 'win32') assert.equal(call.typed.mode, 0o600);
+  assert.ok(fs.existsSync(file), 'kept with the ticket\'s other files');
+  const off = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, argv: ['--no-tools'] });
+  assert.equal(off.calls()[0].typed, null);
+  assert.equal(fs.existsSync(path.join(off.results, 'customers', 'B', 'tickets', 'T7-typed.txt')), false);
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): each ticket's record in run.json holds tool_server, read from
+// the ticket's own audit file after its session: calls, allowed, refused (every decision that starts with refused_),
+// other, and refused_calls (tool, input as the audit keeps it, decision, reason). Wrong implementations it catches: a
+// desk that records no refusals (a blocked exfiltration attempt would leave no trace in the run); one that reads
+// another ticket's audit file; one that drops the reason.
+test('batch 12d: the desk records each ticket\'s tool server calls allowed and refused, with every refused call and its reason', async (t) => {
+  const refused = { time: 't', tool: 'net_dns', input: { name: 'ticket-text.example.net', type: 'TXT' }, decision: 'refused_out_of_scope', reason: 'ticket-text.example.net is out of scope: not listed, not typed', addresses: [], bytes: 0, duration_ms: 1 };
+  const ok = { time: 't', tool: 'net_dns', input: { name: 'pypi.org', type: 'A' }, decision: 'ok', addresses: ['151.101.1.69'], bytes: 0, duration_ms: 1 };
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, sut: { audit_entries: [ok, refused] } });
+  assert.deepEqual(r.ticket('T7').tool_server, { calls: 2, allowed: 1, refused: 1, other: 0, refused_calls: [{ tool: refused.tool, input: refused.input, decision: refused.decision, reason: refused.reason }] });
+});
+
+// Batch 12, task 13: the guard's first guess of a session's cost moves toward measured costs. On 2026-11-18 thirteen
+// demo sessions cost 0.18 to 0.84 US dollars each (docs/aegis/demo/evidence/batch12/full-run-10 and full-run-11), and
+// the old guess of 2.00 stopped T8m, T9m, T7 and T8 with money left. Wrong implementation: a guess still at 2.00 (the
+// ticket below would not run with 3.11 spent under a 5.00 limit). T2's own guess (4.00, a four-system offboarding) stays.
+test('batch 12, task 13: with 3.11 spent under a 5.00 limit, the next ticket runs (the guess is 1.00 a session)', async (t) => {
+  const r = await runDesk(t, { only: ['T8'], answers: { T8: 'Which mailbox?\nGate: none' }, argv: ['--budget-usd', '5', '--spent-usd', '3.11'] });
+  assert.deepEqual(r.run.tickets.map((k) => k.id), ['T8']);
+  assert.deepEqual(r.run.not_run || [], [], 'nothing stopped by the guard');
 });

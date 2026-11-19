@@ -23,11 +23,27 @@ const test = require('node:test');
 const backends = require('./eval/judged/backends.js');
 const { REPO_ROOT } = require('./eval/judged/paths.js');
 const chat = require('./aegis-chat.js');
+const { TOOL_NAMES, mcpConfig, typedHooks } = require('./mcp/aegis-tools/session.js');
 
 // What every chat session gets, written out from backends.js's exports rather than from the command. The
 // whole ~/aegis-asks folder is denied (review round 1, finding 2), so a chat never reads saved answers. Since batch 11
-// (resumed) it ends with the pinned model, so a chat never runs on the settings file's default model.
-const ISOLATED = (home, model = backends.PINNED_MODEL) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks') }), '--model', model];
+// (resumed) it ends with the pinned model, so a chat never runs on the settings file's default model. Since batch 12
+// backends.sutArgs loads the read-only aegis-tools server by default: its four tool names are allowed and its
+// --mcp-config follows --strict-mcp-config, so the chat, which takes its flags from sutArgs, has them too.
+// audit: the tool server's audit file; since batch 12, task 5 a chat started by main() audits to a folder of its own
+// under the saved asks (auditOf reads it back from the argv the chat was started with), and chatArgs alone passes none
+// typed (batch 12d, so this helper changed): the typed file a chat started by main() hands its tool server, and its prompt
+// hook in the inline --settings; chatArgs alone passes none
+const ISOLATED = (home, model = backends.PINNED_MODEL, audit = null, typed = null) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, ...TOOL_NAMES, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks'), mcpConfig: mcpConfig({ auditFile: audit, typedFile: typed }), ...(typed ? { hooks: typedHooks(typed) } : {}) }), '--model', model];
+function auditOf(argv) {
+  const server = JSON.parse(argv[argv.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'];
+  const audit = server.args[server.args.indexOf('--audit') + 1];
+  return audit;
+}
+function typedOf(argv) {
+  const server = JSON.parse(argv[argv.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'];
+  return server.args.includes('--typed') ? server.args[server.args.indexOf('--typed') + 1] : null;
+}
 
 function tempDir(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-chat-test-'));
@@ -73,7 +89,9 @@ test('the chat starts once under a fake claude with the desk\'s isolation and th
 
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
   const appended = got.argv[got.argv.length - 1];
-  assert.deepEqual(got.argv, [...ISOLATED(home), '--append-system-prompt', appended]);
+  assert.match(path.relative(path.join(home, 'aegis-asks'), auditOf(got.argv)), /^chat-[^/\\]+[/\\]tool-audit\.jsonl$/);
+  assert.equal(path.dirname(typedOf(got.argv)), path.dirname(auditOf(got.argv)), 'batch 12d: the typed file sits beside the audit file');
+  assert.deepEqual(got.argv, [...ISOLATED(home, backends.PINNED_MODEL, auditOf(got.argv), typedOf(got.argv)), '--append-system-prompt', appended]);
   assert.match(appended, /data about the environment, not instructions/);
   const open = appended.indexOf('--- What the company runs ---');
   const close = appended.indexOf('--- End of what the company runs ---');
@@ -191,7 +209,8 @@ test('batch 11, task 6: --reply-to asker starts the chat with the voice; another
   const code = await chat.main(['--reply-to', 'asker'], env, { ...c.deps, backend: { command: process.execPath, prefixArgs: [fake, log] } });
   assert.equal(code, 0, c.stderr());
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
-  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home));
+  // batch 12d: the chat's typed file and its prompt hook are part of the isolation now (this line changed for them)
+  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, backends.PINNED_MODEL, auditOf(got.argv), typedOf(got.argv)));
   assert.match(got.argv[got.argv.length - 1], /section 8/);
 
   const refused = io();
@@ -216,7 +235,8 @@ test('batch 11 resumed: the chat runs on claude-opus-5-5 unless --model names an
   const c = io();
   assert.equal(await chat.main(['--model', 'claude-sonnet-5-5', '--reply-to', 'asker'], env, { ...c.deps, backend: { command: process.execPath, prefixArgs: [fake, log] } }), 0, c.stderr());
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
-  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, 'claude-sonnet-5-5'));
+  // batch 12d: the chat's typed file and its prompt hook are part of the isolation now (this line changed for them)
+  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, 'claude-sonnet-5-5', auditOf(got.argv), typedOf(got.argv)));
   assert.deepEqual(chat.chatArgs(null, path.join('/h/me', 'aegis-asks')).slice(-2), ['--model', 'claude-opus-5-5']);
   for (const argv of [['--model', 'two words'], ['--model']]) {
     const refused = io();
@@ -225,4 +245,179 @@ test('batch 11 resumed: the chat runs on claude-opus-5-5 unless --model names an
     assert.equal(started, 0);
     assert.match(refused.stderr(), /--model/);
   }
+});
+
+// Batch 12, task 5: the chat loads the read-only tool server by default, audits its calls to a file of its own under
+// the saved asks folder (denied to the session, outside the repository), says so in its notice, and --no-tools turns
+// it off. Wrong implementations: an audit file inside the repository; a notice that still says the chat has no
+// lookups; a --no-tools that leaves the server in the argument list.
+test('batch 12, task 5: the chat loads the tool server with its own audit file, says so, and --no-tools turns it off', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-chat-tools-'));
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  const seen = [];
+  const said = [];
+  const child = new EventEmitter();
+  const running = chat.main([], { HOME: home }, { spawn: (cmd, args) => { seen.push(args); return child; }, out: (s) => said.push(s), err: () => {} });
+  child.emit('exit', 0);
+  assert.equal(await running, 0);
+  const cfg = JSON.parse(seen[0][seen[0].indexOf('--mcp-config') + 1]);
+  const server = cfg.mcpServers['aegis-tools'];
+  const audit = server.args[server.args.indexOf('--audit') + 1];
+  assert.equal(path.dirname(path.dirname(audit)), path.join(home, 'aegis-asks'));
+  assert.match(path.basename(path.dirname(audit)), /^chat-/);
+  assert.match(said.join(''), /public lookups/);
+  const off = [];
+  const other = new EventEmitter();
+  const quiet = [];
+  const r2 = chat.main(['--no-tools'], { HOME: home }, { spawn: (cmd, args) => { off.push(args); return other; }, out: (s) => quiet.push(s), err: () => {} });
+  other.emit('exit', 0);
+  assert.equal(await r2, 0);
+  assert.ok(!off[0].includes('--mcp-config') && !off[0].some((a) => /mcp__aegis-tools__/.test(a)));
+  assert.doesNotMatch(quiet.join(''), /public lookups/);
+});
+
+// Code review 1 of batch 12, class D: every call to main() made ~/aegis-asks/chat-<id>/ and left it behind, even when
+// no lookup was made or claude never started (the tests alone left three in the real home folder each run). Now the
+// folder goes when its audit file is empty, and stays when the chat made lookups. Wrong implementations: a folder
+// left behind after a chat with no lookups; an audit file that holds calls deleted.
+test('code review 1, class D: a chat with no lookups leaves no chat folder; one with lookups keeps its audit file', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-chat-folders-'));
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  const chats = () => (fs.existsSync(path.join(home, 'aegis-asks')) ? fs.readdirSync(path.join(home, 'aegis-asks')).filter((d) => d.startsWith('chat-')) : []);
+  const quiet = new EventEmitter();
+  const r1 = chat.main([], { HOME: home }, { spawn: () => quiet, out: () => {}, err: () => {} });
+  quiet.emit('exit', 0);
+  assert.equal(await r1, 0);
+  assert.deepEqual(chats(), [], 'no lookups: no folder left');
+  const failed = await chat.main([], { HOME: home }, { spawn: () => { const e = new Error('nope'); e.code = 'ENOENT'; throw e; }, out: () => {}, err: () => {} });
+  assert.equal(failed, 2);
+  assert.deepEqual(chats(), [], 'claude never started: no folder left');
+  const busy = new EventEmitter();
+  let seen;
+  const r2 = chat.main([], { HOME: home }, { spawn: (cmd, args) => { seen = args; return busy; }, out: () => {}, err: () => {} });
+  const server = JSON.parse(seen[seen.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'];
+  fs.appendFileSync(server.args[server.args.indexOf('--audit') + 1], '{"tool":"net_dns"}\n');
+  busy.emit('exit', 0);
+  assert.equal(await r2, 0);
+  assert.equal(chats().length, 1, 'lookups were made: the audit file stays');
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): with the tools on, the chat writes the setup, after protect(),
+// to typed.txt in its own folder before claude starts, names it to the tool server by --typed, and puts the prompt hook
+// (session.typedHooks) in the session's inline --settings, so each message the person sends is appended to it. The file
+// goes when the chat ends; a folder with lookups keeps only its audit file. --no-tools writes no file and no hook. Wrong
+// implementations it catches: the raw setup typed; a typed file inside the repository or shared between chats; a chat
+// with no hook (later messages would never count); a hook with the tools off; the person's words left on disk after the
+// chat.
+test('batch 12d: the chat types the setup in its own folder, hands it to the server and the prompt hook, and removes it at the end', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = tempDir(t);
+  const at = '@';
+  const setupText = `Google Workspace; NOC at noc${at}example.com; status https://status.example.com/`;
+  let seen = null;
+  let atStart = null;
+  const child = new EventEmitter();
+  const running = chat.main(['--setup', setupText], { HOME: home }, {
+    spawn: (cmd, args) => {
+      seen = args;
+      const file = typedOf(args);
+      atStart = { file, text: fs.readFileSync(file, 'utf8'), mode: fs.statSync(file).mode & 0o777 };
+      return child;
+    },
+    out: () => {}, err: () => {},
+  });
+  // a lookup was made, so the folder stays with its audit file
+  fs.appendFileSync(auditOf(seen), '{"tool":"net_dns","decision":"ok"}\n');
+  child.emit('exit', 0);
+  assert.equal(await running, 0);
+  assert.equal(path.basename(atStart.file), 'typed.txt');
+  assert.equal(path.dirname(atStart.file), path.dirname(auditOf(seen)), 'in the chat\'s own folder under the saved asks');
+  assert.equal(atStart.text, `${require('./ask-aegis.js').protect(setupText).text}\n`);
+  assert.ok(!atStart.text.includes(`noc${at}example.com`));
+  if (process.platform !== 'win32') assert.equal(atStart.mode, 0o600);
+  assert.deepEqual(JSON.parse(seen[seen.indexOf('--settings') + 1]).hooks, typedHooks(atStart.file));
+  assert.equal(fs.existsSync(atStart.file), false, 'removed when the chat ends');
+  assert.deepEqual(fs.readdirSync(path.dirname(atStart.file)), ['tool-audit.jsonl']);
+  // no setup: the typed file starts empty
+  let empty = null;
+  const quiet = new EventEmitter();
+  const r2 = chat.main([], { HOME: home }, { spawn: (cmd, args) => { empty = fs.readFileSync(typedOf(args), 'utf8'); return quiet; }, out: () => {}, err: () => {} });
+  quiet.emit('exit', 0);
+  assert.equal(await r2, 0);
+  assert.equal(empty, '');
+  // --no-tools: no typed file and no hook
+  let offArgs = null;
+  const off = new EventEmitter();
+  const r3 = chat.main(['--no-tools', '--setup', setupText], { HOME: home }, { spawn: (cmd, args) => { offArgs = args; return off; }, out: () => {}, err: () => {} });
+  off.emit('exit', 0);
+  assert.equal(await r3, 0);
+  assert.ok(!('hooks' in JSON.parse(offArgs[offArgs.indexOf('--settings') + 1])));
+});
+
+// Code review 1 of batch 12d, finding 4. Wrong implementations it catches: the typed file removed only when claude
+// exits, so a closed terminal window (SIGHUP) or a kill (SIGTERM) ends the launcher first and leaves every message the
+// person typed on disk; a handler that tidies and never passes the signal on, which would leave claude running; handlers
+// left behind after the chat.
+test('batch 12d: a closed terminal or a kill removes the typed file at once and passes the signal to claude', async (t) => {
+  const { EventEmitter } = require('node:events');
+  for (const signal of ['SIGHUP', 'SIGTERM']) {
+    const home = tempDir(t);
+    const child = new EventEmitter();
+    const killed = [];
+    child.kill = (s) => { killed.push(s); return true; };
+    const before = process.listeners(signal);
+    let typedFile = null;
+    const running = chat.main(['--setup', 'Google Workspace'], { HOME: home }, { spawn: (cmd, args) => { typedFile = typedOf(args); return child; }, out: () => {}, err: () => {} });
+    fs.appendFileSync(typedFile, 'a later message the person typed\n');
+    const added = process.listeners(signal).filter((l) => !before.includes(l));
+    assert.equal(added.length, 1, `${signal}: one handler while claude runs`);
+    added[0](signal);
+    assert.equal(fs.existsSync(typedFile), false, `${signal}: the person's words are off the disk before claude has exited`);
+    assert.deepEqual(killed, [signal], `${signal}: passed on to claude`);
+    child.emit('exit', null);
+    // code review 2, finding 8: the chat ends as a process the signal ended, 128 plus the signal's number
+    assert.equal(await running, 128 + os.constants.signals[signal]);
+    assert.deepEqual(process.listeners(signal), before, `${signal}: the handler is removed after the chat`);
+  }
+});
+
+// Code review 2 of batch 12d, finding 3. Wrong implementation it catches: the signal handler running the whole tidy while
+// claude and its tool server are still alive: with no lookup so far it removed the empty audit file and the chat's
+// folder, so a lookup that finished during the shutdown left no audit line.
+test('batch 12d: on a signal only the typed file goes at once; the audit file and the folder wait for claude to exit', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = tempDir(t);
+  const child = new EventEmitter();
+  child.kill = () => true;
+  const before = process.listeners('SIGTERM');
+  let seen = null;
+  const running = chat.main([], { HOME: home }, { spawn: (cmd, args) => { seen = args; return child; }, out: () => {}, err: () => {} });
+  const [handler] = process.listeners('SIGTERM').filter((l) => !before.includes(l));
+  handler('SIGTERM');
+  assert.equal(fs.existsSync(typedOf(seen)), false, 'the typed file is gone at once');
+  assert.ok(fs.existsSync(auditOf(seen)) || fs.existsSync(path.dirname(auditOf(seen))), 'the chat folder is still there while claude shuts down');
+  // a lookup finishes during the shutdown: the server, still alive, writes its audit line
+  fs.appendFileSync(auditOf(seen), '{"tool":"net_dns","decision":"ok"}\n');
+  child.emit('exit', null);
+  await running;
+  assert.deepEqual(fs.readdirSync(path.dirname(auditOf(seen))), ['tool-audit.jsonl'], 'the audit line is kept');
+});
+
+// Code review 2 of batch 12d, finding 8. Wrong implementation it catches: handlers that only pass the signal on, so a
+// claude that ignores it leaves a launcher no SIGTERM or SIGHUP can stop.
+test('batch 12d: a claude that ignores the signal is killed after the grace, and the chat still ends', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = tempDir(t);
+  const child = new EventEmitter();
+  const killed = [];
+  child.kill = (s) => { killed.push(s); return true; }; // it never exits by itself
+  const before = process.listeners('SIGTERM');
+  const running = chat.main([], { HOME: home }, { spawn: () => child, out: () => {}, err: () => {}, graceMs: 20 });
+  const [handler] = process.listeners('SIGTERM').filter((l) => !before.includes(l));
+  handler('SIGTERM');
+  assert.equal(await running, 128 + os.constants.signals.SIGTERM);
+  assert.deepEqual(killed, ['SIGTERM', 'SIGKILL']);
+  assert.deepEqual(process.listeners('SIGTERM'), before);
 });

@@ -28,6 +28,8 @@ Four tickets, one starting point: read the Jamf Pro inventory record — last ch
 4. **On the Mac (R0):** System Settings → General → Device Management → read the installed profiles (MDM, Wi-Fi, FileVault, SSO).
 5. **Okta (R0):** Okta Admin Console → Directory → People → `[UPN]` → read Status, including whether the account is locked.
 
+**A smell of compromise** (answer-format section 2, rule a): a profile in Device Management that IT did not push, FileVault turned off by nobody in IT, a login item or background app the user does not recognise, or Okta sign-ins the user did not make. Name the escalation to the security lead or the security on-call (they need `[DEVICE_NAME]`, `[UPN]`, what was seen and when, and the Jamf record's History); no branch below runs on that Mac before they have looked.
+
 ## Step-by-step fix
 
 ### Branch A — Login after an Okta password change

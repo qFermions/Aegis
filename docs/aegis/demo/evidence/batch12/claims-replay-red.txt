@@ -1,0 +1,50 @@
+✔ each judgment rule: two fixture pairs on two platforms, the pass answer passes and the fail answer fails (24.66325ms)
+✔ rule e in the judged runner: fix-card-fits fails a card over 150 words and passes one within (1.563833ms)
+✔ rule a applies on a smell and only on a smell (1.583875ms)
+✔ rule a needs who and what they need, not the word security alone (0.171333ms)
+✔ rule b applies to new access only, and asks for an end date only when the access is temporary (0.108916ms)
+✔ rule c: not an account recovery, and a secret needs a revoke before any cleanup (0.13525ms)
+✔ rule d: evidence given means the answer may proceed; advice before the question fails (0.118459ms)
+✔ the mode row: first line names the mode, and the answer holds that mode's parts within its budget (1.75525ms)
+✔ claims of a check match the reading record, or are about what the asker sent (1.612667ms)
+✔ a fetched page is cited with its date, and only a page the record holds is called fetched (0.210708ms)
+✔ the asker reply: no stock opening, claims need calls, and a reply to a reporter for someone else passes (8.520667ms)
+✖ claims: a checklist item, a "Done when" condition and the noun read-back are not claims; a plain claim still is (0.536667ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 11
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 88.238208
+
+✖ failing tests:
+
+test at scripts/demo/expert-rules.test.js:180:1
+✖ claims: a checklist item, a "Done when" condition and the noun read-back are not claims; a plain claim still is (0.536667ms)
+  AssertionError [ERR_ASSERTION]: - [ ] Aegis has confirmed the reset event in the Admin log
+  + actual - expected
+  
+  + [
+  +   {
+  +     kinds: [],
+  +     sentence: '- [ ] Aegis has confirmed the reset event in the Admin log'
+  +   }
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<home>/Code/Aegis/scripts/demo/expert-rules.test.js:182:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { sentence: '- [ ] Aegis has confirmed the reset event in the Admin log', kinds: [] } ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

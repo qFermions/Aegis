@@ -1,0 +1,7 @@
+staged for commit "red-cr2-5-stale-files" on feat/batch12-expert-lanes at parent 8e655ec9:
+A	docs/aegis/demo/evidence/batch12d/cr2-stale-files-red.txt
+M	scripts/eval/judged/cli.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

@@ -1,0 +1,13 @@
+R1 scan of the batch: the added lines of git diff 046cdde (every commit up to a597b593 plus the working-tree changes committed with this file), and the batch's commit messages. Run 2026-11-18.
+added lines: 79425
+em dashes in added lines: 79425
+em dashes in commit messages 046cdde..HEAD: 0
+home paths (/Users/ case-sensitive): 0
+owner name or account: 0
+email shapes, by domain:
+   3 example.com
+   4 example.net
+   3 example.org
+registrable domains named, with counts:
+example.com 201; microsoft.com 173; google.com 157; example.net 135; github.com 98; amazon.com 78; example.org 75; slack.com 66; githubusercontent.com 59; slack.dev 57; jamf.com 52; linear.app 40; hashicorp.com 32; kubernetes.io 31; meraki.com 28; cloudflare.com 27; okta.com 26; rfc-editor.org 24; git-scm.com 17; nodejs.org 16; npmjs.com 15; mitre.org 14; azure.com 14; pypa.io 12; fleetdm.com 12; apple.com 12; python.org 10; docker.com 10; zscaler.com 9; badssl.com 9; meraki.net 8; ietf.org 8; gserviceaccount.com 8; pypi.org 6; githubstatus.com 6; first.org 6; cloudflarestatus.com 6; claude.ai 6; slack-status.com 5; microsoftonline.com 4; googleapis.com 4; zoom.us 3; windows.net 3; wireguard.com 2; openssl.org 2; office365.com 2; nexample.com 2; urlscan.io 1; slack-edge.com 1; s.io 1; on.io 1; off.io 1; neverssl.com 1; ipify.org 1; dry.io 1; docs.cloud 1; amazonaws.com 1; 
+Read by hand: example, test and reserved names (example.com, example.net, example.org, badssl.com, neverssl.com; nexample.com is example.com after an escaped newline); vendor documentation, status and package hosts (microsoft.com, google.com, github.com, amazon.com, slack.com, slack.dev, jamf.com, linear.app, hashicorp.com, kubernetes.io, meraki.com, cloudflare.com, okta.com, pypi.org and the rest); standards bodies (rfc-editor.org, ietf.org, mitre.org, first.org); claude.ai is the installer line in README.md. Public services named only in the model's saved answers in judged-dev-run/results.json: ipify.org, urlscan.io, slack-edge.com, office365.com, windows.net, kept as captured output. corp.com is the tail of hashicorp.com. No employer, customer or person domain.

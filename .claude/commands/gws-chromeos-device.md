@@ -16,6 +16,7 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Four device actions live on the same Admin console page and they are **not interchangeable**: **Disable** is reversible (Re-enable); **Reset** — Clear User Profiles or Factory Reset (the powerwash) — removes data and, in Google's own dialog wording, cannot be undone; **Deprovision** takes the device out of management, and it only comes back by wiping it and enrolling it by hand.
 - Every state change has its own exact-phrase gate; a phrase never carries into another phase and "yes" is never a confirmation. Reset and Deprovision are R3 — a deprovision for resale or donation goes through the independent out-of-session review first.
 - Not done until the status read-back in the final checklist passes.
+- **Lost or stolen, holding company data or a signed-in session** (answer-format section 2, rule a): Phase C's disable is the first move, and the escalation goes to the security lead or the security on-call with it (they need the device's serial or asset id, the user, when it was lost, its last sync time, and the user's sign-ins since). Anything beyond the disable waits for their call, and nobody calls the loss harmless before they have looked.
 
 ## Inputs needed
 

@@ -1,0 +1,19 @@
+staged for commit "judged-dev-run" on feat/batch12-expert-lanes at parent 92ec485d:
+A	docs/aegis/demo/evidence/batch12d/card-words-after.txt
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/audit/DEV07-tool-audit.jsonl
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/audit/DEV13-tool-audit.jsonl
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/audit/DEV18-tool-audit.jsonl
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/audit/DEV19-tool-audit.jsonl
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/audit/INF10-tool-audit.jsonl
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/audit/NET02-tool-audit.jsonl
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/audit/NET05-tool-audit.jsonl
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/audit/SWE06-tool-audit.jsonl
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/results.json
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/side-by-side.md
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/summary.md
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/terminal-part1.txt
+A	docs/aegis/demo/evidence/batch12d/judged-dev-run/terminal-part2.txt
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

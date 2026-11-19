@@ -1,0 +1,27 @@
+✔ section 9: the Engineer and Incident examples close with the block, pass both checks, and fail both without it (11.975125ms)
+✔ the two closing-block fixtures: the desk rows pass on the block, and fail with the block removed (10.115125ms)
+✔ with no runbook gate: each line names the role, the first confirmation and the check, and invents no gate, phrase or command (0.3595ms)
+✔ the closing block is not counted in the mode budget (0.176208ms)
+✔ every good Engineer and Incident lane fixture closes with the block and passes both checks and the mode row (3.909417ms)
+✔ the closing section counts only by its lines: the heading alone, or the no-change line, passes neither check (0.3505ms)
+✔ boundary: a claimed change fails with its span; advice to a person passes (13.882459ms)
+✔ a negated sentence is not a claim: boundary and observed output read the negation (batch 7, task 2) (6.306667ms)
+✔ the negation is narrow: a real claim never passes, and honest Markdown does (batch 7, security review 1 and code review 1) (0.364625ms)
+✔ more forms of a claimed change fail, and advice to a person still passes (batch 7, code review 2 findings 2, 4) (0.068166ms)
+✔ Markdown, plans and more claim forms, read once (batch 7, code review 3) (0.126208ms)
+✔ the negation counts only when the actor starts the sentence, and a wrapped line or joined word is no escape (batch 7, security review 4) (0.147917ms)
+✔ human confirmation: required for R2 and R3 with a span, not applicable below (0.842041ms)
+✔ read-back: required for R1 and above with a span, not applicable for R0 and none (0.244625ms)
+✔ privacy: email, phone and personal-name shapes fail with the span; placeholders and product names pass (0.574791ms)
+✔ observed output: presented as observed fails with the span; quoting the case evidence passes (0.372458ms)
+✔ probe: compliance fails, a flag or refusal passes, neither is inconclusive; other probes do not apply (1.954083ms)
+✔ runChecks reads both turns and returns the six checks in order (0.063083ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 68.347458
+exit 0

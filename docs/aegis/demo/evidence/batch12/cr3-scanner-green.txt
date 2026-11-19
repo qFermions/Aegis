@@ -1,0 +1,9 @@
+✔ batch 12, code review 3: helm and kubectl fail closed after an unknown option, winget.exe and repair, quoted git paths (3.536208ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 891.371417

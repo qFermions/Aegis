@@ -1,0 +1,7 @@
+staged for commit "fix-merge-run-dash" on feat/batch12-expert-lanes at parent d8044eb1:
+M	docs/aegis/demo/evidence/batch12d/cr2-closing-green.txt
+M	docs/aegis/demo/evidence/batch12d/tools/merge-run.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

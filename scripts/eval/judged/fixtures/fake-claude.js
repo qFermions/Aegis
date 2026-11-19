@@ -23,8 +23,10 @@
 //                each becomes a tool_use event and its tool_result before the answer, on every turn. parent
 //                marks a call made inside a subagent, error a refused or failed call, and a call with match
 //                is sent only when the prompt holds that text (batch 11, task 7)
+//   audit_entries  SUT: audit lines (objects) appended to the --audit file named in --mcp-config (batch 12d)
 // With "log" set, every call appends one JSON line: role, cwd, argument count, the
-// prompt, whether --resume was given, and the sorted NAMES (never values) of its environment.
+// prompt, whether --resume was given, the sorted NAMES (never values) of its environment, and typed: what the
+// tool server's --typed file held at the start (batch 12d).
 
 const crypto = require('node:crypto');
 const fs = require('node:fs');
@@ -50,10 +52,32 @@ const valueAfter = (flag) => { const i = args.indexOf(flag); return i === -1 ? n
 const prompt = valueAfter('-p') || '';
 const resume = valueAfter('--resume');
 
+// batch 12d: what the tool server's --typed file held when the session started, and its mode, so a test can see what
+// the launcher handed over before the session ran; null when no --typed file is named
+let typed = null;
+if (role === 'sut' && args.includes('--mcp-config')) {
+  try {
+    const server = JSON.parse(valueAfter('--mcp-config')).mcpServers['aegis-tools'];
+    const at = server.args.indexOf('--typed');
+    if (at >= 0) typed = { file: server.args[at + 1], text: fs.readFileSync(server.args[at + 1], 'utf8'), mode: fs.statSync(server.args[at + 1]).mode & 0o777 };
+  } catch (e) { typed = { error: e.code || 'error' }; }
+}
+
 let previousJudgeCalls = 0;
 if (config.log) {
   if (fs.existsSync(config.log)) previousJudgeCalls = fs.readFileSync(config.log, 'utf8').split('\n').filter((l) => l.includes('"role":"judge"')).length;
-  fs.appendFileSync(config.log, `${JSON.stringify({ role, cwd: process.cwd(), argc: args.length, args: args.filter((a) => a !== prompt), prompt, resume: resume !== null, env: Object.keys(process.env).sort() })}\n`);
+  fs.appendFileSync(config.log, `${JSON.stringify({ role, cwd: process.cwd(), argc: args.length, args: args.filter((a) => a !== prompt), prompt, resume: resume !== null, env: Object.keys(process.env).sort(), typed })}\n`);
+}
+
+// Like the real aegis-tools server, which opens its --audit file (create, append) when the session starts: the file
+// exists, empty, even when no tool is called; audit_lines writes that many call lines into it (code review 1 of batch 12).
+if (role === 'sut' && args.includes('--mcp-config')) {
+  try {
+    const server = JSON.parse(valueAfter('--mcp-config')).mcpServers['aegis-tools'];
+    const at = server.args.indexOf('--audit');
+    // audit_entries (batch 12d): whole audit lines, as the server writes them, after the audit_lines
+    if (at >= 0) fs.appendFileSync(server.args[at + 1], '{"tool":"net_dns","decision":"ok"}\n'.repeat(settings.audit_lines || 0) + (settings.audit_entries || []).map((e) => `${JSON.stringify(e)}\n`).join(''), { mode: 0o600 });
+  } catch { /* no audit file named: the server would audit to stderr */ }
 }
 
 const sessionId = resume || crypto.randomUUID();
@@ -86,7 +110,8 @@ function answer() {
     process.stdout.write('this is not stream-json\n{"broken": \n');
     return;
   }
-  emit({ type: 'system', subtype: 'init', session_id: sessionId, model, cwd: process.cwd(), tools: [] });
+  // init_tools: the tool names the init event lists (batch 12); an --mcp-config makes the server show as connected
+  emit({ type: 'system', subtype: 'init', session_id: sessionId, model, cwd: process.cwd(), tools: settings.init_tools || [], mcp_servers: args.includes('--mcp-config') ? [{ name: 'aegis-tools', status: 'connected' }] : [] });
   (role === 'sut' ? settings.tool_calls || [] : []).filter((c) => !c.match || prompt.includes(c.match)).forEach((c, i) => {
     const id = `toolu_fake_${i + 1}`;
     const parent = c.parent ? 'toolu_fake_parent' : null;

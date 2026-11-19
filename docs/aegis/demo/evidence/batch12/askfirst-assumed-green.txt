@@ -1,0 +1,20 @@
+✔ task 2: three answers that must carry the line: no setup given and a ticket that names no system (2.345375ms)
+✔ task 2: the line counts only directly under the heading, with the systems and the words that no profile was given (0.335041ms)
+✔ task 2: three answers that must not carry the line: a setup was given (1.209584ms)
+✔ task 2: with a Google or Okta setup given, a Microsoft admin path in the answer fails the row (0.261042ms)
+✔ task 2: a setup that lacks the system the ticket is about: the line names the missing system (0.607666ms)
+✔ task 2: no setup given and a ticket that names its system: the line is not required (0.045084ms)
+✔ task 2: the line is not counted in the card's words, and the card still reads its six parts (5.990208ms)
+✔ code review 1: a system the setup says the company does not run is not listed by it (0.310709ms)
+✔ code review 2: a negation takes out only the systems it governs, in the setup and in the Assumed setup line (0.614208ms)
+✔ code review 3: a negation stops at a comma unless its list goes on; "is not used" needs a system as its subject; curly apostrophes count (0.419166ms)
+✔ task 4 (batch 12): the line invites the setup and sits after the mode line outside a card (0.39ms)
+✔ an ask-first answer to a bare ticket is not held to the Assumed setup line (3.408875ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53.464208

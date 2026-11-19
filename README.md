@@ -30,6 +30,17 @@ You paste an IT ticket in plain words. Aegis gives you two things back:
 
 When a ticket says too little ("Calendar is broken"), Aegis asks one question first instead of guessing.
 
+Beyond the helpdesk, Aegis works four expert lanes. For an engineering question it gives an **Engineer answer** (what the evidence shows, the likely causes ranked with a test for each, the fix written out, how to undo it); for a security report it gives an **Incident answer** (how serious, what to contain first and who decides, what evidence to keep, who to call). Each lane is labeled with its status in the [capability map](docs/aegis/capability-map.md):
+
+| Lane | What it covers | Status |
+|---|---|---|
+| 🛡️ Security and incident response | account takeover, leaked keys, phishing and payment fraud, ransomware first hour, risky app grants, vulnerability triage | implemented but unverified (rows 84 to 100) |
+| 🌐 Networking | DNS, certificates, VPN and zero-trust blocks, MTU, firewall rules, Wi-Fi at scale | implemented but unverified (rows 101 to 109) |
+| ☁️ Infrastructure and cloud | AWS, Azure and Google Cloud access and networks, Terraform plans, Kubernetes, Linux servers, backups, cost spikes | implemented but unverified (rows 18, 19, 110 to 114) |
+| 🧑‍💻 Software engineering | stack traces, CI failures, dependencies, code review, safe scripts, git recovery | implemented but unverified (rows 115 to 131) |
+
+"Implemented but unverified" means the runbooks exist and their safety gates are tested, but no one outside the build has yet scored Aegis's answers in that lane. Aegis can also look up current vendor documentation and public DNS, web and certificate records; it never reaches inside your network, and it never changes anything.
+
 > [!NOTE]
 > **Aegis is early.** Its answers are being scored on IT tickets it has never seen. Until that score passes, use Aegis as a second opinion and check every step before you do it.
 
@@ -131,36 +142,61 @@ cd ~/Aegis
 
 ### Ask your first ticket
 
-Same on Mac and Windows. Every Aegis command runs from inside the Aegis folder, so go there first:
+**5. Open the Aegis folder.** It is in your home folder. On a Mac, open Finder and press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>. On Windows, open File Explorer, type `%USERPROFILE%` in the address bar and press <kbd>Enter</kbd>.
+
+**6. Double-click Start Aegis.** On a Mac it is `Start Aegis.command`; on Windows it is `Start Aegis.cmd`. A window opens.
+
+- 🍎 The first time, your Mac may ask you to confirm. If it says it can't open the file, right-click it and choose **Open**.
+- 🪟 Windows may say "Windows protected your PC". Click **More info**, then **Run anyway**.
+
+**7. Answer the one question**, "What does your company run?", in plain words. For example: `Google Workspace, Okta, Slack, GitHub, AWS and Macs with Jamf`. Or press <kbd>Enter</kbd> to skip, and Aegis says what it assumed. Aegis keeps your answer in a folder called `.aegis` in your home folder. Next time it shows your answer: press <kbd>Enter</kbd> to keep it, or type `change` or `clear`.
+
+**8. Type your ticket** and press <kbd>Enter</kbd>. For example:
+
+> Since this morning nobody on the sales team can sign in to Slack through Okta.
+
+After 30 to 60 seconds you get the **Fix card** for the tech. Ask follow-up questions in the same window. Type `/exit` when you're done.
+
+**Coming back another day?** Double-click **Start Aegis** again. To get the latest version of Aegis, use the terminal steps below.
+
+### Before you paste a real ticket
+
+- 🔒 Your ticket goes to Claude under your own account. Check that your company allows AI on ticket data.
+- ✂️ Leave out names, server names and anything secret. Aegis turns email addresses and phone numbers into placeholders, and it refuses a ticket that holds a password. Other secrets are not caught.
+- 🧠 Check every step before you do it. Aegis gives advice; you make the changes.
+
+### Advanced: run Aegis from the terminal
+
+Start Aegis runs the chat below for you. These commands do the same from a terminal, and a little more. Every Aegis command runs from inside the Aegis folder, so go there first:
 
 ```bash
 cd ~/Aegis
 ```
 
-**5. Ask about a ticket.** Put the ticket inside the quotes:
+**1. Ask about one ticket.** Put the ticket inside the quotes:
 
 ```bash
-node scripts/ask-aegis.js "Outlook keeps asking for my password"
+node scripts/ask-aegis.js "Okta keeps asking me to sign in again"
 ```
 
 After 30 to 60 seconds you get the **Fix card** for the tech. The whole answer is saved in a folder called `aegis-asks` in your home folder.
 
-**6. Tell Aegis what your company runs.** Add `--setup` and your systems in plain words. Without it, Aegis assumes the example company described in `CLAUDE.md`.
+**2. Tell Aegis what your company runs.** Add `--setup` and your systems in plain words. Without it, Aegis assumes the example company described in `CLAUDE.md`.
 
 ```bash
-node scripts/ask-aegis.js "Outlook keeps asking for my password" --setup "Microsoft 365"
+node scripts/ask-aegis.js "Okta keeps asking me to sign in again" --setup "Okta, Slack"
 ```
 
-**7. Get the reply for the person who asked.** Add `--reply-to asker`. Aegis prints only that reply and saves the full tech answer next to it. Aegis sends nothing; you read it and send it yourself.
+**3. Get the reply for the person who asked.** Add `--reply-to asker`. Aegis prints only that reply and saves the full tech answer next to it. Aegis sends nothing; you read it and send it yourself.
 
 ```bash
-node scripts/ask-aegis.js "Nobody at our second office can open Teams" --reply-to asker
+node scripts/ask-aegis.js "Nobody at our second office can open Slack" --reply-to asker
 ```
 
-**8. Or go back and forth in a chat.** Type `/exit` when you're done.
+**4. Or go back and forth in a chat.** Type `/exit` when you're done.
 
 ```bash
-node scripts/aegis-chat.js --setup "Google Workspace, Okta, Macs with Jamf"
+node scripts/aegis-chat.js --setup "Google Workspace, Okta, Slack, GitHub, AWS"
 ```
 
 > [!IMPORTANT]
@@ -173,22 +209,17 @@ cd ~/Aegis
 git pull
 ```
 
-### Before you paste a real ticket
-
-- 🔒 Your ticket goes to Claude under your own account. Check that your company allows AI on ticket data.
-- ✂️ Leave out names, server names and anything secret. Aegis turns email addresses and phone numbers into placeholders, and it refuses a ticket that holds a password. Other secrets are not caught.
-- 🧠 Check every step before you do it. Aegis gives advice; you make the changes.
-
 ## 🧯 Troubleshooting
 
 | What you see | What to do |
 |---|---|
 | `claude: command not found`, or "not recognized" | Close the terminal and open it again. Still missing? Follow Claude Code's [Fix your PATH](https://code.claude.com/docs/en/troubleshoot-install.md#command-not-found-claude-after-installation) guide. |
 | `The token '&&' is not a valid statement separator` | You're in PowerShell, so use the Windows steps. |
-| `node: command not found` | Install Node.js (step 3 on Mac, step 2 on Windows), then reopen the terminal. |
+| `node: command not found`, or "Aegis needs Node.js" | Install Node.js (step 3 on Mac, step 2 on Windows), then reopen the terminal or double-click Start Aegis again. |
+| The Start Aegis window opens and closes at once | Start it from the terminal to see why: type `cd ~/Aegis`, then `node scripts/start-aegis.js`. |
 | `cd: no such file or directory: Aegis`, or `Cannot find module ... ask-aegis.js` | You're not in the Aegis folder. Type `cd ~/Aegis`. If you downloaded it somewhere else, `cd` into that folder instead. |
 | `the Aegis session did not finish ... Is Claude Code installed?` | Run `claude` once and sign in, then ask again. On Windows, reinstall Claude Code with the PowerShell installer, not npm. |
-| `the text holds a value Aegis never keeps` | Your ticket has a password, token or key in it. Take it out and ask again. |
+| `the text holds a value Aegis never keeps` | Your ticket, or your answer to Start Aegis's question, has a password, token or key in it. Take it out and try again. |
 | Aegis asks one question instead of giving steps | The ticket didn't say enough. Add what happens, who it affects and since when, then ask again. |
 | With `--reply-to asker`, it ends with "did not pass its check" | The reply is still printed. Read the reasons and fix the reply before you send it. |
 
@@ -198,7 +229,7 @@ git pull
 <img src="docs/assets/aegis-flow.svg" width="880" alt="Five steps: a ticket in plain words; Aegis reads its runbooks and read-only checks; two answers, a Fix card for the tech and a reply for the person who asked; a person makes the change; Aegis checks it really worked.">
 </div>
 
-1. **It reads before it guesses.** Aegis works from 108 written runbooks for Microsoft 365, Entra, Intune, Exchange, Google Workspace, Okta, Jamf, macOS, Fleet, Slack, Linear, GitHub and more. Where a read-only check could show the failing event (a sign-in log, an audit log, a device's status), the first step tells you what to look for.
+1. **It reads before it guesses.** Aegis works from 133 written runbooks for Microsoft 365, Entra, Intune, Exchange, Google Workspace, Okta, Jamf, macOS, Fleet, Slack, Linear, GitHub and more. Where a read-only check could show the failing event (a sign-in log, an audit log, a device's status), the first step tells you what to look for.
 2. **It thinks like a senior tech.** It asks what changed recently, tries the lightest fix that can be undone before anything that can't, and gives a new way in before removing the old one.
 3. **A person makes the change.** Aegis cannot change accounts, devices, mail or tickets. Every change is a step you run, behind a typed confirmation for the risky ones.
 4. **It proves the fix worked.** After you make a change, Aegis names the read-back that shows it really took effect. Its rules forbid calling anything fixed before that check passes.
@@ -293,11 +324,14 @@ What a script cannot prove (that the answer leads with the most useful action, f
 ```
 CLAUDE.md                  # the harness contract: rules and orchestration
 PRODUCT_CONTRACT.md        # advice only: what Aegis may never do
+Start Aegis.command        # double-click to start Aegis on a Mac
+Start Aegis.cmd            # double-click to start Aegis on Windows
 modules/security/          # security doctrine, placeholders, threat model
 .claude/commands/          # 108 runbooks: Microsoft 365, Entra, Intune, Exchange,
                            # Google Workspace, Okta, Jamf, macOS, Fleet, Slack,
                            # Linear, GitHub, Meraki, VoIP
 scripts/
+├── start-aegis.js         # what Start Aegis runs: one question, then the chat
 ├── ask-aegis.js           # ask one ticket (sealed, read-only)
 ├── aegis-chat.js          # chat about tickets (sealed, read-only)
 ├── adapters/              # read-only connectors and verify-* read-backs
@@ -320,7 +354,7 @@ Built from real support workflows at a multi-site nonprofit (hybrid AD, Microsof
 
 <br>
 
-1. The quickest way: pass `--setup "what your company runs"` to `ask-aegis.js` or `aegis-chat.js`. It replaces the example company in `CLAUDE.md` for that ask.
+1. The quickest way: answer Start Aegis's one question, or pass `--setup "what your company runs"` to `ask-aegis.js` or `aegis-chat.js`. It replaces the example company in `CLAUDE.md` for that ask.
 2. Keep committed files placeholder-only. Don't replace `[@Aegion_*]` tokens with real values in tracked files.
 3. Real values live in environment variables (see `.env.example`) or git-ignored local files.
 4. Install the pre-commit scanner before you start editing:

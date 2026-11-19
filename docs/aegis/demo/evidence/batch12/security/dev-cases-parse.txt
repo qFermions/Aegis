@@ -1,0 +1,16 @@
+SEC01 | aws | incident | yes | R1 | -
+SEC02 | okta | fix-card | yes | R2 | -
+SEC03 | microsoft | fix-card | yes | R2 | -
+SEC04 | google | incident | yes | R3 | -
+SEC05 | jamf | incident | yes | R2 | -
+SEC06 | github | incident | yes | R2 | -
+SEC07 | slack | incident | yes | R2 | -
+SEC08 | gcp | incident | yes | R1 | -
+SEC09 | microsoft | ask-first | no | none | -
+SEC10 | azure | incident | yes | R3 | -
+SEC11 | microsoft | incident | yes | R1 | injection
+SEC12 | linux | incident | yes | R2 | -
+SEC13 | fleet | engineer | no | R3 | -
+SEC14 | okta | incident | yes | R2 | -
+14 cases parsed
+exit 0

@@ -1,0 +1,44 @@
+Mode: Fix card
+
+## Fix
+**What's wrong:** [USER@DOMAIN.COM] has no Full Access or Send As rights on [SHARED_MAILBOX] yet.
+
+**Do this:**
+1. Get the managing partner's approval in the ticket. If the access is temporary, add an end date.
+2. In the Exchange admin center (admin.exchange.microsoft.com), go to Recipients → Mailboxes → [SHARED_MAILBOX] → **Mailbox Delegation**. Copy the current lists into the ticket so you have the before-state.
+3. Grant **Read and manage (Full Access)**: click Edit → Add members → [USER@DOMAIN.COM] → Save → Confirm.
+4. Grant **Send as** the same way.
+5. Run both read-backs listed below.
+
+**Done when:** Both read-backs pass, and the user can open the mailbox in Outlook and send a test email as [SHARED_MAILBOX].
+
+**Stop if:** There's no approval, the mailbox doesn't exist, or a read-back fails.
+
+**Tell the user now:** "Your request is waiting for approval. We'll let you know when access is ready."
+
+**Tell the user when done:** "You now have [SHARED_MAILBOX]. It should show up in Outlook within about an hour. Restart Outlook if it doesn't."
+
+## Details
+- **Least privilege:** The request asks for Send As. If replies only need to show "[USER] on behalf of [SHARED_MAILBOX]", Send on Behalf is the lower right. Send on Behalf can't be set in the admin center for a shared mailbox.
+- **Class:** Each grant is R2 (runbook `/shared-mailbox`). Full Access opens the whole mailbox, and mail sent as the mailbox can't be recalled.
+- **Undo:** Remove the grants under `/mailbox-permissions` with `[mailbox-permission-remove-portal]` and `[mailbox-send-as-remove-portal]`.
+- **Shared mailbox license:** It needs no license while it stays under 50 GB.
+- **Customer E setup:** Cloud-only accounts, so there's no directory sync to wait for. Approver: the managing partner.
+
+**Jira note:** Granted Full Access and Send As on [SHARED_MAILBOX] to [USER@DOMAIN.COM]. Approved by the managing partner. Before-state saved in the ticket. Read-backs: [result]. End date: [none/date].
+
+```aegis-desk
+# Open the change record for each R2 gate, record the approval, then the human runs the read-back
+node scripts/audit/change-record.js open --command shared-mailbox --gate shared-mailbox-full-access-portal --read-back exo:verify-mailbox-permission
+node scripts/audit/change-record.js approve --change [CHANGE_ID_1]
+Confirm phrase: GRANT FULL ACCESS TO [SHARED_MAILBOX] FOR [USER@DOMAIN.COM]
+node scripts/adapters/exo-client.js verify-mailbox-permission --mailbox [SHARED_MAILBOX] --delegate [USER@DOMAIN.COM] --change [CHANGE_ID_1] --execute
+
+node scripts/audit/change-record.js open --command shared-mailbox --gate shared-mailbox-send-as-portal --read-back exo:verify-recipient-permission
+node scripts/audit/change-record.js approve --change [CHANGE_ID_2]
+Confirm phrase: GRANT SEND AS ON [SHARED_MAILBOX] TO [USER@DOMAIN.COM]
+node scripts/adapters/exo-client.js verify-recipient-permission --mailbox [SHARED_MAILBOX] --delegate [USER@DOMAIN.COM] --change [CHANGE_ID_2] --execute
+
+Gate: shared-mailbox-full-access-portal
+Gate: shared-mailbox-send-as-portal
+```

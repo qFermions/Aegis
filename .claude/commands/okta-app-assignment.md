@@ -21,6 +21,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Every state change below has its own exact-phrase gate. A phrase never carries into a later phase; "yes" is never a confirmation.
 - Every change phase ends with a read-only connector read-back (`scripts/adapters/okta-client.js`: GET only, it cannot change anything in Okta). It proves a change only against the Phase A pre-state: a person who already had the app passes `verify-app-assigned` with nothing changed.
 - Not done until every read-back in the final checklist passes.
+- **Least privilege** (answer-format section 2, rule b): the app's lowest role or profile that does the job, given through the team's group (Phase C) when more than one person needs it, not one person at a time and not a copy of a colleague's apps. The app's owner (the business or data owner of the app) approves, named in the ticket. Temporary access gets an end date in the ticket, and Phase D (or the group removal in `/okta-group-membership`) takes it away on that date.
+- **A smell of compromise** (rule a): an assignment nobody approved, one made by an admin account whose owner did not make it, or a new app integration with broad access that nobody asked for. Name the escalation to the security lead or the security on-call (they need the app, who holds it, when and by which admin it was assigned, and the System Log entries); nobody calls it harmless before they have looked.
 
 ## Inputs needed
 

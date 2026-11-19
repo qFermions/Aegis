@@ -1,0 +1,9 @@
+✔ code review 1, class G: two or three Options, and an answer with both Hypotheses and Options is told so (1.347ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35.440458

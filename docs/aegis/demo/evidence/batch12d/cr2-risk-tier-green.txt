@@ -1,0 +1,42 @@
+✔ relative Markdown file links resolve inside the repository (92.834792ms)
+✔ PowerShell casts and invocations inside fenced code are not parsed as Markdown links (0.107834ms)
+✔ A: a docs-only change is tier A and lists no path (139.327834ms)
+✔ B: evaluation code is tier B and only the B paths are listed (122.94425ms)
+✔ C: a CI workflow change is tier C (132.120417ms)
+✔ C: the checklist command runner modules/automation/scripts/deploy-check.js is tier C, not modules/** B (122.7115ms)
+✔ C: scripts/init-memory.js, which writes Claude Code memory files, is tier C like scripts/memory/** (134.544125ms)
+✔ C: scripts/audit/** (the hash-chained audit trail and change records) is tier C, not scripts/** B (137.908542ms)
+✔ C: scripts/intake/** (outside content into a graph case, with tenant binding) is tier C, not scripts/** B (127.968125ms)
+✔ C: the batch G3 connector scripts/adapters/github-client.js is tier C (121.108208ms)
+✔ C: the batch G3 connector scripts/adapters/okta-client.js is tier C (143.30025ms)
+✔ C: the batch G3 connector scripts/adapters/msgraph-client.js is tier C (122.638375ms)
+✔ C: scripts/demo/** (spawns the claude CLI, writes change records and a simulated tenant) is tier C, not scripts/** B (batch 7, task 6) (121.377917ms)
+✔ C: scripts/ask-aegis.js and scripts/aegis-chat.js (they start the claude CLI) are tier C; their tests stay B (358.616083ms)
+✔ C: config/** (the hosts a sealed session may reach) and scripts/mcp/** (the tool server that enforces them) are tier C (444.621625ms)
+✔ C: scripts/eval/judged/backends.js (the wall of every sealed session) is tier C; its test stays B (230.207833ms)
+✔ one C path wins over many B paths, and only the C path is listed (120.264167ms)
+✔ ** matches nested paths at any depth (114.796875ms)
+✔ uncommitted and untracked changes count toward the tier (129.050792ms)
+✔ the base defaults to the default branch and falls back to origin/<default> when the local ref is missing (192.409041ms)
+✔ a missing base ref fails closed with exit 1 and a named ref (94.987917ms)
+✔ glob grammar: * stays in one segment, ? is one character, matching is case-sensitive (0.973667ms)
+✔ a path git would quote (non-ASCII) still matches its tier glob (115.312375ms)
+✔ a file moved out of a C path still sets tier C (both sides of the rename are listed) (151.753875ms)
+✔ a malformed tier file fails closed with exit 1 instead of reporting tier A (305.724375ms)
+✔ the CLI runs when invoked through a symlinked path (106.063792ms)
+✔ C: scripts/adapters/readonly-contract.js is tier C, not scripts/** B (115.828208ms)
+✔ C: scripts/adapters/fleet-client.js is tier C, not scripts/** B (119.576958ms)
+✔ C: scripts/adapters/jamf-client.js is tier C, not scripts/** B (121.98625ms)
+✔ C: scripts/adapters/slack-client.js is tier C, not scripts/** B (116.3735ms)
+✔ C: scripts/adapters/linear-client.js is tier C, not scripts/** B (119.598584ms)
+✔ C: scripts/adapters/gws-client.js is tier C, not scripts/** B (109.210334ms)
+✔ C: scripts/gws-posture-audit.js is tier C, not scripts/** B (115.792ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4741.280708
+exit 0

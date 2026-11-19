@@ -14,6 +14,8 @@ disable-model-invocation: true
 - **Junk folder vs quarantine?** Junk = delivered by EOP but sorted by Outlook/OWA. Quarantine = held by EOP before delivery. The fix path differs.
 - **Consistent pattern or one-off?** One sender, one recipient, always? Or random? Pattern = policy/config issue. Random = possible blocklist or reputation issue.
 - **Check Message Trace first** — it will tell you exactly what EOP decided and why.
+- **Ask first** (answer-format section 2, rule d): a request to allow a sender or domain, or to change a spam policy, with no trace verdict or headers in the ticket gets one question first: "What verdict and SPF, DKIM and DMARC results does the message trace or the header show for one affected message?" Allows and policy changes wait for that answer.
+- **A smell of compromise** (rule a): outbound, a user on the Restricted entities list, a mailbox sending mail its owner did not send, or a forwarding rule nobody set; inbound, a phish verdict on mail a user already opened. Name the escalation to the security lead or the security on-call (they need the account or message, what was seen, when, the trace and the headers); the account is contained with them through `/security-alert-triage` before any unblock, and nobody calls it harmless before they have looked.
 
 ## Step-by-step fix
 

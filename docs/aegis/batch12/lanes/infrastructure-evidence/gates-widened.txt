@@ -1,0 +1,45 @@
+# TMPDIR=<tmp> node --test scripts/command-safety-gates.test.js at aa29ca5 (lead's widened scanner 03ed4a6 merged)
+✔ every discovered safety/preview marker ID is globally unique (0.262208ms)
+✔ checked-in state-change inventory exactly matches discovery and client boundaries (1089.621083ms)
+✔ every executable mutation has exactly one same-fence owner (0.37725ms)
+✔ every commented mutation is owned by the nearest PREVIEW ONLY marker (0.1915ms)
+✔ every discovered manual portal mutation has one action-local gate or preview owner (3.526ms)
+✔ cloud-cost-spike-release-preview: preview region contains no executable mutation (0.016041ms)
+✔ k8s-pod-failure-exec-preview: preview region contains no executable mutation (0.013375ms)
+✔ k8s-pod-failure-capacity-preview: preview region contains no executable mutation (0.0135ms)
+✔ linux-server-triage-remove-files: preview region contains no executable mutation (0.0115ms)
+✔ terraform-plan-review-state-surgery: preview region contains no executable mutation (0.013417ms)
+✔ infra-safe-terraform-apply: preview region contains no executable mutation (0.010834ms)
+✔ infra-safe-k8s-rollback: preview region contains no executable mutation (0.010083ms)
+✔ infra-safe-gcp-binding: preview region contains no executable mutation (0.010125ms)
+✔ infra-safe-network-rule: preview region contains no executable mutation (0.010542ms)
+✔ infra-safe-unit-restart: preview region contains no executable mutation (0.010208ms)
+✔ backup-restore-test-restore-new-portal: portal gate is action-local and fail-closed (1.228458ms)
+✔ backup-restore-test-replace-live-portal: portal gate is action-local and fail-closed (0.065541ms)
+✔ cloud-access-denied-azure-assign-portal: portal gate is action-local and fail-closed (0.050333ms)
+✔ cloud-access-denied-aws-policy-portal: portal gate is action-local and fail-closed (0.495125ms)
+✔ cloud-cost-spike-snapshot-portal: portal gate is action-local and fail-closed (0.039167ms)
+✔ cloud-cost-spike-delete-disk-portal: portal gate is action-local and fail-closed (0.052875ms)
+✔ cloud-network-block-azure-nsg-portal: portal gate is action-local and fail-closed (0.039833ms)
+✔ backup-restore-test-gcp-disk-from-snapshot: shell gate is explicit, dominates its sinks, and is fail-closed (147.281459ms)
+✔ cloud-access-denied-aws-decode: shell gate is explicit, dominates its sinks, and is fail-closed (103.149375ms)
+✔ cloud-access-denied-gcp-binding: shell gate is explicit, dominates its sinks, and is fail-closed (110.926584ms)
+✔ cloud-cost-spike-stop-instance: shell gate is explicit, dominates its sinks, and is fail-closed (93.651083ms)
+✔ cloud-network-block-aws-sg-ingress: shell gate is explicit, dominates its sinks, and is fail-closed (94.309584ms)
+✔ cloud-network-block-gcp-firewall: shell gate is explicit, dominates its sinks, and is fail-closed (93.426709ms)
+✔ k8s-pod-failure-rollout-undo: shell gate is explicit, dominates its sinks, and is fail-closed (101.377125ms)
+✔ k8s-pod-failure-apply-manifest: shell gate is explicit, dominates its sinks, and is fail-closed (98.909458ms)
+✔ linux-server-triage-restart-unit: shell gate is explicit, dominates its sinks, and is fail-closed (98.33975ms)
+✔ linux-server-triage-vacuum-journal: shell gate is explicit, dominates its sinks, and is fail-closed (94.298417ms)
+✔ terraform-plan-review-apply-in-place: shell gate is explicit, dominates its sinks, and is fail-closed (96.381125ms)
+✔ terraform-plan-review-apply-replace: shell gate is explicit, dominates its sinks, and is fail-closed (92.223583ms)
+✔ terraform-plan-review-force-unlock: shell gate is explicit, dominates its sinks, and is fail-closed (90.85625ms)
+✔ terraform-plan-review-refresh-only: shell gate is explicit, dominates its sinks, and is fail-closed (81.955916ms)
+ℹ tests 512
+ℹ suites 0
+ℹ pass 471
+ℹ fail 41
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9179.178042

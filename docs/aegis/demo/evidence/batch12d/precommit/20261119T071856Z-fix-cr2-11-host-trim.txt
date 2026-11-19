@@ -1,0 +1,6 @@
+staged for commit "fix-cr2-11-host-trim" on feat/batch12-expert-lanes at parent 8047fab0:
+M	scripts/mcp/aegis-tools/tools.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

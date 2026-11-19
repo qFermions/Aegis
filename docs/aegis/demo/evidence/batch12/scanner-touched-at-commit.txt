@@ -1,0 +1,17 @@
+Batch 12, task 12: files the widened detection touched, at the scanner commit (before the four lanes merged)
+
+$ diff <(python3 -m json.tool docs/security/STATE_CHANGE_INVENTORY.json at the commit before) <(the regenerated inventory)
+Only the visitorSetup section changed: three new entries, all in README.md.
+
+File        Line  Statement                                   Label          Resolved by
+README.md   98    irm https://claude.ai/install.ps1 | iex     indirect-exec  VISITOR_SETUP_INVENTORY (the official Claude Code installer for Windows)
+README.md   104   winget install OpenJS.NodeJS.LTS            package-write  VISITOR_SETUP_INVENTORY (Node.js on the visitor's own computer)
+README.md   105   winget install Git.Git                      package-write  VISITOR_SETUP_INVENTORY (Git on the visitor's own computer)
+
+No gated example's sink list changed: no runbook held a terraform, kubectl, helm, aws or az write, an iex or a
+winget install in a scanned fence before the lanes. The other files that name these commands do it in prose, in a
+table or in a `text` fence, which the scanner does not read: .claude/agents/graph-risk-finalizer.md:45, CLAUDE.md:107
+and :111, docs/security_model.md:163-164, modules/automation/powershell/safety_patterns.md:500,
+modules/automation/pre_commit_hooks.md:124 and :127, modules/security/security-doctrine.md:47-48,
+modules/security/threat_detection.md:97, :159 and :162 (a `text` fence).
+The lanes' runbooks were checked again after they merged: docs/aegis/demo/evidence/batch12/lane-gates-and-previews.txt (every hit owned).

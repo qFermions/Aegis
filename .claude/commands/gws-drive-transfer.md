@@ -18,6 +18,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 - Hard limits: the recipient must be in the organization, active (not suspended, archived or deleted), have enough storage and have Drive turned on; the source must not be on litigation hold for any service and must not already be deleted; no transfers to or from external accounts; items in Trash are not transferred; a transfer running longer than 36 hours stops unsuccessfully and must be started again; shared-drive files are unaffected (the organization owns them).
 - Calendar events are a **separate gate** with their own limits (future, non-private events only; private events are cancelled).
 - Needs the Drive & Docs administrator privilege (Calendar administrator privilege for Phase 3).
+- **The transfer folder is the safe place** (answer-format section 2, rule c): the files land in a transfer folder in the new owner's My Drive (`docs/aegis/batch12/vendor-facts-runbook-rules.md` RR-12). The new owner or the data owner checks that folder against Phase 1's counts before anything is moved out of it into a shared drive or a team folder, and before the previous account is deleted.
+- **Who receives it** (rule b): the new owner gets ownership of everything moved, so the previous owner's manager or the data owner approves who receives it, named in the ticket, and files the new owner does not need go on to their data owner after the check.
 - Not done until the read-backs in the final checklist pass.
 
 ## Inputs needed

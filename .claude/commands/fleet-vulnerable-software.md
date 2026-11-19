@@ -21,6 +21,8 @@ Fleet keeps a software inventory for every host and matches it to CVEs from NVD,
 
 CVSS scores, EPSS and the known-exploited flag are Fleet Premium. A fixed false positive can take up to 2 hours to clear.
 
+**A smell of compromise** (answer-format section 2, rule a): a CVE flagged as known exploited on an exposed host, or signs it was used (a process, launch agent or connection nobody expects). Name the escalation to the security lead or the security on-call (they need the CVE, the exposed hosts and their count, when the exposure began, and what was seen); the patch plan below goes on, and the hosts' evidence is kept before a patch changes them.
+
 ## What to check first
 
 1. **The vulnerable title (R0):** Fleet → Software → `[FLEET_NAME]` → filter to vulnerable software → `[APP_NAME]` → Software details → read the installed versions, the CVEs on each and the host count.

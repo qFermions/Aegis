@@ -15,6 +15,8 @@ Steps marked **[if applicable]** depend on role/department — skip with a note 
 
 **Every change carries its class and its double-check (answer-format section 2).** No step in this plan has a gate: each is a PREVIEW ONLY marker, a separate reviewed change. So in the plan written under Details every step that changes something says "no gate here" and shows two things beside it: its risk class from the table in CLAUDE.md, and a proof a person can see with their own eyes, which is that step's ✅ Verify line. The classes: the licence (Step 3) and an MFA method an admin adds (Step 4) are R3, the row for CA, MFA and licensing changes. A step that adds 2 to 10 memberships or grants at once (Steps 5 to 8 for most hires) is R2, and more than 10 is R3. A single addition that one action undoes (the AD account, one extension, one seat, one drive mapping, one printer) is R1. A step that changes nothing (the sync wait, the inventory row, the notices, the first sign-in check) says "no change". When a class is unclear the plan takes the higher one and says why.
 
+**Least privilege for every grant (answer-format section 2, rule b).** The hire gets what the role needs, not a copy of a colleague's access: the lowest role that does the job (Visitors before Members; Full Access to a shared mailbox only where they must read it, Send As only where they send from it), through the department's groups rather than direct grants, approved by `[MANAGER_NAME]` or the owner of each resource, and no admin role at creation. A contractor or temporary hire has an end date in the ticket for every grant, and the account's end goes into `/offboard`'s plan on that date.
+
 ---
 
 ## Phase A — Identity & Licensing
@@ -365,6 +367,7 @@ Send to the user's **personal email**: work email `[UPN]`, first sign-in at offi
 - [ ] License assigned · MFA registered (+ SMS fallback)
 - [ ] Security groups · DLs/M365 groups · shared-mailbox delegation [or N/A]
 - [ ] SharePoint/Teams access (mechanism verified, no double-grant)
+- [ ] Every grant at the lowest role the job needs, through a group, approved by the manager or resource owner; a contractor's end date in the ticket (rule b)
 - [ ] Signature · [@Aegion_VOIP] `[EXTENSION]` · Zoom · Adobe [or N/A] · per-role apps [or N/A noted]
 > **PREVIEW ONLY [new-user-checklist-device-setup]:** This checklist line records what the device steps above already did; it is not a procedure and does not authorize enrolling, grouping or changing a device. Each of those changes runs from its own gated step.
 - [ ] Windows device enrolled, named, compliant, KFM on · mobile set up (corp: user prereq groups → enroll → WAIT for Intune object → device group → apps + Slack verified / BYOD: Authenticator + Outlook MAM) — never N/A

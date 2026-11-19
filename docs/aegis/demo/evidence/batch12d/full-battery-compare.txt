@@ -1,0 +1,13 @@
+# full suite: TMPDIR=/private/tmp node --test (v24.21.0, at 021887a6), its failing test names compared with docs/aegis/demo/evidence/batch12/baseline/failing-names.txt
+# the run's own output is not saved whole (it is long); its summary lines and exit code are below
+failing in this run: 41; in the baseline list: 41
+failing now and not in the baseline: 0
+in the baseline and passing now: 0
+SAME 41 NAMES
+ℹ tests 2557
+ℹ pass 2515
+ℹ fail 41
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+exit 1

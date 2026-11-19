@@ -18,6 +18,7 @@ Generic approval never authorizes a device action. Use only the action-specific 
 ## What to check first
 - Intune admin center → Devices → All devices → `[DEVICE_NAME]` → **Managed by** + **Ownership** (Corporate vs Personal).
 - Is the user still active? (If offboarding, follow `/offboard` order.)
+- **Lost or stolen, holding company data or a sign-in method** (answer-format section 2, rule a): name the escalation to the security lead or the security on-call before the wipe decision. They need what happened and when, `[DEVICE_NAME]` and `[UPN]`, the device's last check-in time and encryption state from its Intune record, and the user's sign-ins since the loss. They decide whether the wipe goes now or waits for evidence; the tech does not decide it alone, and nobody calls the loss harmless before they have looked.
 - Does the lost or replaced device hold the user's sign-in method (Microsoft Authenticator, or the number that gets the codes)? A wipe erases the device; it gives the user no way back in, and the method stays registered in Entra until it is deleted there. Run the lost-or-replaced-device path of `/mfa-issue` beside the wipe: who is asking, a Temporary Access Pass, the new method registered, and only then the old method deleted (answer-format section 2, "A new way in before the old way out"). The wipe waits for none of it, and none of it waits for the wipe.
 
 ## Step-by-step fix (portal first)
@@ -87,6 +88,7 @@ if ($confirmation -ceq $requiredConfirmation) {
 - [ ] Device action status = Complete in Intune
 - [ ] (Decommission) device removed from Intune + Entra + Autopilot deregistered
 - [ ] User notified if BYOD (company data removed)
+- [ ] Lost or stolen device with company data or a sign-in method: escalated to the security lead or on-call with what happened, when, the device, the account and its last check-in, before the wipe decision (rule a)
 
 ## 📝 Jira-ready note
 > Resolved [date/time]. `[DEVICE_NAME]` ([corporate/BYOD]): [Full Wipe verified under this command's exact gate / Retire verified under a separate reviewed action / Fresh Start verified under a separate reviewed action / no device action performed]. Management status: [verified value]. Object removal/deregistration: [verified under separate actions / not performed]. Time spent: [X] min.

@@ -1,0 +1,8 @@
+staged for commit "fix-cr2-13-risk-tier" on feat/batch12-expert-lanes at parent 05d94271:
+M	.github/risk-tiers.json
+M	REVIEW.md
+A	docs/aegis/demo/evidence/batch12d/cr2-risk-tier-green.txt
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

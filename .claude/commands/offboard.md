@@ -15,6 +15,8 @@ CRITICAL: Do NOT ask for employee details, names, emails, or any PII. Deliver th
 
 ⚠️ **This is a destructive multi-system plan — route it through independent plan review before executing.** Every disable/wipe/removal step below hits the destructive-action gate: confirm before running.
 ⚠️ **Involuntary termination?** Complete Steps 1–4 BEFORE the user is notified. Speed matters.
+⚠️ **Left on bad terms, or a smell of compromise?** (answer-format section 2, rule a) A leaver dismissed for cause or who left on bad terms, or an account that shows sign-ins, forwarding rules, mass downloads or deletions nobody expected, is a security matter as well as an offboarding. Name the escalation to the security lead or the security on-call before Step 1: they need who it is, the last day, what was seen and when, the accounts and devices, and the sign-in and audit log entries. Phase B's preservation comes before any deletion, so the evidence is kept.
+**The manager's access to the leaver's data (rule b).** Steps 5 and 6 give the manager the mailbox and the OneDrive. Grant only what the handover needs (Full Access to read; Send As only if mail must go out as the mailbox), name who approves it (the manager's own manager or HR), and write its end date in the plan: the mail decision's "for how long" date, when Step 16's review takes the access away.
 
 **Every change carries its class and its double-check (answer-format section 2).** In the plan written under Details, every step that changes something shows two things beside it: its risk class (R1, R2 or R3, the class its gate's Reversibility line opens with) and its double-check. The double-check is the gate's Read-back command where the gate names one (Phase A's four). Where the gate's Read-back field says none, the plan says "no read-back command" for that step and names the proof a person can see with their own eyes: that step's ✅ Verify line. A step that has only a PREVIEW ONLY marker (the Zoom ownership transfer, the Jira closure note, the disposal reminder) has no gate: the plan says "no gate here, a separate reviewed change" and still names what a person would see when it is done. No changing step is listed without both.
 
@@ -451,6 +453,7 @@ No lighter step: this is the close-out after every other step, on an account tha
 - [ ] AD disabled (authoritative) + Entra sign-in blocked · Entra refresh-token/browser-cookie revocation requested and checked after propagation · password randomized · MFA methods cleared
 - [ ] Mail decision written and signed off before Step 5: where the mail goes, until what date, what it costs against the alternatives, and the date the restore window closes
 - [ ] Mailbox → shared + manager delegated · OneDrive transferred (30-day window flagged) · all licenses removed (after conversion)
+- [ ] Manager's access: the lowest right the handover needs, its approver and its end date in the plan (rule b) · a leaver on bad terms or a smell of compromise escalated to the security lead or on-call before Step 1 (rule a)
 - [ ] Groups/DLs/shared-mailbox delegation stripped
 - [ ] Computer wiped/retired (ownership confirmed) · work phone wiped + removed from `[WORK_PHONE_DEVICE_GROUP]`
 - [ ] [@Aegion_VOIP] extension reclaimed + voicemail cleared · Zoom deactivated · Adobe seat freed

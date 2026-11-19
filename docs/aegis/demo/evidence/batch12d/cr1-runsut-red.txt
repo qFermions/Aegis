@@ -1,0 +1,68 @@
+✔ the SUT and judge command lines match the spec; --web moves the web tools to the allowed set (2.306541ms)
+✔ both sessions load only the repository's own settings, also when resumed, on the web, or with a judge model (batch 6, task 9) (1.035417ms)
+✔ the tool server is on by default for the system under test, never for the judge, and off leaves the old argv (batch 12) (68.2245ms)
+✔ batch 12d: sutArgs hands the server the typed file, and the prompt hook only when asked; off and the judge get neither (0.898417ms)
+✔ batch 12d: runSut writes the person's words to the typed file before the first turn, and the follow-up before the second (73.655458ms)
+✖ batch 12d: runSut starts each case with an empty audit file, and a typed file that cannot be written does not stop the run (21.502708ms)
+✔ batch 12d: toolServerRecord counts allowed, refused and other calls from the audit file and lists each refused call (0.857542ms)
+✔ the exclusions cover the judge's temporary folder too, and never the repository's own CLAUDE.md (batch 6, code review 1 finding 7) (0.263583ms)
+✔ under a stale TMPDIR the exclusions cover the system temporary folder the judge falls back to (0.43925ms)
+✔ the read limits: the deny list is pinned, the rules are absolute, and what Aegis needs stays readable (batch 7, task 4) (16.936459ms)
+✔ sutArgs takes no persistence only when asked, and the judge never persists (batch 7, task 5) (0.219958ms)
+✔ the prompt is the ticket, plus the evidence after the pasted-evidence header (0.032ms)
+✔ the scrub list is every NAME= of .env.example plus the secret suffixes (0.301542ms)
+✔ the child runs from the repository root with a scrubbed environment (names only are checked) (20.442166ms)
+✔ a case with a follow_up resumes the first turn's session and records both answers, turns, cost and model (42.162292ms)
+✔ a slow child is stopped at the timeout: state TIMEOUT, and SIGKILL follows a child that ignores SIGTERM (824.051209ms)
+✔ output that is not stream-json, an error result, or a missing executable is ERROR (74.118709ms)
+✔ parseStream takes the result text, else the last assistant text, and counts invalid lines (0.098959ms)
+✔ batch 12: summarizeTurn records the tools and MCP servers the init event listed (0.069625ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 18
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1182.389334
+
+✖ failing tests:
+
+test at scripts/eval/judged/backends.test.js:193:1
+✖ batch 12d: runSut starts each case with an empty audit file, and a typed file that cannot be written does not stop the run (21.502708ms)
+  AssertionError [ERR_ASSERTION]: the earlier run's line is gone
+  + actual - expected
+  
+    {
+      allowed: 0,
+  +   calls: 1,
+  -   calls: 0,
+      other: 0,
+  +   refused: 1,
+  +   refused_calls: [
+  +     {
+  +       decision: 'refused_out_of_scope',
+  +       input: {
+  +         name: 'old.example.com',
+  +         type: 'A'
+  +       },
+  +       reason: 'from an earlier run',
+  +       tool: 'net_dns'
+  +     }
+  +   ]
+  -   refused: 0,
+  -   refused_calls: []
+    }
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/backends.test.js:200:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { calls: 1, allowed: 0, refused: 1, other: 0, refused_calls: [ [Object] ] },
+    expected: { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit 1

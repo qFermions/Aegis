@@ -1,0 +1,65 @@
+Mode: Engineer answer
+## Engineer answer
+**Evidence read:** the pasted `AuthorizationFailed` error and the `/cloud-access-denied` runbook. The error names one person, one action (`Microsoft.Compute/virtualMachines/restart/action`) and one VM in `rg-batch-prod`. It is an IAM block: the request reached Azure and no role allowed the action. It is not a network problem and not a sign-in problem.
+
+**Hypotheses:**
+1. [FIRST_NAME] has no role on `rg-batch-prod` that allows restart. Test: open the resource group → Access control (IAM) → Check access → [FIRST_NAME]. It should list nothing that covers the VMs.
+2. A role was granted in the last few minutes and hasn't taken effect yet (it can take up to 10 minutes). Test: [FIRST_NAME] signs out and back in, then tries again.
+
+**Recommendation:** don't grant Contributor on the subscription. That would let [FIRST_NAME] create, change and delete everything in the subscription in order to restart two VMs. Instead:
+- Create a custom role that can only read, start and restart VMs.
+- Assign it to a night-shift operators group at `rg-batch-prod` only, and add [FIRST_NAME] to that group.
+- The resource group owner approves it first.
+
+If a group already holds a suitable role there, [FIRST_NAME] just joins that group and no new assignment is needed.
+
+```json
+{
+  "Name": "VM Restart Operator",
+  "Description": "Read, start and restart VMs only. No create, change or delete.",
+  "Actions": [
+    "Microsoft.Compute/virtualMachines/read",
+    "Microsoft.Compute/virtualMachines/instanceView/read",
+    "Microsoft.Compute/virtualMachines/start/action",
+    "Microsoft.Compute/virtualMachines/restart/action",
+    "Microsoft.Resources/subscriptions/resourceGroups/read"
+  ],
+  "NotActions": [],
+  "AssignableScopes": ["/subscriptions/[SUBSCRIPTION_ID]/resourceGroups/rg-batch-prod"]
+}
+```
+
+**Blast radius:**
+- One role assignment, one resource group, one group of 10 people or fewer.
+- Rollback: remove that one assignment in Access control (IAM).
+- Stop if the owner won't approve, if Check access shows an explicit deny assignment (an allow can't override it), or if anyone pushes for Contributor or subscription scope. That makes it R3 and needs written approval plus an independent review.
+
+**Verify:**
+- Role assignments lists the group with `VM Restart Operator` at `rg-batch-prod` itself, not inherited from above.
+- After signing out and back in, [FIRST_NAME] can restart `batch-vm-01`.
+- Deleting or resizing the VM is still refused.
+
+**Ask next:** why do the batch VMs hang? Restart access fixes the symptom. Their boot diagnostics and the batch job logs are the next thing to read.
+
+## Details
+- Step 1 (create the custom role definition): no gate in the runbook. It goes through the team's change process. Proof: the role is listed under Access control (IAM) → Roles with exactly the five actions above.
+- Step 2 (assign the role to the group at `rg-batch-prod`): R2. Double-check: the admin pastes the resource group's role assignment list, and it shows the group with this role at that scope.
+- Step 3 (add [FIRST_NAME] to the group): R1, done through the group owner's process. Double-check: the group's member list shows [FIRST_NAME].
+- If the group already holds a suitable role, skip steps 1 and 2.
+- Jira note: "[FIRST_NAME] was denied the restart action on batch-vm-01. A custom VM Restart Operator role was assigned to [GROUP_NAME] at rg-batch-prod, approved by [owner] on [date]. Contributor on the subscription was declined. Read-back: [paste]."
+
+```asker-reply
+Thanks for including the exact error, it made this easy to pin down. Contributor on the whole subscription would work, but it would also let them change or delete everything in that subscription, so we won't grant it. They'll get a narrower permission instead: read, start and restart the virtual machines in that one resource group, given through a night-shift group.
+
+Their error shows they currently have no permission to restart those machines. I haven't confirmed yet whether a group that already has this access exists.
+
+There's nothing for you or them to do yet. Next, an Azure administrator gets the resource group owner's approval and sets this up. After that, they should sign out and back in before trying a restart. It's also worth asking why the machines hang in the first place.
+```
+
+```aegis-desk
+Gate: none
+Gate: cloud-access-denied-azure-assign-portal
+Phrase: ASSIGN VM Restart Operator TO [GROUP_NAME] ON rg-batch-prod IN [SUBSCRIPTION_ID]
+Change record: R2, read-back none (no Aegis connector reads Azure RBAC)
+Read-back: Access control (IAM) → Role assignments lists [GROUP_NAME] with VM Restart Operator at this resource group, not inherited from above; the denied call works after a sign-out and sign-in
+```

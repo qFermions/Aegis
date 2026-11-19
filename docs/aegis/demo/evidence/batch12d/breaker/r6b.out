@@ -1,0 +1,21 @@
+{"url":"https://registry.npmjs.org/attacker-pkg/-/attacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/attacker-pkg/%2D/attacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/attacker-pkg/%2d/attacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/attacker-pkg/-%2Fattacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/attacker-pkg%2F-%2Fattacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/attacker-pkg//-/attacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/attacker-pkg/x/../-/attacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/attacker-pkg/%2e/-/attacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/attacker-pkg\\-\\attacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/ATTACKER-PKG/-/attacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org./attacker-pkg/-/attacker-pkg-0.0.1.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://REGISTRY.NPMJS.ORG/attacker-pkg/-/x.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org:8443/attacker-pkg/-/x.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"http://registry.npmjs.org/attacker-pkg/-/x.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/@sc%2Fattacker-pkg/-/x.tgz","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/-/v1/search?text=x","decision":"refused_out_of_scope","sent":[]}
+{"url":"https://registry.npmjs.org/attacker-pkg/0.0.137","decision":"ok","sent":["HEAD https://registry.npmjs.org/attacker-pkg/0.0.137","GET https://registry.npmjs.org/attacker-pkg/0.0.137"]}
+{"url":"https://registry.npmjs.org/attacker-pkg","decision":"ok","sent":["HEAD https://registry.npmjs.org/attacker-pkg","GET https://registry.npmjs.org/attacker-pkg"]}
+{"url":"https://registry.npmjs.org/meta-redirect","decision":"refused_redirect","sent":["HEAD https://registry.npmjs.org/meta-redirect"]}
+{"url":"https://registry.npmjs.org/meta-redirect2","decision":"refused_redirect","sent":["HEAD https://registry.npmjs.org/meta-redirect2"]}
+{"url":"https://pypi.org/packages/source/a/ap/ap-1.tar.gz","decision":"refused_redirect","sent":["HEAD https://pypi.org/packages/source/a/ap/ap-1.tar.gz"]}

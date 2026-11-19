@@ -1,0 +1,7 @@
+staged for commit "fix-cr1-runsut" on feat/batch12-expert-lanes at parent 8c9e29ea:
+A	docs/aegis/demo/evidence/batch12d/cr1-runsut-green.txt
+M	scripts/eval/judged/backends.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

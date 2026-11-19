@@ -413,18 +413,22 @@ function promptTooLong(prompt) {
 async function runSut(c, opts) {
   const repoRoot = opts.repoRoot || REPO_ROOT;
   const base = { command: opts.command, prefixArgs: opts.prefixArgs, spawn: opts.spawn, env: opts.env, cwd: repoRoot, timeoutMs: opts.timeoutMs, graceMs: opts.graceMs };
-  const typedFile = opts.tools !== false && opts.typedFile ? opts.typedFile : null;
-  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model, tools: opts.tools, auditFile: opts.auditFile, typedFile };
+  let typedFile = opts.tools !== false && opts.typedFile ? opts.typedFile : null;
   const turns = [];
   const prompt = buildSutPrompt(c);
   if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c, repoRoot);
-  if (typedFile) aegisTools.writeTyped(typedFile, [c.setup, c.ticket, c.evidence].filter((s) => typeof s === 'string' && s !== '').join('\n'));
+  // the server appends to the audit file, so a results folder used before would give this case the earlier run's calls
+  if (opts.auditFile) { try { fs.rmSync(opts.auditFile, { force: true }); } catch { /* left as it is */ } }
+  // a typed file that cannot be written does not stop the run: the session then names none and reaches only the two lists
+  const typed = (text, how) => { try { aegisTools.writeTyped(typedFile, text, how); return true; } catch { return false; } };
+  if (typedFile && !typed([c.setup, c.ticket, c.evidence].filter((s) => typeof s === 'string' && s !== '').join('\n'))) typedFile = null;
+  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model, tools: opts.tools, auditFile: opts.auditFile, typedFile };
   turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web, ...wall }), base));
   if (c.follow_up !== '' && turns[0].state === 'OK') {
     if (!turns[0].session_id) {
       turns.push({ state: 'ERROR', reason: 'no session id to resume for the follow-up', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null });
     } else {
-      if (typedFile) aegisTools.writeTyped(typedFile, c.follow_up, { append: true });
+      if (typedFile) typed(c.follow_up, { append: true }); // not appended: the follow-up opens no host of its own
       turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id, ...wall }), base));
     }
   }

@@ -142,6 +142,18 @@ test('C: config/** (the hosts a sealed session may reach) and scripts/mcp/** (th
   }
 });
 
+// Code review 2 of batch 12d, finding 13. Wrong implementation it catches: the file that builds every sealed session's
+// wall (its tool list, its read-deny rules, its MCP config and typed file) left at tier B under scripts/**, so a change
+// that allows one more tool or denies one folder less is reviewed by its pull request body alone.
+test('C: scripts/eval/judged/backends.js (the wall of every sealed session) is tier C; its test stays B', () => {
+  const cwd = sandbox();
+  commit(cwd, ['scripts/eval/judged/backends.js', 'docs/notes.md']);
+  assert.deepEqual(run(cwd, ['main']), ['tier=C', 'scripts/eval/judged/backends.js']);
+  const other = sandbox();
+  commit(other, ['scripts/eval/judged/backends.test.js', 'scripts/eval/judged/report.js']);
+  assert.equal(run(other, ['main'])[0], 'tier=B');
+});
+
 test('one C path wins over many B paths, and only the C path is listed', () => {
   const cwd = sandbox();
   const many = Array.from({ length: 12 }, (_, i) => `scripts/eval/case-${i}.js`);

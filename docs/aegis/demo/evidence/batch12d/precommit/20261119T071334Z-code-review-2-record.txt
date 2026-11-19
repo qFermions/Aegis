@@ -1,0 +1,7 @@
+staged for commit "code-review-2-record" on feat/batch12-expert-lanes at parent 669d5ceb:
+M	checks.md
+M	docs/aegis/demo/evidence/batch12d/code-review.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

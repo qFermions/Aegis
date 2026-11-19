@@ -968,3 +968,57 @@ test('batch 12d: net_dns, net_http and net_tls describe their scope: the docs li
   }
   assert.match(byName.net_http, /exact URL/);
 });
+
+// ── Batch 12d, the breaker's findings ──────────────────────────────────────────────────────────────────────────
+// EXPECTED DECISION (written before the code)
+// - A bracketed placeholder is not text the person typed. ask-aegis and the chat's --setup write the typed file after
+//   the privacy step, which turns every email address into [USER@DOMAIN.COM]; domain.com then read as a typed host.
+//   Host tokens are taken from the typed text with its bracketed placeholders removed; a typed IPv6 URL keeps its
+//   brackets, and a host the person wrote in brackets is not typed (the safe direction).
+// - A tarball or registry API path on registry.npmjs.org (any path with /-/) is out of scope for net_http unless it is
+//   the exact URL the person typed: npm publishes download counts per package version, so a path the model chooses
+//   could signal to whoever owns the package. Package metadata paths stay allowed.
+
+// Wrong implementations it catches: the privacy step's placeholder read as typed text (the break: a five-character
+// ticket opened domain.com for DNS and TLS); every bracket stripped, which loses a typed IPv6 URL.
+test('batch 12d: a bracketed placeholder is not typed text: [USER@DOMAIN.COM] opens no host', async () => {
+  const { protect } = require('../../ask-aegis.js');
+  const { typedTokens } = require('./tools.js');
+  const masked = protect('a@b.c').text;
+  assert.equal(masked, '[USER@DOMAIN.COM]', 'what ask-aegis writes to the typed file for the ticket a@b.c');
+  const s = scoped(`${masked} says mail to [mail.example.net] bounces; https://[2001:db8::1]/status and real.example.org are fine.`);
+  for (const name of ['domain.com', 'DOMAIN.COM', 'mail.example.net']) {
+    for (const type of ['A', 'TXT', 'MX']) await outOfScope(s, 'net_dns', { name, type });
+    for (const port of [443, 8443]) await outOfScope(s, 'net_tls', { host: name, port });
+  }
+  nothingSent(s, 'placeholders');
+  const typed = typedTokens(`${masked} and [DT-First.Name,Last] and https://[2001:db8::1]/status and real.example.org and https://example.org/u/[UPN]/x`);
+  assert.equal(typed.hosts.has('domain.com'), false);
+  assert.equal(typed.hosts.has('first.name'), false);
+  assert.ok(typed.hosts.has('real.example.org'), 'what the person typed still counts');
+  assert.ok(typed.urls.has('https://[2001:db8::1]/status'), 'a typed IPv6 URL keeps its brackets');
+  assert.ok(typed.urls.has('https://example.org/u/[UPN]/x'), 'a typed URL stays verbatim, placeholder and all');
+});
+
+// Wrong implementations it catches: any path allowed on a probe host, so 256 versions of one package carry a byte per
+// call to the package's owner through npm's public download counts; the rule applied to the first URL and not to a
+// redirect hop; metadata paths refused too, which would take the registry lookup away.
+test('batch 12d: a tarball or API path on registry.npmjs.org is out of scope unless it is the exact typed URL', async () => {
+  const tarball = 'https://registry.npmjs.org/some-package/-/some-package-0.0.7.tgz';
+  const s = scoped('npm install fails for some-package.');
+  for (const url of [tarball, 'https://registry.npmjs.org/@scope/some-package/-/some-package-1.2.3.tgz', 'https://registry.npmjs.org/-/v1/search?text=abc']) {
+    const body = await refusedWith(s, 'net_http', { url }, 'refused_out_of_scope');
+    assert.match(body.reason, /download counts/, url);
+  }
+  nothingSent(s, 'tarball paths');
+  // a redirect hop to a tarball is refused before it is requested
+  const npm = () => learn({ 'registry.npmjs.org': { A: [PUBLIC_IP] } });
+  const hop = scoped('npm install fails for some-package.', { resolver: npm(), request: fakeHttp({ 'HEAD https://registry.npmjs.org/some-package/latest': { status: 302, headers: { location: tarball } } }) });
+  const redirected = await refusedWith(hop, 'net_http', { url: 'https://registry.npmjs.org/some-package/latest' }, 'refused_redirect');
+  assert.match(redirected.reason, /out of scope/);
+  assert.deepEqual(hop.deps.request.sent.map((r) => `${r.method} ${r.path}`), ['HEAD /some-package/latest'], 'only the first request was sent');
+  // package metadata stays allowed, and so does the tarball when the person typed that exact URL
+  const meta = 'https://registry.npmjs.org/some-package';
+  const ok = scoped(`The lockfile points at ${tarball} and the install fails.`, { resolver: npm(), request: fakeHttp({ [`HEAD ${meta}`]: { status: 200, headers: {} }, [`GET ${meta}`]: { status: 200, headers: {}, body: '{}' }, [`HEAD ${tarball}`]: { status: 200, headers: {} }, [`GET ${tarball}`]: { status: 200, headers: {}, body: 'x' } }) });
+  for (const url of [meta, tarball]) assert.equal((await call(ok, 'net_http', { url })).isError, false, url);
+});

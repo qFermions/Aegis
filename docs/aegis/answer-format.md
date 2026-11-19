@@ -199,7 +199,7 @@ What it says:
 
 Its form:
 
-- At most 3 short paragraphs and 150 words; full sentences; addressed to "you".
+- At most 3 short paragraphs and 150 words; full sentences; addressed to "you". The one exception is the Ask first reply: one question as section 7 defines it (one question mark, at most 60 words, no card, no steps) may ask about the thing without the word "you"; every other rule of the reply still holds for it.
 - No headings, lists, bold, portal paths, gate ids, risk classes or bracketed placeholders.
 - It never says a change is done before the double-check passed, never tells the asker to take an admin action, and never says Aegis changed anything.
 - For a ticket with nothing to go on (section 7), the reply is the one question.

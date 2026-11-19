@@ -31,7 +31,7 @@ test('a reply that is not one question still needs "you"; a one-question reply s
   const notOne = [
     ['a statement', 'The scanner needs a technician to look at its log before anything else changes.'],
     ['two questions', 'What does the scanner screen show? Since when does it happen?'],
-    ['one question past 60 words', `${'The scanner has stopped in the middle of a scan several times this week, and the team at the front has been scanning on the other floor while it waits for a technician to look at it. '.repeat(1)}What exactly does its screen show when a scan stops?`],
+    ['one question past 60 words', `${'The scanner has stopped in the middle of a scan several times this week, and the team at the front has been scanning on the other floor while it waits for a technician to look at it. '.repeat(2)}What exactly does its screen show when a scan stops?`],
   ];
   for (const [name, text] of notOne) assert.ok(replyProblems(text).includes(NOT_YOU), `${name}: ${replyProblems(text).join('; ')}`);
   const otherRules = [

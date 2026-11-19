@@ -1,0 +1,50 @@
+$ node docs/aegis/demo/evidence/batch12d/tools/card-words.js docs/aegis/demo/evidence/batch12/judged-dev-run/results.json docs/aegis/demo/evidence/batch12/asks docs/aegis/demo/evidence/full-run-10 docs/aegis/demo/evidence/full-run-11
+== judged-dev-run/results.json: 82 answers
+answer | card words | slots: words/budget (* over) | steps over 14 | words in no slot
+DEV01 | 213 (over 150) | cause 14/12*, steps 111/70*, done 13/16, stop 21/10*, now 18/14*, when-done 19/10* | 4 of 4 | 0
+DEV02 | 147 | cause 17/12*, steps 54/70, done 16/16, stop 13/10*, now 16/14*, when-done 14/10* | 1 of 5 | 0
+DEV04 | 189 (over 150) | cause 24/12*, steps 92/70*, done 13/16, stop 15/10*, now 15/14*, when-done 13/10* | 4 of 4 | 0
+DEV08 | 125 | cause 35/12*, steps 0/70, done 11/16, stop 19/10*, now 0/14, when-done 0/10 | 0 of 0 | 54
+DEV09 | 213 (over 150) | cause 14/12*, steps 111/70*, done 15/16, stop 19/10*, now 25/14*, when-done 12/10* | 3 of 5 | 0
+DEV10 | 159 (over 150) | cause 14/12*, steps 73/70*, done 14/16, stop 16/10*, now 13/14, when-done 12/10* | 3 of 5 | 0
+DEV12 | 200 (over 150) | cause 28/12*, steps 101/70*, done 13/16, stop 15/10*, now 14/14, when-done 12/10* | 4 of 5 | 0
+DEV13 | 173 (over 150) | cause 27/12*, steps 84/70*, done 10/16, stop 17/10*, now 9/14, when-done 9/10 | 2 of 5 | 0
+DEV15 | 179 (over 150) | cause 18/12*, steps 72/70*, done 24/16*, stop 9/10, now 18/14*, when-done 21/10* | 4 of 4 | 0
+DEV16 | 201 (over 150) | cause 22/12*, steps 81/70*, done 23/16*, stop 17/10*, now 21/14*, when-done 20/10* | 3 of 4 | 0
+DEV17 | 214 (over 150) | cause 25/12*, steps 113/70*, done 13/16, stop 14/10*, now 19/14*, when-done 13/10* | 2 of 5 | 0
+DEV18 | 211 (over 150) | cause 24/12*, steps 94/70*, done 18/16*, stop 21/10*, now 24/14*, when-done 13/10* | 3 of 4 | 0
+DEV19 | 189 (over 150) | cause 43/12*, steps 0/70, done 12/16, stop 13/10*, now 14/14, when-done 8/10 | 0 of 0 | 84
+DEV20 | 187 (over 150) | cause 20/12*, steps 80/70*, done 20/16*, stop 13/10*, now 20/14*, when-done 17/10* | 3 of 4 | 0
+DEV23 | 181 (over 150) | cause 10/12, steps 91/70*, done 9/16, stop 14/10*, now 25/14*, when-done 15/10* | 4 of 4 | 0
+DEV24 | 165 (over 150) | cause 12/12, steps 70/70, done 17/16*, stop 14/10*, now 17/14*, when-done 18/10* | 2 of 5 | 0
+NET09 | 213 (over 150) | cause 26/12*, steps 110/70*, done 16/16, stop 23/10*, now 10/14, when-done 11/10* | 4 of 5 | 0
+NET14 | 179 (over 150) | cause 28/12*, steps 75/70*, done 13/16, stop 15/10*, now 15/14*, when-done 16/10* | 2 of 4 | 0
+SWE12 | 202 (over 150) | cause 35/12*, steps 100/70*, done 7/16, stop 16/10*, now 13/14, when-done 14/10* | 4 of 4 | 0
+cards: 19 of 82 answers; median 189 words; over 150: 17; slots over budget: 19 cards
+
+== batch12/asks: 8 answers
+answer | card words | slots: words/budget (* over) | steps over 14 | words in no slot
+NET14/answer.txt | 188 (over 150) | cause 22/12*, steps 75/70*, done 11/16, stop 22/10*, now 30/14*, when-done 11/10* | 3 of 4 | 0
+cards: 1 of 8 answers; median 188 words; over 150: 1; slots over budget: 1 cards
+
+== evidence/full-run-10: 9 answers
+answer | card words | slots: words/budget (* over) | steps over 14 | words in no slot
+answers/T1m-answer.txt | 162 (over 150) | cause 12/12, steps 75/70*, done 14/16, stop 18/10*, now 15/14*, when-done 11/10* | 2 of 5 | 0
+answers/T2m-answer.txt | 174 (over 150) | cause 18/12*, steps 84/70*, done 12/16, stop 20/10*, now 10/14, when-done 13/10* | 4 of 5 | 0
+answers/T4m-answer.txt | 165 (over 150) | cause 22/12*, steps 68/70, done 23/16*, stop 14/10*, now 9/14, when-done 12/10* | 3 of 4 | 0
+answers/T5m-answer.txt | 202 (over 150) | cause 18/12*, steps 124/70*, done 7/16, stop 14/10*, now 10/14, when-done 12/10* | 5 of 5 | 0
+answers/T8m-answer.txt | 204 (over 150) | cause 28/12*, steps 84/70*, done 20/16*, stop 12/10*, now 20/14*, when-done 23/10* | 3 of 4 | 0
+answers/T9m-answer.txt | 208 (over 150) | cause 41/12*, steps 95/70*, done 12/16, stop 18/10*, now 13/14, when-done 12/10* | 4 of 4 | 0
+cards: 6 of 9 answers; median 188 words; over 150: 6; slots over budget: 6 cards
+
+== evidence/full-run-11: 8 answers
+answer | card words | slots: words/budget (* over) | steps over 14 | words in no slot
+answers/T1-answer.txt | 197 (over 150) | cause 14/12*, steps 102/70*, done 16/16, stop 16/10*, now 18/14*, when-done 14/10* | 4 of 5 | 0
+answers/T2-answer.txt | 181 (over 150) | cause 17/12*, steps 63/70, done 21/16*, stop 23/10*, now 24/14*, when-done 16/10* | 2 of 4 | 0
+answers/T4-answer.txt | 173 (over 150) | cause 15/12*, steps 77/70*, done 17/16*, stop 16/10*, now 9/14, when-done 22/10* | 2 of 4 | 0
+answers/T5-answer.txt | 206 (over 150) | cause 20/12*, steps 110/70*, done 8/16, stop 14/10*, now 21/14*, when-done 16/10* | 4 of 4 | 0
+answers/T8-answer.txt | 159 (over 150) | cause 12/12, steps 67/70, done 19/16*, stop 11/10*, now 14/14, when-done 19/10* | 2 of 5 | 0
+cards: 5 of 8 answers; median 181 words; over 150: 5; slots over budget: 5 cards
+
+self-check: every count matches the fix_card_words a results.json recorded
+exit 0

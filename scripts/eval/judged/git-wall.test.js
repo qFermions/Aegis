@@ -109,8 +109,10 @@ test('no sealed session gets the git status snapshot: the setting is off in ever
 test('every tracked case file is under a deny rule, the lane case files of batch 12 included', () => {
   const { execFileSync } = require('node:child_process');
   const rules = backends.readDenyRules().map((r) => r.slice('Read(//'.length, -1));
+  // the file's path in the rules' own form (abs), so a Windows drive letter reads as the rules write it: the first
+  // form of this test compared "D:/..." with the rules' "d/..." and failed on the Windows runner alone
   const covered = (file) => {
-    const full = path.join(REPO_ROOT, file).split(path.sep).join('/').replace(/^\/+/, '');
+    const full = abs(path.join(REPO_ROOT, ...file.split('/'))).slice('Read(//'.length, -1);
     return rules.some((r) => r === full || (r.endsWith('/**') && !r.slice(0, -3).includes('*') && full.startsWith(`${r.slice(0, -3)}/`)));
   };
   const tracked = execFileSync('git', ['ls-files'], { cwd: REPO_ROOT, encoding: 'utf8' }).split('\n').filter((f) => /dev-cases[^/]*\.jsonl$/.test(f));

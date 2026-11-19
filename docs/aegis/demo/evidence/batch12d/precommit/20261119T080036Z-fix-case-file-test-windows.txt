@@ -1,0 +1,9 @@
+staged for commit "fix-case-file-test-windows" on feat/batch12-expert-lanes at parent 0cde5f81:
+M	checks.md
+A	docs/aegis/demo/evidence/batch12d/case-file-test-windows-green.txt
+A	docs/aegis/demo/evidence/batch12d/case-file-test-windows-red.txt
+M	scripts/eval/judged/git-wall.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

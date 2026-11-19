@@ -1,0 +1,22 @@
+staged for commit "battery-final" on feat/batch12-expert-lanes at parent 980f9ff9:
+M	checks.md
+A	docs/aegis/demo/evidence/batch12d/battery-final/HEAD.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/command-structure-lint.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/failing-vs-baseline.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/g2-ticket-eval.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/g3-ticket-eval.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/gws-ticket-eval.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/ladder-audit-check.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/ms-ticket-eval.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/node-test-failing-names.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/node-test-tripwire-failing-names.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/node-test-tripwire.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/node-test.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/pre-commit-check-all.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/release-boundary-check.txt
+A	docs/aegis/demo/evidence/batch12d/battery-final/replay-demo.txt
+M	progress.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

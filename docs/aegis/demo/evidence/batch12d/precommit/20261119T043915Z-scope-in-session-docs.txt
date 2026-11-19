@@ -1,0 +1,7 @@
+staged for commit "scope-in-session-docs" on feat/batch12-expert-lanes at parent ae9fbb6a:
+M	docs/aegis/answer-format.md
+M	knowledge/networking/README.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

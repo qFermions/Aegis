@@ -43,6 +43,8 @@ A smell of compromise inside a helpdesk ticket keeps its Fix card and adds the e
 
 Aegis's sealed sessions may hold three read-only lookups beside the documentation fetch: `net_dns(name, type)`, `net_http(url)` and `net_tls(host)`. They refuse private address space and see only the public internet.
 
+Their reach is fixed (batch 12d): a host on the documentation list (`config/docs-allowlist.json`), a host on the probe list (`config/probe-allowlist.json`: pypi.org, registry.npmjs.org, slack-status.com, www.githubstatus.com), or, for `net_dns` and `net_tls`, the exact host name the person typed, and for `net_http`, the exact URL the person typed. Anything else is refused (`refused_out_of_scope`): a subdomain, another path or query, a host that only a fetched page or a runbook mentions. A typed host name alone opens no URL. After a refusal, do not guess another name: say which exact host or URL you would need the person to give, and what the lookup would show.
+
 When they help:
 
 - **What the world sees.** `net_dns` reads the public answer for a name (A, AAAA, CNAME, MX, NS, TXT, CAA, SOA). Compare it with what the ticket's inside resolver returns: a difference is split horizon, a stale cache, or a change still inside its TTL.

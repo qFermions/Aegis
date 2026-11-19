@@ -1641,6 +1641,18 @@ test('batch 12d: the desk hands each session a typed file beside its debug log: 
   assert.equal(fs.existsSync(path.join(off.results, 'customers', 'B', 'tickets', 'T7-typed.txt')), false);
 });
 
+// Batch 12d. EXPECTED DECISION (written before the code): each ticket's record in run.json holds tool_server, read from
+// the ticket's own audit file after its session: calls, allowed, refused (every decision that starts with refused_),
+// other, and refused_calls (tool, input as the audit keeps it, decision, reason). Wrong implementations it catches: a
+// desk that records no refusals (a blocked exfiltration attempt would leave no trace in the run); one that reads
+// another ticket's audit file; one that drops the reason.
+test('batch 12d: the desk records each ticket\'s tool server calls allowed and refused, with every refused call and its reason', async (t) => {
+  const refused = { time: 't', tool: 'net_dns', input: { name: 'ticket-text.example.net', type: 'TXT' }, decision: 'refused_out_of_scope', reason: 'ticket-text.example.net is out of scope: not listed, not typed', addresses: [], bytes: 0, duration_ms: 1 };
+  const ok = { time: 't', tool: 'net_dns', input: { name: 'pypi.org', type: 'A' }, decision: 'ok', addresses: ['151.101.1.69'], bytes: 0, duration_ms: 1 };
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, sut: { audit_entries: [ok, refused] } });
+  assert.deepEqual(r.ticket('T7').tool_server, { calls: 2, allowed: 1, refused: 1, other: 0, refused_calls: [{ tool: refused.tool, input: refused.input, decision: refused.decision, reason: refused.reason }] });
+});
+
 // Batch 12, task 13: the guard's first guess of a session's cost moves toward measured costs. On 2026-11-18 thirteen
 // demo sessions cost 0.18 to 0.84 US dollars each (docs/aegis/demo/evidence/batch12/full-run-10 and full-run-11), and
 // the old guess of 2.00 stopped T8m, T9m, T7 and T8 with money left. Wrong implementation: a guess still at 2.00 (the

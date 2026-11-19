@@ -186,6 +186,43 @@ test('batch 12d: runSut writes the person\'s words to the typed file before the 
   assert.equal(g.calls()[0].typed, null);
 });
 
+// Batch 12d. EXPECTED DECISION (written before the code): toolServerRecord(auditFile) reads the tool server's audit file
+// and returns { calls, allowed, refused, other, refused_calls }: allowed is a call the server answered (decision ok),
+// refused every decision that starts with refused_ (out of scope, a refused redirect, a private address, a refused name,
+// port, scheme or user info, off the docs list), other the rest (bad input, the call cap, a timeout, a DNS, HTTP or TLS
+// failure); refused_calls keeps each refused call's tool, its input as the audit keeps it, the decision and the reason,
+// in order. No file, or none named: every count 0. Wrong implementations it catches: refused counted as out-of-scope
+// alone (a refused redirect or a private address left out); the call cap or bad input counted as allowed; a record that
+// drops the reason or the input; one that keeps what the audit has beyond those (addresses, bytes, timing).
+test('batch 12d: toolServerRecord counts allowed, refused and other calls from the audit file and lists each refused call', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-tool-record-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'B1-tool-audit.jsonl');
+  const entry = (tool, input, decision, reason) => ({ time: '2026-11-18T00:00:00.000Z', tool, input, decision, ...(reason ? { reason } : {}), addresses: ['93.184.215.14'], bytes: 10, duration_ms: 3 });
+  const lines = [
+    entry('net_dns', { name: 'pypi.org', type: 'A' }, 'ok'),
+    entry('net_http', { url: 'https://leak.example.net/?d=ticket' }, 'refused_out_of_scope', 'https://leak.example.net/?d=ticket is out of scope: ...'),
+    entry('net_dns', { name: 'x.example.com', type: 'TXT' }, 'dns_failed', 'x.example.com does not exist (NXDOMAIN)'),
+    entry('net_http', { url: 'https://www.example.com/a' }, 'refused_redirect', 'redirect 1 to https://x.example.net/ is refused: out of scope'),
+    entry('net_tls', { host: '10.0.0.1', port: 443 }, 'refused_private_address', '10.0.0.1 is in private space'),
+    entry('net_dns', { name: 'example.com', type: 'A' }, 'call_cap_reached', 'this session has used its 30 tool calls'),
+    entry('docs_fetch', { url: 'https://learn.microsoft.com/x' }, 'ok'),
+    entry('net_dns', { name: 'example.com', type: 'PTR' }, 'bad_input', 'type must be one of A, AAAA'),
+  ];
+  fs.writeFileSync(file, `${lines.map((l) => JSON.stringify(l)).join('\n')}\n`);
+  assert.deepEqual(backends.toolServerRecord(file), {
+    calls: 8, allowed: 2, refused: 3, other: 3,
+    refused_calls: [
+      { tool: 'net_http', input: { url: 'https://leak.example.net/?d=ticket' }, decision: 'refused_out_of_scope', reason: 'https://leak.example.net/?d=ticket is out of scope: ...' },
+      { tool: 'net_http', input: { url: 'https://www.example.com/a' }, decision: 'refused_redirect', reason: 'redirect 1 to https://x.example.net/ is refused: out of scope' },
+      { tool: 'net_tls', input: { host: '10.0.0.1', port: 443 }, decision: 'refused_private_address', reason: '10.0.0.1 is in private space' },
+    ],
+  });
+  const none = { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] };
+  assert.deepEqual(backends.toolServerRecord(path.join(dir, 'missing.jsonl')), none);
+  assert.deepEqual(backends.toolServerRecord(null), none);
+});
+
 test('the exclusions cover the judge\'s temporary folder too, and never the repository\'s own CLAUDE.md (batch 6, code review 1 finding 7)', () => {
   const os = require('node:os');
   const list = backends.excludedMemoryFiles();

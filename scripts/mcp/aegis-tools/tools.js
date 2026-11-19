@@ -102,7 +102,12 @@ function typedTokens(text) {
   // a URL counts as the person wrote it and without the sentence punctuation at its end: a URL may really end in a
   // bracket or a quote, and a sentence may end right after one (code review 1 of batch 12d, finding 5)
   for (const [run] of s.matchAll(URL_RUN)) {
-    for (const form of new Set([run, withoutSentenceEnd(run)])) {
+    // and with one, two or three of those characters taken off, since the URL's own last character may be one of them
+    // and a sentence may put a few more after it (code review 2, finding 4); a fixed few forms, whatever the run's length
+    const bare = withoutSentenceEnd(run);
+    const forms = new Set([run, bare]);
+    for (let cut = 1; cut <= 3 && run.length - cut > bare.length; cut += 1) forms.add(run.slice(0, run.length - cut));
+    for (const form of forms) {
       try {
         const u = new URL(form);
         u.hash = '';

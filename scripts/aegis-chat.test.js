@@ -377,7 +377,47 @@ test('batch 12d: a closed terminal or a kill removes the typed file at once and 
     assert.equal(fs.existsSync(typedFile), false, `${signal}: the person's words are off the disk before claude has exited`);
     assert.deepEqual(killed, [signal], `${signal}: passed on to claude`);
     child.emit('exit', null);
-    assert.equal(await running, 2);
+    // code review 2, finding 8: the chat ends as a process the signal ended, 128 plus the signal's number
+    assert.equal(await running, 128 + os.constants.signals[signal]);
     assert.deepEqual(process.listeners(signal), before, `${signal}: the handler is removed after the chat`);
   }
+});
+
+// Code review 2 of batch 12d, finding 3. Wrong implementation it catches: the signal handler running the whole tidy while
+// claude and its tool server are still alive: with no lookup so far it removed the empty audit file and the chat's
+// folder, so a lookup that finished during the shutdown left no audit line.
+test('batch 12d: on a signal only the typed file goes at once; the audit file and the folder wait for claude to exit', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = tempDir(t);
+  const child = new EventEmitter();
+  child.kill = () => true;
+  const before = process.listeners('SIGTERM');
+  let seen = null;
+  const running = chat.main([], { HOME: home }, { spawn: (cmd, args) => { seen = args; return child; }, out: () => {}, err: () => {} });
+  const [handler] = process.listeners('SIGTERM').filter((l) => !before.includes(l));
+  handler('SIGTERM');
+  assert.equal(fs.existsSync(typedOf(seen)), false, 'the typed file is gone at once');
+  assert.ok(fs.existsSync(auditOf(seen)) || fs.existsSync(path.dirname(auditOf(seen))), 'the chat folder is still there while claude shuts down');
+  // a lookup finishes during the shutdown: the server, still alive, writes its audit line
+  fs.appendFileSync(auditOf(seen), '{"tool":"net_dns","decision":"ok"}\n');
+  child.emit('exit', null);
+  await running;
+  assert.deepEqual(fs.readdirSync(path.dirname(auditOf(seen))), ['tool-audit.jsonl'], 'the audit line is kept');
+});
+
+// Code review 2 of batch 12d, finding 8. Wrong implementation it catches: handlers that only pass the signal on, so a
+// claude that ignores it leaves a launcher no SIGTERM or SIGHUP can stop.
+test('batch 12d: a claude that ignores the signal is killed after the grace, and the chat still ends', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = tempDir(t);
+  const child = new EventEmitter();
+  const killed = [];
+  child.kill = (s) => { killed.push(s); return true; }; // it never exits by itself
+  const before = process.listeners('SIGTERM');
+  const running = chat.main([], { HOME: home }, { spawn: () => child, out: () => {}, err: () => {}, graceMs: 20 });
+  const [handler] = process.listeners('SIGTERM').filter((l) => !before.includes(l));
+  handler('SIGTERM');
+  assert.equal(await running, 128 + os.constants.signals.SIGTERM);
+  assert.deepEqual(killed, ['SIGTERM', 'SIGKILL']);
+  assert.deepEqual(process.listeners('SIGTERM'), before);
 });

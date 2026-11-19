@@ -1,0 +1,7 @@
+staged for commit "red-claude-answer-format" on feat/batch12-expert-lanes at parent 73c19ace:
+A	docs/aegis/demo/evidence/batch12d/claude-answer-format-red.txt
+M	scripts/repository-structure.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

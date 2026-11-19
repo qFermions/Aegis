@@ -178,6 +178,17 @@ test("the toolbox rule is in CLAUDE.md and in the answer format: this repository
   }
 });
 
+// Batch 12d, task 3. Wrong implementations this catches: the closing section and the slot-built card written in the
+// answer format only, so a session that never opens that file does not know them; a different heading in the two files.
+test('CLAUDE.md names the closing section of Engineer and Incident answers and the slot-built Fix card', () => {
+  const claude = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8');
+  const format = fs.readFileSync(path.join(ROOT, 'docs', 'aegis', 'answer-format.md'), 'utf8');
+  for (const text of [claude, format]) assert.match(text, /`## Human-run and read-back`/);
+  assert.match(claude, /Mode: Incident answer`[^.]*close: `## Human-run and read-back`\)/, 'the Incident answer names its close');
+  assert.match(claude, /Mode: Engineer answer`[^.]*same close\)/, 'the Engineer answer has the same close');
+  assert.match(claude, /six slots, at most 150 words/);
+});
+
 test('CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized)', () => {
   const content = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\r\n/g, '\n');
   assert.ok(content.length <= 40000, `CLAUDE.md is ${content.length} chars; Claude Code truncates the tail past 40,000`);

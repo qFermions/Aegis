@@ -1,0 +1,10 @@
+staged for commit "red-tasks-2-and-5" on feat/batch12-expert-lanes at parent e0b512cf:
+A	docs/aegis/demo/evidence/batch12d/git-wall-red.txt
+A	docs/aegis/demo/evidence/batch12d/lane-cleanups-red.txt
+A	scripts/eval/judged/git-wall.test.js
+M	scripts/lint/ladder-audit.test.js
+M	scripts/repository-structure.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals to enable.
+pre-commit-check: ✓ Clean — no issues found.
+exit 0

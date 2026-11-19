@@ -158,6 +158,15 @@ test('every [@Aegion_*] org token used in a tracked file is defined in the place
   assert.deepStrictEqual(undefinedUses, [], `Org tokens used but not defined in the dictionary:\n${undefinedUses.join('\n')}`);
 });
 
+// Batch 12d, task 5. Wrong implementations this catches: a networking placeholder used in a runbook and missing from
+// the dictionary; a token listed without its backticks, which the dev-case test (cases.test.js) does not find.
+test('the six networking placeholders the lane runbooks use are in the placeholder dictionary', () => {
+  const dictionary = fs.readFileSync(path.join(ROOT, 'modules', 'security', 'placeholder-dictionary.md'), 'utf8');
+  for (const token of ['[SITE_A]', '[SITE_B]', '[SITE_B_HOST]', '[SITE_B_GATEWAY]', '[SWITCH_NAME]', '[VLAN_ID]']) {
+    assert.ok(dictionary.includes(`\`${token}\``), `${token} is a dictionary placeholder`);
+  }
+});
+
 test('CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized)', () => {
   const content = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\r\n/g, '\n');
   assert.ok(content.length <= 40000, `CLAUDE.md is ${content.length} chars; Claude Code truncates the tail past 40,000`);

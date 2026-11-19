@@ -1,0 +1,20 @@
+staged for commit "breaker-evidence" on feat/batch12-expert-lanes at parent 1aa47a39:
+A	docs/aegis/demo/evidence/batch12d/breaker.md
+A	docs/aegis/demo/evidence/batch12d/breaker/harness.js
+A	docs/aegis/demo/evidence/batch12d/breaker/r1.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r1b.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r6.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r6b.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r7.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r8.out
+A	docs/aegis/demo/evidence/batch12d/breaker/real-npm-3.out
+A	docs/aegis/demo/evidence/batch12d/breaker/real-npm.out
+A	docs/aegis/demo/evidence/batch12d/breaker/t2-idna.js
+A	docs/aegis/demo/evidence/batch12d/breaker/t2.out
+A	docs/aegis/demo/evidence/batch12d/breaker/t6-npm.js
+A	docs/aegis/demo/evidence/batch12d/breaker/t8-npm2.js
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T045100Z-breaker-evidence.txt
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

@@ -1,0 +1,8 @@
+ticket typed by the person: "a@b.c"
+typed file written by ask-aegis: "[USER@DOMAIN.COM]\n"
+server args: ["<repo>/scripts/mcp/aegis-tools/server.js","--audit","<HOME>/aegis-asks/20261119T044929Z-73d7050f/tool-audit.jsonl","--typed","<HOME>/aegis-asks/20261119T044929Z-73d7050f/typed.txt"]
+{"tool":"net_dns","args":{"name":"domain.com","type":"TXT"},"decision":"refused_out_of_scope","reason":"domain.com is out of scope: its host is not on the docs allowlist (config/docs-allowlist.json) or the probe allowlist (c","dns":[],"tls":[],"http":[]}
+{"tool":"net_dns","args":{"name":"DOMAIN.COM","type":"MX"},"decision":"refused_out_of_scope","reason":"DOMAIN.COM is out of scope: its host is not on the docs allowlist (config/docs-allowlist.json) or the probe allowlist (c","dns":[],"tls":[],"http":[]}
+{"tool":"net_tls","args":{"host":"domain.com","port":8443},"decision":"refused_out_of_scope","reason":"domain.com is out of scope: its host is not on the docs allowlist (config/docs-allowlist.json) or the probe allowlist (c","dns":[],"tls":[],"http":[]}
+{"tool":"net_dns","args":{"name":"b.co","type":"A"},"decision":"refused_out_of_scope","reason":"b.co is out of scope: its host is not on the docs allowlist (config/docs-allowlist.json) or the probe allowlist (config/","dns":[],"tls":[],"http":[]}
+{"tool":"net_http","args":{"url":"http://domain.com/"},"decision":"refused_out_of_scope","reason":"http://domain.com/ is out of scope: its host is not on the docs allowlist (config/docs-allowlist.json) or the probe allo","dns":[],"tls":[],"http":[]}

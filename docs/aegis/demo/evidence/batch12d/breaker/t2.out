@@ -1,0 +1,4 @@
+0 code points where IDNA(x) != IDNA(lower(x)):
+
+{"name":"größe.example.com","decision":"ok","dns":["A xn--gre-6ka8i.example.com."]}
+{"name":"GRÖẞE.example.com","decision":"ok","dns":["A xn--gre-6ka8i.example.com."]}

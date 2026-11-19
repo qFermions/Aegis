@@ -997,7 +997,15 @@ test('batch 12d: a bracketed placeholder is not typed text: [USER@DOMAIN.COM] op
   assert.equal(typed.hosts.has('first.name'), false);
   assert.ok(typed.hosts.has('real.example.org'), 'what the person typed still counts');
   assert.ok(typed.urls.has('https://[2001:db8::1]/status'), 'a typed IPv6 URL keeps its brackets');
-  assert.ok(typed.urls.has('https://example.org/u/[UPN]/x'), 'a typed URL stays verbatim, placeholder and all');
+  // the breaker's retest: masking must not split one typed run into a host of its own, and a URL the privacy step
+  // changed is not a URL the person typed. A whole run of non-space text that holds a placeholder is no typed text.
+  assert.equal(typed.urls.has('https://example.org/u/[UPN]/x'), false, 'a URL with a placeholder in it is not a typed URL');
+  assert.equal(typed.hosts.has('example.org'), false, 'and its host is not typed by that run alone');
+  for (const text of ['[USER@DOMAIN.COM]..example.net', 'call [PHONE_NUMBER].example.net', '[PHONE_NUMBER].x.example.net', '[USER@DOMAIN.COM]_x.example.net', 'https://x.example.net/?u=[USER@DOMAIN.COM]']) {
+    const t = typedTokens(`${text} and real.example.org`);
+    assert.deepEqual([...t.hosts].filter((h) => h.includes('.')), ['real.example.org'], text);
+    assert.deepEqual([...t.urls], [], text);
+  }
 });
 
 // Wrong implementations it catches: any path allowed on a probe host, so 256 versions of one package carry a byte per
@@ -1010,6 +1018,12 @@ test('batch 12d: a tarball or API path on registry.npmjs.org is out of scope unl
     const body = await refusedWith(s, 'net_http', { url }, 'refused_out_of_scope');
     assert.match(body.reason, /download counts/, url);
   }
+  // the breaker's retest: npm decodes %2D and %2F, so the rule is a list of what is allowed (a package's metadata
+  // path), never a search for /-/ in the path as written
+  for (const tail of ['some-package/%2D/some-package-0.0.7.tgz', 'some-package/%2d/some-package-0.0.7.tgz', 'some-package/-%2Fsome-package-0.0.7.tgz', 'some-package%2F-%2Fsome-package-0.0.7.tgz', '@scope%2Fsome-package', 'some-package/1.0.0/extra', '-/ping', 'some-package/%31.0.0']) {
+    const body = await refusedWith(s, 'net_http', { url: `https://registry.npmjs.org/${tail}` }, 'refused_out_of_scope');
+    assert.match(body.reason, /download counts/, tail);
+  }
   nothingSent(s, 'tarball paths');
   // a redirect hop to a tarball is refused before it is requested
   const npm = () => learn({ 'registry.npmjs.org': { A: [PUBLIC_IP] } });
@@ -1021,4 +1035,13 @@ test('batch 12d: a tarball or API path on registry.npmjs.org is out of scope unl
   const meta = 'https://registry.npmjs.org/some-package';
   const ok = scoped(`The lockfile points at ${tarball} and the install fails.`, { resolver: npm(), request: fakeHttp({ [`HEAD ${meta}`]: { status: 200, headers: {} }, [`GET ${meta}`]: { status: 200, headers: {}, body: '{}' }, [`HEAD ${tarball}`]: { status: 200, headers: {} }, [`GET ${tarball}`]: { status: 200, headers: {}, body: 'x' } }) });
   for (const url of [meta, tarball]) assert.equal((await call(ok, 'net_http', { url })).isError, false, url);
+  // the metadata forms: the registry root, a package, a scoped package, a version, an old name with capitals
+  const forms = ['', 'some-package/1.2.3', '@scope/some-package', '@scope/some-package/latest', 'JSONStream'].map((tail) => `https://registry.npmjs.org/${tail}`);
+  const routes = Object.fromEntries(forms.flatMap((url) => [[`HEAD ${new URL(url).href}`, { status: 200, headers: {} }], [`GET ${new URL(url).href}`, { status: 200, headers: {}, body: '{}' }]]));
+  const metadata = scoped('npm install fails.', { resolver: npm(), request: fakeHttp(routes) });
+  for (const url of forms) assert.equal((await call(metadata, 'net_http', { url })).isError, false, url);
+  // a redirect to the encoded tarball form is refused like the plain one
+  const enc = scoped('npm install fails.', { resolver: npm(), request: fakeHttp({ 'HEAD https://registry.npmjs.org/some-package/latest': { status: 302, headers: { location: '/some-package/%2D/some-package-0.0.7.tgz' } } }) });
+  await refusedWith(enc, 'net_http', { url: 'https://registry.npmjs.org/some-package/latest' }, 'refused_redirect');
+  assert.equal(enc.deps.request.sent.length, 1, 'only the first request was sent');
 });

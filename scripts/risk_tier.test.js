@@ -131,6 +131,17 @@ test('C: scripts/ask-aegis.js and scripts/aegis-chat.js (they start the claude C
   assert.equal(run(tests, ['main'])[0], 'tier=B');
 });
 
+// Code review 1 of batch 12d, finding 10. Wrong implementation it catches: the lists of hosts a sealed session may reach
+// (config/**) left at tier A, and the tool server that enforces them (scripts/mcp/**) at tier B under scripts/**, so a
+// change that lets a session reach one more host is reviewed as a docs change.
+test('C: config/** (the hosts a sealed session may reach) and scripts/mcp/** (the tool server that enforces them) are tier C', () => {
+  for (const file of ['config/probe-allowlist.json', 'config/docs-allowlist.json', 'scripts/mcp/aegis-tools/tools.js', 'scripts/mcp/aegis-tools/server.test.js']) {
+    const cwd = sandbox();
+    commit(cwd, [file, 'docs/notes.md']);
+    assert.deepEqual(run(cwd, ['main']), ['tier=C', file]);
+  }
+});
+
 test('one C path wins over many B paths, and only the C path is listed', () => {
   const cwd = sandbox();
   const many = Array.from({ length: 12 }, (_, i) => `scripts/eval/case-${i}.js`);

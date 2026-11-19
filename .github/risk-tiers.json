@@ -28,6 +28,7 @@
     "scripts/risk_tier.mjs",
     "config/**",
     "scripts/mcp/**",
+    "scripts/eval/judged/backends.js",
     "package.json",
     "package-lock.json"
   ],

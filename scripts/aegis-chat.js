@@ -105,10 +105,17 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
       try { fs.unlinkSync(auditFile); } catch { /* never written */ }
       try { fs.rmdirSync(path.dirname(auditFile)); } catch { /* not empty or gone: left as it is */ }
     };
-    const finish = (code) => { if (!done) { done = true; process.removeListener('SIGINT', ignoreInterrupt); tidy(); resolve(code); } };
-    process.on('SIGINT', ignoreInterrupt);
-    const failed = (e) => { io.err(`aegis-chat: could not start claude (${e.code || 'error'}). Is Claude Code installed? Type claude once to install it and sign in.\n`); finish(2); };
     let child;
+    // a closed terminal window (SIGHUP) or a kill (SIGTERM) would end this launcher before claude's exit is seen, and
+    // leave every message the person typed on disk: tidy at once, pass the signal on, and let claude's exit end the chat
+    // shortcut: a SIGKILL or a power loss still leaves typed.txt (0600, outside the repository); sweep old chat folders
+    // at start if that is ever seen
+    const stop = (signal) => { tidy(); try { child.kill(signal); } catch { /* no child, or gone already */ } };
+    const finish = (code) => { if (!done) { done = true; for (const [signal, handler] of [['SIGINT', ignoreInterrupt], ['SIGHUP', stop], ['SIGTERM', stop]]) process.removeListener(signal, handler); tidy(); resolve(code); } };
+    process.on('SIGINT', ignoreInterrupt);
+    process.on('SIGHUP', stop);
+    process.on('SIGTERM', stop);
+    const failed = (e) => { io.err(`aegis-chat: could not start claude (${e.code || 'error'}). Is Claude Code installed? Type claude once to install it and sign in.\n`); finish(2); };
     try {
       child = spawn(backend.command, [...(backend.prefixArgs || []), ...chatArgs(setup, path.join(homeOf(env), ASKS_DIR), replyTo, model, { tools, auditFile, typedFile })], { cwd: REPO_ROOT, env: sessionEnv(env), stdio: 'inherit', shell: false });
     } catch (e) { failed(e); return; }

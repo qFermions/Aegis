@@ -101,3 +101,20 @@ test('no sealed session gets the git status snapshot: the setting is off in ever
   assert.equal(backends.scrubEnv({ PATH: '/usr/bin' }, new Set()).CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS, '1');
   assert.equal(backends.scrubEnv({ PATH: '/usr/bin', CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS: '0' }, new Set()).CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS, '1', 'the caller\'s own value does not turn it back on');
 });
+
+// A real sealed session's Grep from the repository root found docs/aegis/batch12/lanes/infrastructure-dev-cases.jsonl:
+// the four lane case files of batch 12 (58 cases with their expected decisions) sit in a folder no rule named. Wrong
+// implementations this catches: the case file denied at scripts/eval/judged alone; a later copy of a case file tracked
+// anywhere else in the repository with no rule over it.
+test('every tracked case file is under a deny rule, the lane case files of batch 12 included', () => {
+  const { execFileSync } = require('node:child_process');
+  const rules = backends.readDenyRules().map((r) => r.slice('Read(//'.length, -1));
+  const covered = (file) => {
+    const full = path.join(REPO_ROOT, file).split(path.sep).join('/').replace(/^\/+/, '');
+    return rules.some((r) => r === full || (r.endsWith('/**') && !r.slice(0, -3).includes('*') && full.startsWith(`${r.slice(0, -3)}/`)));
+  };
+  const tracked = execFileSync('git', ['ls-files'], { cwd: REPO_ROOT, encoding: 'utf8' }).split('\n').filter((f) => /dev-cases[^/]*\.jsonl$/.test(f));
+  assert.ok(tracked.length >= 5, `the case files are tracked (${tracked.length})`);
+  assert.deepEqual(tracked.filter((f) => !covered(f)), [], 'case files no deny rule covers');
+  assert.ok(covered('docs/aegis/batch12/lanes/security-notes.md'), 'the lane notes beside them, which describe the cases');
+});

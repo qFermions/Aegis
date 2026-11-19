@@ -1,0 +1,50 @@
+✔ every private and special address is refused, every public one passes (5.494042ms)
+✔ a name is refused before any query when it is single-label, IP-looking or under a private suffix (4.106875ms)
+✔ a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title (10.959583ms)
+✔ a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted (1.468291ms)
+✔ net_http refuses http://169.254.169.254/ before any query or request (0.446417ms)
+✔ net_http refuses http://169.254.169.254/latest/meta-data/ before any query or request (0.189792ms)
+✔ net_http refuses http://localhost before any query or request (0.182666ms)
+✔ net_http refuses http://10.0.0.1 before any query or request (0.127917ms)
+✔ net_http refuses http://[::1]/ before any query or request (0.452292ms)
+✔ net_http refuses http://2130706433/ before any query or request (0.122ms)
+✔ net_http refuses http://[::ffff:127.0.0.1]/ before any query or request (0.246459ms)
+✔ net_http refuses http://0x7f.1/ before any query or request (0.194666ms)
+✔ net_http refuses http://127.1/ before any query or request (0.1265ms)
+✔ net_http refuses http://[fd00:ec2::254]/ before any query or request (0.098042ms)
+✔ net_http refuses http://168.63.129.16/ before any query or request (0.167917ms)
+✔ net_http refuses http://[64:ff9b::a9fe:a9fe]/ before any query or request (0.123292ms)
+✔ a name whose resolution returns a private address is refused, with nothing sent (0.325958ms)
+✔ a name returning one public and one private address is refused (0.149334ms)
+✔ a redirect from a public URL to a private one is refused, with no request sent to the private hop (2.242708ms)
+✔ a docs redirect to an off-list host is refused, before that host is resolved (1.196ms)
+✔ the connection uses the pinned address even if a second resolution would return a different one (rebinding) (0.631666ms)
+✔ port 22 and 8080 are refused (0.223ms)
+✔ ftp: and file: are refused (0.143167ms)
+✔ user info is refused (0.110125ms)
+✔ GET reads at most 4 KB and then stops reading (0.445667ms)
+✔ the call cap holds: after 30 calls every call returns call_cap_reached (0.531833ms)
+✔ a TLS check on a fake expired certificate reports expired true and the verification error (0.338709ms)
+✔ tools/list lists exactly four tools, each with a strict input schema and no method, body, header or credential argument (0.217708ms)
+✔ an unknown method returns -32601 (0.060959ms)
+✔ malformed JSON returns -32700 (0.057166ms)
+✔ initialize echoes the client protocol version, notifications get no reply, a bad tools/call shape is -32602 (0.133416ms)
+✔ net_dns validates the name, refuses private A and AAAA answers and maps the record types (0.585375ms)
+✔ net_http follows public redirects, re-resolving each hop, and returns only the selected headers (1.858417ms)
+✔ docs_fetch caps bytes and text, says when it cut, and caches by URL (2.288875ms)
+✔ a server that never answers ends in timeout (200.735833ms)
+✔ every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content (0.719791ms)
+✔ the audit file is created with mode 0600 and only appended (1.165083ms)
+✔ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (53.852875ms)
+✔ the docs allowlist is the charter's 26 hosts plus docs.cloud.google.com, docs.slack.dev and tools.slack.dev, and nothing else (0.287167ms)
+✔ TOOL_NAMES are the four mcp__aegis-tools__ names, the same four the server lists (2.593375ms)
+✔ mcpConfig is one stdio server: this Node binary, the server file by absolute path, and --audit only when given (0.163125ms)
+ℹ tests 41
+ℹ suites 0
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 328.65225
+exit 0

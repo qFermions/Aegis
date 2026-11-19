@@ -19,6 +19,9 @@ Use the folder `command -v pg_dump` prints in your own shell; `/usr/local/bin` a
 **Verify:** the next scheduled run logs a finished dump and exit 0, and the dump file has today's date and a size like the last good one.
 **Ask next:** under which user is this cron job installed, and does `crontab -l` for that user show the full path to `dump.sh`?
 
+## Human-run and read-back
+- **Set the path inside dump.sh and merge it.** Runs it: the script's owner, through a reviewed pull request; the runbook's merge gate covers the merge. Confirms first: the folder pg_dump lives in on that server. Verify: the next cron run logs a finished dump and exit 0.
+
 ## Details
 
 - Step 1 (change the script): R1. Double-check: the next cron run's log line shows exit 0.

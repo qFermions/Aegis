@@ -18,6 +18,9 @@ spec:
 **Verify:** the external call takes under a second from a new pod, and the p95 latency panel for `payments` is back to its level before the upgrade.
 **Ask next:** do other namespaces on the upgraded node pool show the same delay?
 
+## Human-run and read-back
+- **Lower ndots for the payments Deployment.** Runs it: the workload owner, by merging the manifest change. Confirms first: test 1 showed the name with a trailing dot resolves fast. Verify: a new pod's external call takes under a second.
+
 ```aegis-desk
 Gate: none
 ```

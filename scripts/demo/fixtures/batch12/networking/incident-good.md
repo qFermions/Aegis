@@ -11,6 +11,11 @@ Assumed setup: Cisco Meraki switches and access points (no company profile given
 **Communications:** third-floor users hear that IT is checking a network fault on their floor, to save their work and to hold sign-ins to finance and HR systems until told. The reporter is thanked and asked not to touch the device.
 **Timeline:** first seen 08:40 by the help desk, reported 09:05, now 09:20; when the server appeared and whether any lookup was redirected: unknown.
 
+## Human-run and read-back
+- **Shut the unknown DHCP server's switch port.** Runs it: the network owner. Confirms first: the evidence under Preserve is saved and the port's settings are copied. Verify: an affected laptop's new lease comes from the known server. No runbook gate covers this.
+- **Pause third-floor sign-ins to finance and HR systems.** Runs it: the security on-call, through the floor's managers. Confirms first: the floor's users are told why. Verify: no third-floor sign-in to those systems appears until the pause is lifted. No runbook gate covers this.
+- **Set the switch's DHCP server policy for that VLAN.** Runs it: the network owner, in a change window. Confirms first: the known server's address is the one allowed. Verify: the policy allows only the known server and new leases come from it. No runbook gate covers this.
+
 ## Details
 Contain steps 1 and 3 change the network; no runbook gate in this lane covers a switch port or a DHCP server policy, so the network owner applies each through their change process with the port's settings saved first (`knowledge/networking/escalation.md`, `knowledge/networking/safe-changes.md`).
 

@@ -1,0 +1,6 @@
+staged for commit "merge-run-tool" on feat/batch12-expert-lanes at parent 0acc8c26:
+A	docs/aegis/demo/evidence/batch12d/tools/merge-run.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

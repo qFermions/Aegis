@@ -118,9 +118,12 @@ function readDenyRules(runRoot = null, caseDirs = []) {
 // --strict-mcp-config so it is the one MCP server the session loads. The judge grades with no tools, so it never
 // takes one. hooks (batch 12d): the chat's prompt hook (session.typedHooks), added to the inline --settings only when
 // given; the judge never takes one either.
+// includeGitInstructions false (batch 12d, task 2): Claude Code gives a session a git status snapshot when it starts (the
+// current branch, the main branch, the status, the recent commits), so denying .git to the tools alone left this
+// repository's branch and commits in every session's context; scrubEnv sets the environment variable that does the same.
 function isolationArgs({ judge = false, runRoot = null, caseDirs = [], mcpConfig = null, hooks = null } = {}) {
   if (judge && (mcpConfig || hooks)) throw new Error('the judge session takes no MCP server and no hook');
-  return ['--setting-sources', 'project', '--strict-mcp-config', ...(mcpConfig ? ['--mcp-config', mcpConfig] : []), '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot, caseDirs) }, ...(hooks ? { hooks } : {}) })];
+  return ['--setting-sources', 'project', '--strict-mcp-config', ...(mcpConfig ? ['--mcp-config', mcpConfig] : []), '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, includeGitInstructions: false, permissions: { deny: readDenyRules(runRoot, caseDirs) }, ...(hooks ? { hooks } : {}) })];
 }
 // The model every session names (batch 11 resumed): the one the commander's correctness run was measured on. With no
 // --model the CLI takes the settings file's default model, which can change from one day to the next, so a run
@@ -170,6 +173,8 @@ function scrubEnv(env, exampleNames) {
     if (exampleNames.has(name) || SECRET_SUFFIX.test(name)) continue;
     out[name] = value;
   }
+  // no git status snapshot of this repository in a session's context, whatever the caller's own value (see isolationArgs)
+  out.CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS = '1';
   return out;
 }
 

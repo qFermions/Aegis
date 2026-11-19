@@ -386,7 +386,8 @@ test('the scrub list is every NAME= of .env.example plus the secret suffixes', (
   const names = backends.envNamesFromExample('# comment\nFLEET_URL=[@Aegion_FLEET_URL]\nX=\n  INDENTED=1\n');
   assert.deepEqual([...names], ['FLEET_URL', 'X']);
   const env = { PATH: '/bin', FLEET_URL: 'h', X: '1', AEGIS_TEST_TOKEN: 't', SOME_API_KEY: 'k', A_SECRET: 's', DB_PASSWORD: 'p', KEEP_ME: 'y' };
-  assert.deepEqual(Object.keys(backends.scrubEnv(env, names)).sort(), ['KEEP_ME', 'PATH']);
+  // batch 12d, task 2: the scrub also sets the variable that keeps the git status snapshot out of a session (git-wall.test.js)
+  assert.deepEqual(Object.keys(backends.scrubEnv(env, names)).sort(), ['CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS', 'KEEP_ME', 'PATH']);
   const real = backends.readExampleNames();
   for (const n of ['FLEET_URL', 'JIRA_API_TOKEN', 'AEGION_DOMAIN', 'GITHUB_TOKEN']) assert.ok(real.has(n), n);
 });

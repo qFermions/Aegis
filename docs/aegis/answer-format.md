@@ -253,7 +253,7 @@ How Aegis picks, in this order:
 - When the answer advises no change yet (it diagnoses or asks first), the section holds one line: `- No change is advised yet, so nothing is run and nothing is read back.`
 - The section is not counted in the mode's budget, like Details and the `aegis-desk` block; keep each line under 40 words.
 
-The judged runner's `human-confirmation` and `read-back` checks, and the desk's rows for them, read this section.
+The judged runner's `human-confirmation` and `read-back` checks, and the desk's rows for them, read this section by its lines: a line counts as a human-run confirmation when it has its `Runs it:` and `Confirms first:` parts, and as a read-back when it has its `Verify:` part. The heading alone, or the no-change line, passes neither check.
 
 A short Engineer answer, about none of the desk's tickets:
 

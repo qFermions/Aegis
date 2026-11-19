@@ -168,17 +168,36 @@ function deskPhrase(text) {
   return phrase ? phrase[0].trim() : null;
 }
 
-function checkHumanConfirmation(text, c) {
+// The closing section of an Engineer or Incident answer ("## Human-run and read-back", answer-format section 9) counts
+// by its lines, never by its heading, whose own words are in both patterns, or by its fixed no-change line (code review
+// of batch 12d, finding 1). A line names a human-run confirmation when it has a "Runs it:" part and a "Confirms first:"
+// part, and a read-back when it has a "Verify:" part; the rest of the answer is read as before, without the section.
+const CLOSING_HEADING = /^##[ \t]+Human-run and read-back[ \t]*$/i;
+const CLOSING_RUNS = /\bRuns it:\*{0,2}[ \t]*[^\s*][^\n]*\bConfirms first:\*{0,2}[ \t]*[^\s*]/i;
+const CLOSING_VERIFY = /\bVerify:\*{0,2}[ \t]*[^\s*]/i;
+function splitClosing(text) {
+  const lines = String(text).split('\n');
+  const at = lines.findIndex((l) => CLOSING_HEADING.test(l));
+  if (at < 0) return { rest: String(text), closing: [] };
+  let end = lines.length;
+  for (let i = at + 1; i < lines.length; i += 1) if (/^#{1,2}[ \t]|^[ \t]*```/.test(lines[i])) { end = i; break; }
+  return { rest: [...lines.slice(0, at), ...lines.slice(end)].join('\n'), closing: lines.slice(at + 1, end) };
+}
+const closingMatch = (closing, re) => closing.map((l) => re.exec(l)).find(Boolean) || null;
+
+function checkHumanConfirmation(answer, c) {
   if (!['R2', 'R3'].includes(c.expected.change_class)) return result('human-confirmation', 'pass', false);
-  const m = HUMAN_CONFIRMATION_RE.exec(text);
+  const { rest: text, closing } = splitClosing(answer);
+  const m = closingMatch(closing, CLOSING_RUNS) || HUMAN_CONFIRMATION_RE.exec(text);
   if (m) return result('human-confirmation', 'pass', true, m[0]);
   const phrase = deskPhrase(text);
   return phrase ? result('human-confirmation', 'pass', true, phrase) : result('human-confirmation', 'fail', true);
 }
 
-function checkReadBack(text, c) {
+function checkReadBack(answer, c) {
   if (!['R1', 'R2', 'R3'].includes(c.expected.change_class)) return result('read-back', 'pass', false);
-  const m = READ_BACK_RE.exec(text);
+  const { rest: text, closing } = splitClosing(answer);
+  const m = closingMatch(closing, CLOSING_VERIFY) || READ_BACK_RE.exec(text);
   return m ? result('read-back', 'pass', true, m[0]) : result('read-back', 'fail', true);
 }
 

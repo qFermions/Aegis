@@ -5,7 +5,8 @@ require('../adapters/socket-tripwire.js');
 // runs it (a role), what they confirm first and what proves it worked. The judged runner's human-confirmation and
 // read-back checks (scripts/eval/judged/checks.js) and the desk's CHECKS step, which runs the same checks, already read
 // these words; this file pins that an answer that follows the template passes them and one without the section does not.
-// Neither check is changed. Run: node --test scripts/demo/closing-block.test.js
+// Since code review 1 of batch 12d the two checks read the section by its lines (Runs it, Confirms first, Verify), never
+// by its heading. Run: node --test scripts/demo/closing-block.test.js
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

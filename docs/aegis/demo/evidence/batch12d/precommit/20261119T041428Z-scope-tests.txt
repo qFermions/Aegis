@@ -1,0 +1,10 @@
+staged for commit "scope-tests" on worktree-agent-a84f13fda379436ea at parent e0b512cf:
+M	docs/aegis/demo/evidence/batch12d/precommit/20261119T035753Z-baseline.txt
+M	docs/aegis/demo/evidence/batch12d/precommit/20261119T035813Z-progress-hypothesis.txt
+A	docs/aegis/demo/evidence/batch12d/scope-red.txt
+M	docs/aegis/demo/evidence/batch12d/tools/commit.sh
+M	scripts/mcp/aegis-tools/server.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

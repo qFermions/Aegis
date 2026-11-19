@@ -95,9 +95,10 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
     const ignoreInterrupt = () => {};
     // a chat that made no lookup leaves no folder behind: its audit file is empty or was never written (code review 1
     // of batch 12, class D); one that made lookups keeps its audit file
+    // the person's words leave the disk with the chat (batch 12d)
+    const dropTyped = () => { if (typedFile) try { fs.unlinkSync(typedFile); } catch { /* gone already */ } };
     const tidy = () => {
-      // the person's words leave the disk with the chat (batch 12d)
-      if (typedFile) try { fs.unlinkSync(typedFile); } catch { /* gone already */ }
+      dropTyped();
       if (!auditFile) return;
       let size = 0;
       try { size = fs.statSync(auditFile).size; } catch { /* never written */ }
@@ -107,10 +108,12 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
     };
     let child;
     // a closed terminal window (SIGHUP) or a kill (SIGTERM) would end this launcher before claude's exit is seen, and
-    // leave every message the person typed on disk: tidy at once, pass the signal on, and let claude's exit end the chat
+    // leave every message the person typed on disk: remove the typed file at once, pass the signal on, and let claude's exit end the chat
     // shortcut: a SIGKILL or a power loss still leaves typed.txt (0600, outside the repository); sweep old chat folders
     // at start if that is ever seen
-    const stop = (signal) => { tidy(); try { child.kill(signal); } catch { /* no child, or gone already */ } };
+    // only the typed file goes at once: claude and its tool server are still alive, and a lookup that finishes during
+    // the shutdown must still find its audit file and the chat's folder (code review 2, finding 3)
+    const stop = (signal) => { dropTyped(); try { child.kill(signal); } catch { /* no child, or gone already */ } };
     const finish = (code) => { if (!done) { done = true; for (const [signal, handler] of [['SIGINT', ignoreInterrupt], ['SIGHUP', stop], ['SIGTERM', stop]]) process.removeListener(signal, handler); tidy(); resolve(code); } };
     process.on('SIGINT', ignoreInterrupt);
     process.on('SIGHUP', stop);

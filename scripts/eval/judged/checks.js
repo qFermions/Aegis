@@ -172,16 +172,24 @@ function deskPhrase(text) {
 // by its lines, never by its heading, whose own words are in both patterns, or by its fixed no-change line (code review
 // of batch 12d, finding 1). A line names a human-run confirmation when it has a "Runs it:" part and a "Confirms first:"
 // part, and a read-back when it has a "Verify:" part; the rest of the answer is read as before, without the section.
-const CLOSING_HEADING = /^##[ \t]+Human-run and read-back[ \t]*$/i;
+const CLOSING_HEADING = /^[ \t]*#{1,6}[ \t]*\**[ \t]*Human-run and read-back[ \t]*\**[ \t]*:?[ \t]*\**[ \t]*$/i;
+const NO_CHANGE_LINE = /^[ \t]*(?:[-*+][ \t]+)?\**No change is advised yet\b/i;
 const CLOSING_RUNS = /\bRuns it:\*{0,2}[ \t]*[^\s*][^\n]*\bConfirms first:\*{0,2}[ \t]*[^\s*]/i;
 const CLOSING_VERIFY = /\bVerify:\*{0,2}[ \t]*[^\s*]/i;
+// { rest, closing }: the answer without its closing sections, and the lines of those sections. The heading is matched
+// in any form (any level, bold, a colon, spaces or a CR around it) and every such section is taken, a follow-up
+// answer's too; the heading lines and the fixed no-change line are in neither part (code review 2, finding 1).
 function splitClosing(text) {
-  const lines = String(text).split('\n');
-  const at = lines.findIndex((l) => CLOSING_HEADING.test(l));
-  if (at < 0) return { rest: String(text), closing: [] };
-  let end = lines.length;
-  for (let i = at + 1; i < lines.length; i += 1) if (/^#{1,2}[ \t]|^[ \t]*```/.test(lines[i])) { end = i; break; }
-  return { rest: [...lines.slice(0, at), ...lines.slice(end)].join('\n'), closing: lines.slice(at + 1, end) };
+  const rest = [];
+  const closing = [];
+  let inside = false;
+  for (const line of String(text).replace(/\r/g, '').split('\n')) {
+    if (CLOSING_HEADING.test(line)) { inside = true; continue; }
+    if (NO_CHANGE_LINE.test(line)) continue;
+    if (inside && /^#{1,6}[ \t]|^[ \t]*```/.test(line)) inside = false;
+    (inside ? closing : rest).push(line);
+  }
+  return { rest: rest.join('\n'), closing };
 }
 const closingMatch = (closing, re) => closing.map((l) => re.exec(l)).find(Boolean) || null;
 

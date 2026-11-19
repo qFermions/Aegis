@@ -1,0 +1,49 @@
+✔ the SUT and judge command lines match the spec; --web moves the web tools to the allowed set (1.994291ms)
+✔ both sessions load only the repository's own settings, also when resumed, on the web, or with a judge model (batch 6, task 9) (0.916625ms)
+✔ the tool server is on by default for the system under test, never for the judge, and off leaves the old argv (batch 12) (64.528125ms)
+✔ batch 12d: sutArgs hands the server the typed file, and the prompt hook only when asked; off and the judge get neither (0.5585ms)
+✔ batch 12d: runSut writes the person's words to the typed file before the first turn, and the follow-up before the second (73.529917ms)
+✖ batch 12d: runSut starts each case with an empty audit file, and a typed file that cannot be written does not stop the run (65.166708ms)
+✔ batch 12d: toolServerRecord counts allowed, refused and other calls from the audit file and lists each refused call (0.602458ms)
+✔ the exclusions cover the judge's temporary folder too, and never the repository's own CLAUDE.md (batch 6, code review 1 finding 7) (0.248458ms)
+✔ under a stale TMPDIR the exclusions cover the system temporary folder the judge falls back to (0.251083ms)
+✔ the read limits: the deny list is pinned, the rules are absolute, and what Aegis needs stays readable (batch 7, task 4) (6.052708ms)
+✔ sutArgs takes no persistence only when asked, and the judge never persists (batch 7, task 5) (0.244833ms)
+✔ the prompt is the ticket, plus the evidence after the pasted-evidence header (0.032208ms)
+✔ the scrub list is every NAME= of .env.example plus the secret suffixes (0.331416ms)
+✔ the child runs from the repository root with a scrubbed environment (names only are checked) (20.500375ms)
+✔ a case with a follow_up resumes the first turn's session and records both answers, turns, cost and model (43.213083ms)
+✔ a slow child is stopped at the timeout: state TIMEOUT, and SIGKILL follows a child that ignores SIGTERM (817.19625ms)
+✔ output that is not stream-json, an error result, or a missing executable is ERROR (75.78675ms)
+✔ parseStream takes the result text, else the last assistant text, and counts invalid lines (0.108125ms)
+✔ batch 12: summarizeTurn records the tools and MCP servers the init event listed (0.077792ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 18
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1203.771667
+
+✖ failing tests:
+
+test at scripts/eval/judged/backends.test.js:193:1
+✖ batch 12d: runSut starts each case with an empty audit file, and a typed file that cannot be written does not stop the run (65.166708ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'not written'
+  
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/backends.test.js:211:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'not written',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

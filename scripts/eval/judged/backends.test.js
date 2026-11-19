@@ -205,6 +205,13 @@ test('batch 12d: runSut starts each case with an empty audit file, and a typed f
   const sut = await backends.runSut(kase({ follow_up: 'And now?' }), { ...g.opts, env: { PATH: process.env.PATH }, typedFile: blocked });
   assert.equal(sut.state, 'OK');
   assert.deepEqual(g.calls().map((c) => c.typed), [null, null], 'neither turn names a typed file');
+  // code review 2, finding 7: the record says the case ran with no typed file, so its refused lookups are read as a
+  // harness fault; a case whose typed file was written holds no such field. Wrong implementation it catches: the write
+  // error swallowed with no trace in results.json.
+  assert.equal(sut.typed_file, 'not written');
+  const h = fake(t, { sut: { answer: 'a' } });
+  const fine = await backends.runSut(kase(), { ...h.opts, env: { PATH: process.env.PATH }, typedFile: path.join(dir, 'B3-typed.txt') });
+  assert.ok(!('typed_file' in fine));
 });
 
 // Batch 12d. EXPECTED DECISION (written before the code): toolServerRecord(auditFile) reads the tool server's audit file

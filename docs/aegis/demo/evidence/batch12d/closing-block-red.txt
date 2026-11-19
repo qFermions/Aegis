@@ -1,0 +1,102 @@
+$ TMPDIR=<tmp> node --test scripts/demo/closing-block.test.js
+✖ section 9: the Engineer and Incident examples close with the block, pass both checks, and fail both without it (0.838125ms)
+✖ the two closing-block fixtures: the desk rows pass on the block, and fail with the block removed (0.074583ms)
+✖ with no runbook gate: each line names the role, the first confirmation and the check, and invents no gate, phrase or command (0.053208ms)
+✖ the closing block is not counted in the mode budget (0.038333ms)
+✖ every good Engineer and Incident lane fixture closes with the block and passes both checks and the mode row (0.637542ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43.058333
+
+✖ failing tests:
+
+test at scripts/demo/closing-block.test.js:59:1
+✖ section 9: the Engineer and Incident examples close with the block, pass both checks, and fail both without it (0.838125ms)
+  AssertionError [ERR_ASSERTION]: Mode: Engineer answer: the example has "## Human-run and read-back"
+      at TestContext.<anonymous> (<repo>/scripts/demo/closing-block.test.js:64:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/demo/closing-block.test.js:79:1
+✖ the two closing-block fixtures: the desk rows pass on the block, and fail with the block removed (0.074583ms)
+  Error: ENOENT: no such file or directory, open '<repo>/scripts/demo/fixtures/batch12d/engineer-closing-block.md'
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/demo/closing-block.test.js:81:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/scripts/demo/fixtures/batch12d/engineer-closing-block.md'
+  }
+
+test at scripts/demo/closing-block.test.js:101:1
+✖ with no runbook gate: each line names the role, the first confirmation and the check, and invents no gate, phrase or command (0.053208ms)
+  Error: ENOENT: no such file or directory, open '<repo>/scripts/demo/fixtures/batch12d/engineer-closing-block.md'
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/demo/closing-block.test.js:103:23)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/scripts/demo/fixtures/batch12d/engineer-closing-block.md'
+  }
+
+test at scripts/demo/closing-block.test.js:118:1
+✖ the closing block is not counted in the mode budget (0.038333ms)
+  Error: ENOENT: no such file or directory, open '<repo>/scripts/demo/fixtures/batch12d/engineer-closing-block.md'
+      at Object.readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (<repo>/scripts/demo/closing-block.test.js:119:21)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '<repo>/scripts/demo/fixtures/batch12d/engineer-closing-block.md'
+  }
+
+test at scripts/demo/closing-block.test.js:126:1
+✖ every good Engineer and Incident lane fixture closes with the block and passes both checks and the mode row (0.637542ms)
+  AssertionError [ERR_ASSERTION]: fixtures/batch12/security/engineer-good.md: has "## Human-run and read-back"
+      at TestContext.<anonymous> (<repo>/scripts/demo/closing-block.test.js:132:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit 1

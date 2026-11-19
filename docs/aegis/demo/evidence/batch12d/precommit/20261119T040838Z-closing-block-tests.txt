@@ -1,0 +1,10 @@
+staged for commit "closing-block-tests" on worktree-agent-aadc7d2f97259d5ca at parent e0b512cf:
+A	docs/aegis/demo/evidence/batch12d/closing-block-red.txt
+M	docs/aegis/demo/evidence/batch12d/precommit/20261119T035753Z-baseline.txt
+M	docs/aegis/demo/evidence/batch12d/precommit/20261119T035813Z-progress-hypothesis.txt
+M	docs/aegis/demo/evidence/batch12d/tools/commit.sh
+A	scripts/demo/closing-block.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

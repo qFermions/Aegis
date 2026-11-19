@@ -18,6 +18,7 @@
 // goes to typed.txt in the chat's folder for the tool server's scope, and the file is removed when the chat ends.
 
 const childProcess = require('node:child_process');
+const os = require('node:os');
 
 const backends = require('./eval/judged/backends.js');
 const path = require('node:path');
@@ -113,8 +114,26 @@ function main(argv = process.argv.slice(2), env = process.env, deps = {}) {
     // at start if that is ever seen
     // only the typed file goes at once: claude and its tool server are still alive, and a lookup that finishes during
     // the shutdown must still find its audit file and the chat's folder (code review 2, finding 3)
-    const stop = (signal) => { dropTyped(); try { child.kill(signal); } catch { /* no child, or gone already */ } };
-    const finish = (code) => { if (!done) { done = true; for (const [signal, handler] of [['SIGINT', ignoreInterrupt], ['SIGHUP', stop], ['SIGTERM', stop]]) process.removeListener(signal, handler); tidy(); resolve(code); } };
+    // The chat then ends as a process the signal ended (128 plus its number). A claude that ignores the signal is
+    // killed after the grace, so the launcher can always be stopped (code review 2, finding 8).
+    let stopped = null;
+    let killTimer = null;
+    const kill = (signal) => { try { child.kill(signal); } catch { /* no child, or gone already */ } };
+    const stop = (signal) => {
+      dropTyped();
+      kill(signal);
+      if (stopped) return;
+      stopped = signal;
+      killTimer = setTimeout(() => { kill('SIGKILL'); finish(null); }, deps.graceMs || backends.DEFAULT_GRACE_MS);
+    };
+    const finish = (code) => {
+      if (done) return;
+      done = true;
+      clearTimeout(killTimer);
+      for (const [signal, handler] of [['SIGINT', ignoreInterrupt], ['SIGHUP', stop], ['SIGTERM', stop]]) process.removeListener(signal, handler);
+      tidy();
+      resolve(stopped ? 128 + os.constants.signals[stopped] : code);
+    };
     process.on('SIGINT', ignoreInterrupt);
     process.on('SIGHUP', stop);
     process.on('SIGTERM', stop);

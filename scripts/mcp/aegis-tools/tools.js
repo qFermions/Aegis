@@ -80,6 +80,16 @@ const PLACEHOLDER = /\[[A-Za-z@][A-Za-z0-9_@.#,-]*\]/;
 // one more segment (a version or a tag). No percent sign, so nothing the registry decodes into another path.
 const NPM_METADATA = /^\/(?:(?:@[A-Za-z0-9._~-]+\/)?[A-Za-z0-9._~][A-Za-z0-9._~-]*(?:\/[A-Za-z0-9._~-]+)?\/?)?$/;
 
+// The run without the dots and hyphens at its two ends, by two loops: a pattern for this backtracked from every
+// position of a long run of them inside a word (code review 2, finding 11).
+function withoutEnds(run) {
+  let start = 0;
+  let end = run.length;
+  while (start < end && (run[start] === '.' || run[start] === '-')) start += 1;
+  while (end > start && (run[end - 1] === '.' || run[end - 1] === '-')) end -= 1;
+  return run.slice(start, end);
+}
+
 // { hosts, urls }: whole tokens of the typed text. A host token is a maximal run of host characters with the dots and
 // hyphens at its ends taken off, in lower case, or an IPv6 literal. A URL token runs from http:// or https:// to the
 // next space, as written and without trailing sentence punctuation, each kept as its WHATWG href with no fragment.
@@ -90,7 +100,7 @@ function typedTokens(text) {
   const s = String(text).split(/(\s+)/).map((run) => (PLACEHOLDER.test(run) ? ' ' : run)).join('');
   const hosts = new Set();
   for (const [run] of s.matchAll(HOST_RUN)) {
-    const h = run.replace(/^[.-]+|[.-]+$/g, '').toLowerCase();
+    const h = withoutEnds(run).toLowerCase();
     if (h) hosts.add(h);
   }
   for (const [run] of s.matchAll(ADDRESS_RUN)) {

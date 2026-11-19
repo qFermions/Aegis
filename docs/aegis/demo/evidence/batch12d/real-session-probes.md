@@ -1,0 +1,13 @@
+# Five real sealed sessions (batch 12d)
+
+After the owner lifted the cap on model sessions, five one-question sessions checked what tests on fakes cannot: each is `claude -p` with the judged runner's own arguments (`backends.sutArgs`, the scrubbed environment, `claude-opus-5-5`, CLI 2.1.328), started by `tools/session-probe.js <name>` from a scratch folder. API-equivalent cost 0.48 US dollars in all. What each proved, and what it did not:
+
+| probe | what was asked | what came back | what it proves | what it does not |
+|---|---|---|---|---|
+| snapshot-on | with the settings as they were before the fix (no `includeGitInstructions`, the environment variable unset): name the repository's branch and recent commits from context alone, no tool | the branch `feat/batch12-expert-lanes` and the subjects of the five newest commits, "from the git status snapshot taken at the start of the session" | every sealed session had this repository's branch and commit subjects in its context, whatever the `.git` deny rules said; this is where SWE10's branch name came from | nothing about earlier CLI versions |
+| snapshot-off | the same question with the fix (`fix-git-snapshot` commit) | `NOT IN CONTEXT.` | the setting and the variable remove the snapshot on this CLI version | that a session can never learn the branch another way (a tracked file that names it, such as PROJECT_STATE.md, is still readable) |
+| glob | one Glob for `.git/logs/refs/heads/**` and one for `scripts/eval/judged/*.jsonl`, no path argument | "No files found" for both | a Glob from the repository root lists no name under a folder a Read rule denies; the documentation only promises best effort | every pattern form; a later CLI version |
+| grep | one Grep from the root for a phrase that is only in `progress.md`, and one for a field of the case files | no match for the first; for the second, one file: `docs/aegis/batch12/lanes/infrastructure-dev-cases.jsonl` | a root Grep returns nothing from denied files, and the four lane case files of batch 12 were not denied (fixed: `docs/aegis/batch12/lanes/**`, test "every tracked case file is under a deny rule") | that no other tracked file gives a case away |
+| hook | a print-mode session with the chat's typed file and its UserPromptSubmit hook in the inline settings | the answer `ok`, and the typed file then held the prompt, one line | the hook loads from inline `--settings` beside `--setting-sources project`, runs in its argument form, and writes the prompt and nothing else | an interactive chat (the probe is print mode); what the hook does for a subagent's prompt |
+
+Neither judged run's reading record holds a read of the lane case files (`judged-dev-run/results.json`, and batch 12's), so the gap was open and not used.

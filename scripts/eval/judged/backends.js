@@ -65,7 +65,10 @@ function excludedMemoryFiles(repoRoot = REPO_ROOT, home = os.homedir(), { judge 
 // shown only by a real session: docs/aegis/demo/evidence/full-run-1/.
 const READ_DENIED = Object.freeze(['progress.md', 'checks.md', 'docs/review/**', 'docs/aegis/demo/**', 'docs/explainers/**', 'scripts/demo/customers/**', 'scripts/eval/judged/dev-cases.jsonl', 'scripts/demo/**', 'scripts/eval/**', 'docs/evidence/**', 'docs/aegis/**/evidence/**', '.aegis-state/**', 'docs/aegis/**/baseline/**', 'docs/baseline/**',
   // agent worktrees are whole copies of the checkout, the case file and every denied record included (security review of batch 12d)
-  '.claude/worktrees/**']);
+  '.claude/worktrees/**',
+  // the lane builders' own folder of batch 12: the four lane case files (58 cases with their expected decisions) and the
+  // notes that describe them; a real session's root Grep found one (batch 12d)
+  'docs/aegis/batch12/lanes/**']);
 const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
 
 // The CLI's absolute form: // then the path from the file system root, with forward slashes.

@@ -1,0 +1,9 @@
+staged for commit "helper-long-dash" on feat/batch12-expert-lanes at parent b0952e26:
+M	docs/aegis/demo/evidence/batch12d/precommit/20261119T035753Z-baseline.txt
+M	docs/aegis/demo/evidence/batch12d/precommit/20261119T035813Z-progress-hypothesis.txt
+M	docs/aegis/demo/evidence/batch12d/precommit/20261119T040357Z-red-tasks-2-and-5.txt
+M	docs/aegis/demo/evidence/batch12d/tools/commit.sh
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

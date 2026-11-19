@@ -5,6 +5,6 @@ A	scripts/eval/judged/git-wall.test.js
 M	scripts/lint/ladder-audit.test.js
 M	scripts/repository-structure.test.js
 --- node scripts/pre-commit-check.js ---
-pre-commit-check: ℹ tenant-literal check skipped — configure tenant literals to enable.
-pre-commit-check: ✓ Clean — no issues found.
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
 exit 0

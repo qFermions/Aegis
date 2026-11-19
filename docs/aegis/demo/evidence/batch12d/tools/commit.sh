@@ -13,6 +13,7 @@ tmp="$(mktemp)"
 node scripts/pre-commit-check.js >> "$tmp" 2>&1; code=$?
 echo "exit $code" >> "$tmp"
 main="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
-sed -e "s#$repo#<repo>#g" -e "s#$main#<repo>#g" -e "s#$HOME#<home>#g" "$tmp" > "$file"; rm -f "$tmp"
+# the scanner prints one long dash; the repository's rule is none in any file, so it is written as a hyphen
+sed -e "s#$repo#<repo>#g" -e "s#$main#<repo>#g" -e "s#$HOME#<home>#g" -e $'s#\xe2\x80\x94#-#g' "$tmp" > "$file"; rm -f "$tmp"
 if [ "$code" -ne 0 ]; then echo "pre-commit scan exit $code: not committed; see $file"; exit "$code"; fi
 git add "$file" && git commit "$@"

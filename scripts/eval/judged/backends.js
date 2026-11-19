@@ -422,6 +422,7 @@ async function runSut(c, opts) {
   if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c, repoRoot);
   // a typed file that cannot be written does not stop the run: the session then names none and reaches only the two lists
   const typed = (text, how) => { try { aegisTools.writeTyped(typedFile, text, how); return true; } catch { return false; } };
+  const asked = Boolean(typedFile);
   if (typedFile && !typed([c.setup, c.ticket, c.evidence].filter((s) => typeof s === 'string' && s !== '').join('\n'))) typedFile = null;
   const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model, tools: opts.tools, auditFile: opts.auditFile, typedFile };
   turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web, ...wall }), base));
@@ -433,7 +434,8 @@ async function runSut(c, opts) {
       turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id, ...wall }), base));
     }
   }
-  return sutRecord(turns, c, repoRoot);
+  // a case that ran with no typed file says so, so its refused lookups are read as a harness fault (code review 2, finding 7)
+  return asked && !typedFile ? { ...sutRecord(turns, c, repoRoot), typed_file: 'not written' } : sutRecord(turns, c, repoRoot);
 }
 
 function sutRecord(turns, c, repoRoot = REPO_ROOT) {

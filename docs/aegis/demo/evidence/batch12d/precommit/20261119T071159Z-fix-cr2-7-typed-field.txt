@@ -1,0 +1,7 @@
+staged for commit "fix-cr2-7-typed-field" on feat/batch12-expert-lanes at parent af7fc6d4:
+A	docs/aegis/demo/evidence/batch12d/cr2-typed-field-green.txt
+M	scripts/eval/judged/backends.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

@@ -1,0 +1,10 @@
+staged for commit "breaker-round-4" on feat/batch12-expert-lanes at parent 3e583cd3:
+M	docs/aegis/demo/evidence/batch12d/breaker.md
+A	docs/aegis/demo/evidence/batch12d/breaker/r1c.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r6c.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r7c.out
+A	docs/aegis/demo/evidence/batch12d/breaker/r8c.out
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

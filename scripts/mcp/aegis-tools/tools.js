@@ -100,9 +100,13 @@ function typedTokens(text) {
 function inScope(ctx, tool, target) {
   const http = tool === 'net_http';
   const host = http ? target.host : String(target).toLowerCase().replace(/^\[|\]$/g, '').replace(/\.+$/, '');
-  if (ctx.allowlist.has(host) || ctx.probe.has(host)) return;
+  // npm publishes download counts per package version, so a tarball or registry API path the model chooses (any path
+  // with /-/) could signal to whoever owns the package (the breaker's class 2 finding); package metadata paths stay
+  const counted = http && host === 'registry.npmjs.org' && target.u.pathname.includes('/-/');
+  if ((ctx.allowlist.has(host) || ctx.probe.has(host)) && !counted) return;
   const typed = ctx.typed();
   if (http ? typed.urls.has(target.u.href) : typed.hosts.has(host)) return;
+  if (counted) throw new Refusal('refused_out_of_scope', `${target.u.href.slice(0, 300)} is out of scope: a tarball or registry API path on registry.npmjs.org is allowed only as the exact URL the person typed, because npm publishes download counts; a package's metadata path (https://registry.npmjs.org/<package>) is allowed`);
   const missed = http
     ? 'it is not the exact URL the person typed in this session (a typed host alone opens no URL, and a path or query that was not typed is refused)'
     : 'it is not a host name the person typed in this session (a subdomain or a part of a typed name does not count)';

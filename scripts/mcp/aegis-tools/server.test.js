@@ -1081,3 +1081,38 @@ test('batch 12d: a typed URL that ends in a bracket or other punctuation is type
   assert.equal((await call(s, 'net_http', { url: asTyped })).isError, false);
   await outOfScope(s, 'net_http', { url: 'https://docs.example.org/wiki/DNS_' });
 });
+
+// ── Batch 12d, code review 2 ──────────────────────────────────────────────────────────────────────────────────
+// Finding 4. Wrong implementation it catches: only two forms of a typed URL kept, as written and with all trailing
+// punctuation removed, so a URL that ends in a bracket and is followed by a full stop, a question mark or a closing
+// bracket of the sentence is in neither form and is refused.
+test('batch 12d: a typed URL that ends in a bracket counts when sentence punctuation follows it', () => {
+  const { typedTokens } = require('./tools.js');
+  const real = 'https://docs.example.org/wiki/DNS_(disambiguation)';
+  for (const text of [`Check ${real}.`, `Is it ${real}?`, `(see ${real})`, `"${real}".`, `Check ${real}).`]) assert.ok(typedTokens(text).urls.has(real), text);
+  const long = typedTokens(`see https://example.org/a${')'.repeat(50)}`);
+  assert.ok(long.urls.size <= 6, `a long run of punctuation gives a few forms, not one per character (${long.urls.size})`);
+});
+
+// Finding 11. Wrong implementation it catches: the dots and hyphens at a host token's ends trimmed with a pattern that
+// backtracks from every position of a long run of them, so one such run in a ticket costs seconds at each call.
+test('batch 12d: typedTokens is linear on a long run of hyphens or dots inside a word', () => {
+  const { typedTokens } = require('./tools.js');
+  for (const ch of ['-', '.']) {
+    const t0 = process.hrtime.bigint();
+    const out = typedTokens(`see a${ch.repeat(120000)}b and example.org`);
+    const ms = Number(process.hrtime.bigint() - t0) / 1e6;
+    assert.ok(ms < 500, `120,000 of ${JSON.stringify(ch)} took ${ms.toFixed(0)} ms`);
+    assert.ok(out.hosts.has('example.org'));
+  }
+  assert.deepEqual([...typedTokens('-.mail.example.org.- and --x--').hosts].sort(), ['and', 'mail.example.org', 'x'], 'the ends are still trimmed');
+});
+
+// Finding 12. Wrong implementation it catches: only trailing dots taken off an address run, so an IPv6 address
+// followed by a colon ("2001:db8::53: yes") is not typed; or every trailing colon taken off, which breaks an address
+// that really ends in two colons.
+test('batch 12d: an IPv6 address followed by a colon is typed, and one that ends in two colons stays whole', () => {
+  const { typedTokens } = require('./tools.js');
+  const hosts = typedTokens('resolver 2001:db8::53: yes, and 2001:db8::54; the prefix 2001:db8:: is ours.').hosts;
+  for (const h of ['2001:db8::53', '2001:db8::54', '2001:db8::']) assert.ok(hosts.has(h), h);
+});

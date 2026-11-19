@@ -1,0 +1,127 @@
+✔ a public allowlisted docs page is fetched and returned wrapped as data, with url, fetched_at and title (9.431583ms)
+✔ a host off the allowlist is refused (refused_not_allowlisted) with no resolution attempted (1.627042ms)
+✔ net_http refuses http://169.254.169.254/ before any query or request (1.390458ms)
+✔ net_http refuses http://169.254.169.254/latest/meta-data/ before any query or request (0.230584ms)
+✔ net_http refuses http://localhost before any query or request (0.306ms)
+✔ net_http refuses http://10.0.0.1 before any query or request (0.27475ms)
+✔ net_http refuses http://[::1]/ before any query or request (0.280125ms)
+✔ net_http refuses http://2130706433/ before any query or request (0.239959ms)
+✔ net_http refuses http://[::ffff:127.0.0.1]/ before any query or request (0.2755ms)
+✔ net_http refuses http://0x7f.1/ before any query or request (0.442042ms)
+✔ net_http refuses http://127.1/ before any query or request (0.183125ms)
+✔ net_http refuses http://[fd00:ec2::254]/ before any query or request (0.455916ms)
+✔ net_http refuses http://168.63.129.16/ before any query or request (0.212708ms)
+✔ net_http refuses http://[64:ff9b::a9fe:a9fe]/ before any query or request (0.178792ms)
+✔ a name whose resolution returns a private address is refused, with nothing sent (0.612333ms)
+✔ a name returning one public and one private address is refused (0.269625ms)
+✔ a redirect from a public URL to a private one is refused, with no request sent to the private hop (2.844209ms)
+✔ a docs redirect to an off-list host is refused, before that host is resolved (0.874833ms)
+✔ the connection uses the pinned address even if a second resolution would return a different one (rebinding) (0.83025ms)
+✔ port 22 and 8080 are refused (0.267333ms)
+✔ ftp: and file: are refused (0.182417ms)
+✔ user info is refused (0.14975ms)
+✔ GET reads at most 4 KB and then stops reading (0.793625ms)
+✔ the call cap holds: after 30 calls every call returns call_cap_reached (0.555625ms)
+✔ a TLS check on a fake expired certificate reports expired true and the verification error (0.336667ms)
+✔ tools/list lists exactly four tools, each with a strict input schema and no method, body, header or credential argument (0.166083ms)
+✔ an unknown method returns -32601 (0.055166ms)
+✔ malformed JSON returns -32700 (0.054209ms)
+✔ initialize echoes the client protocol version, notifications get no reply, a bad tools/call shape is -32602 (0.099084ms)
+✔ net_dns validates the name, refuses private A and AAAA answers and maps the record types (0.83675ms)
+✔ net_http follows public redirects, re-resolving each hop, and returns only the selected headers (1.077709ms)
+✔ docs_fetch caps bytes and text, says when it cut, and caches by URL (1.816208ms)
+✔ a server that never answers ends in timeout (200.825709ms)
+✔ every call writes one audit entry with the input, the decision, the pinned address, bytes and duration, and no content (0.838959ms)
+✔ the audit file is created with mode 0600 and only appended (0.935125ms)
+✔ over real stdio the server writes protocol lines only to stdout and audits to the --audit file (38.762792ms)
+✔ the docs allowlist is the charter's 26 hosts plus docs.cloud.google.com, docs.slack.dev and tools.slack.dev, and nothing else (0.141625ms)
+✔ batch 12d: the probe allowlist is exactly pypi.org, registry.npmjs.org, slack-status.com and www.githubstatus.com (0.042417ms)
+✔ batch 12d: a docs-allowlist host and a probe-allowlist host are allowed for net_dns, net_tls and net_http on any path, with nothing typed (1.115ms)
+✔ batch 12d: the exact typed host is allowed for net_dns and net_tls, and the exact typed URL for net_http (0.615833ms)
+✔ batch 12d: refused: a typed host with a path or query that was not typed (net_http), and a typed bare host for any URL (0.365791ms)
+✔ batch 12d: refused: a subdomain that was not typed, a long label in front of a typed domain included (net_dns, net_tls, net_http) (0.559917ms)
+✔ batch 12d: refused: a host that only a fetched page mentions (0.447416ms)
+✔ batch 12d: refused: a host that only a file in the repository mentions (1.903292ms)
+✔ batch 12d: a typed private address passes the scope check and the address guard refuses it (0.298125ms)
+✔ batch 12d: refused: a redirect from an allowed URL to a host or URL out of scope, before that hop is resolved or requested (1.310417ms)
+✔ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added (0.74225ms)
+✔ batch 12d: no typed file, an empty, missing, linked or unreadable one, or a directory: only the two lists apply, and stderr says so (1.555292ms)
+✔ batch 12d: a message appended to the typed file after the server started is honoured on the next call (0.402542ms)
+✔ batch 12d: --typed takes a file; with no value, or an empty one, the server refuses to start (exit 2) (92.06075ms)
+✔ batch 12d: with the probe allowlist missing or malformed the server refuses to start (122.119375ms)
+✔ batch 12d: net_dns, net_http and net_tls describe their scope: the docs list, the probe list, or what the person typed (0.148125ms)
+✔ batch 12d: a bracketed placeholder is not typed text: [USER@DOMAIN.COM] opens no host (11.530125ms)
+✔ batch 12d: a tarball or API path on registry.npmjs.org is out of scope unless it is the exact typed URL (1.543708ms)
+✔ batch 12d: typedTokens is linear on one long run of hex digits or of punctuation, and still reads IPv6 literals (3.887875ms)
+✔ batch 12d: a typed URL that ends in a bracket or other punctuation is typed as written, and without the punctuation (0.408208ms)
+✖ batch 12d: a typed URL that ends in a bracket counts when sentence punctuation follows it (0.252375ms)
+✖ batch 12d: typedTokens is linear on a long run of hyphens or dots inside a word (4632.780167ms)
+✖ batch 12d: an IPv6 address followed by a colon is typed, and one that ends in two colons stays whole (0.144625ms)
+ℹ tests 59
+ℹ suites 0
+ℹ pass 56
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5179.521625
+
+✖ failing tests:
+
+test at scripts/mcp/aegis-tools/server.test.js:1089:1
+✖ batch 12d: a typed URL that ends in a bracket counts when sentence punctuation follows it (0.252375ms)
+  AssertionError [ERR_ASSERTION]: Check https://docs.example.org/wiki/DNS_(disambiguation).
+      at TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:1092:117)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:1099:1
+✖ batch 12d: typedTokens is linear on a long run of hyphens or dots inside a word (4632.780167ms)
+  AssertionError [ERR_ASSERTION]: 120,000 of "-" took 4633 ms
+      at TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:1105:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at scripts/mcp/aegis-tools/server.test.js:1114:1
+✖ batch 12d: an IPv6 address followed by a colon is typed, and one that ends in two colons stays whole (0.144625ms)
+  AssertionError [ERR_ASSERTION]: 2001:db8::53
+      at TestContext.<anonymous> (<repo>/scripts/mcp/aegis-tools/server.test.js:1117:74)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit 1

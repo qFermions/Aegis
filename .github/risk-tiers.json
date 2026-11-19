@@ -26,6 +26,8 @@
     "scripts/adapters/**",
     "scripts/gws-posture-audit.js",
     "scripts/risk_tier.mjs",
+    "config/**",
+    "scripts/mcp/**",
     "package.json",
     "package-lock.json"
   ],

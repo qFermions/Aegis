@@ -64,8 +64,10 @@ test('every test in scripts/demo is one node --test picks up', () => {
   const files = fs.readdirSync(path.join(ROOT, 'scripts', 'demo'), { recursive: true }).map(String).filter((f) => f.endsWith('.js') && /test/i.test(f));
   // batch 8 added answer.test.js (the Fix card and the aegis-desk block); batch 9 added user-messages.test.js and lightest-step.test.js;
   // batch 10 (tasks 3 and 4) added batch10-readbacks.test.js; batch 11 added the tests of its answer rules (tasks 2, 4, 5 and 6)
-  // and, in task 5, batch11-new-way-in.test.js; batch 12 added expert-rules.test.js (its judgment rules, modes and reading claims)
-  assert.deepEqual(files.sort(), ['answer.test.js', 'ask-first.test.js', 'asker-reply.test.js', 'assumed-setup.test.js', 'batch10-readbacks.test.js', 'batch11-new-way-in.test.js', 'customer-desk.test.js', 'customers.test.js', 'expert-rules.test.js', 'lightest-step.test.js', 'render.test.js', 'thinking-rules.test.js', 'user-messages.test.js', 'wiring.test.js']);
+  // and, in task 5, batch11-new-way-in.test.js; batch 12 added expert-rules.test.js (its judgment rules, modes and reading claims);
+  // batch 12d added closing-block.test.js and card-slots.test.js (the answers that fit their own checks) and
+  // card-rows-narrow.test.js and ask-first-you.test.js (the owner's two narrower checks)
+  assert.deepEqual(files.sort(), ['answer.test.js', 'ask-first-you.test.js', 'ask-first.test.js', 'asker-reply.test.js', 'assumed-setup.test.js', 'batch10-readbacks.test.js', 'batch11-new-way-in.test.js', 'card-rows-narrow.test.js', 'card-slots.test.js', 'closing-block.test.js', 'customer-desk.test.js', 'customers.test.js', 'expert-rules.test.js', 'lightest-step.test.js', 'render.test.js', 'thinking-rules.test.js', 'user-messages.test.js', 'wiring.test.js']);
 });
 
 test('the explainer is under 60 lines and the quiz keeps its answers collapsed', () => {

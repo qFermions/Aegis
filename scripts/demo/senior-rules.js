@@ -383,7 +383,9 @@ function replyProblems(reply, { ticket = '', setup = '', ids = null, toolCalls =
   if (/\bR[0-3]\b/.test(text)) out.push('it names a risk class');
   const desk = deskOnlyIn(text.replace(/\bR[0-3]\b/g, ' '), ids);
   if (desk) out.push(`it holds text that belongs to the desk ("${desk}")`);
-  if (!/\byou(?:r|rs|'re|'ll|'ve)?\b/i.test(text)) out.push('it is not addressed to "you"');
+  // an Ask first reply is the one question (section 8), which may ask about the thing without the word: one question as
+  // section 7 defines it, read by the ask-first reader, need not say "you" (batch 12d, task 4b, the owner's decision)
+  if (!/\byou(?:r|rs|'re|'ll|'ve)?\b/i.test(text) && askFirstProblems(text).length > 0) out.push('it is not addressed to "you"');
   if (paragraphs.some((p) => !/[.!?]["')”’]?$/.test(p.trim()))) out.push('a paragraph does not end as a full sentence');
   // the "user message now" logic: no done claim, no change announced as decided, no time nobody set
   out.push(...userMessageProblems(text, `${ticket}\n${setup}`));

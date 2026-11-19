@@ -59,6 +59,9 @@ output "bucket_arn" { value = aws_s3_bucket.this.arn }
 **Verify:** the plan shows four creates; after the apply the export job writes one object under `exports/`, and a request with no credentials is refused.
 **Ask next:** who owns the data in this bucket, for the owner tag and for approving readers later?
 
+## Human-run and read-back
+- **Apply the bucket module's saved plan.** Runs it: the workspace owner. Confirms first: the plan shows four creates and no change to anything existing. Verify: the export job writes one object under exports/ and a request with no credentials is refused.
+
 ```aegis-desk
 Gate: none
 ```

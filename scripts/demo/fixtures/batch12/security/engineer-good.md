@@ -18,6 +18,9 @@ Fallback: the vendor's workaround (turn off the named feature) if the update mus
 **Verify:** the status page shows the fixed version, and a fresh scan no longer flags [CVE_ID].
 **Ask next:** is the appliance's login page reachable from the internet, or only over another VPN?
 
+## Human-run and read-back
+- **Update the VPN appliance's firmware to the fixed version.** Runs it: the network owner, through the change process. Confirms first: the KEV result and the version match, and the previous firmware image is kept. Verify: the status page shows the fixed version and a fresh scan no longer flags [CVE_ID].
+
 ```aegis-desk
 Gate: none
 ```

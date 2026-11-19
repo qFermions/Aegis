@@ -13,6 +13,10 @@ listener 443 default certificate: api.example.org (now: lb.example.net)
 **Verify:** the client's next call succeeds and its TLS log shows the api.example.org certificate; a read without `-servername` shows the new default only if the listener was changed.
 **Ask next:** which Java runtime and version does the client run?
 
+## Human-run and read-back
+- **Turn SNI on in the Java client.** Runs it: the client's owner, in its TLS settings, through review. Confirms first: the client's debug output shows no server_name sent. Verify: the next call succeeds and the client's log shows the api.example.org certificate. No runbook gate covers this.
+- **Only if the client cannot change in time: make api.example.org's certificate the listener's default.** Runs it: the balancer's owner, in a change window. Confirms first: the other services on the listener are listed and the old default is kept. Verify: other clients' health checks stay green. The runbook's certificate bind gate covers this (Details).
+
 ## Details
 Step 1 (turn SNI on in the client): no gate. Proof: the client's TLS log shows server_name sent and the call succeeds.
 Step 2, only if step 1 cannot be done in time: gate `tls-certificate-bind-change` (R3, a shared listener, change window).

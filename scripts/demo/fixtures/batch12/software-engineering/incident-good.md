@@ -10,6 +10,11 @@ Mode: Incident answer
 **Communications:** the repository and package owners now; no reply to the contributor until security decides. To the person who reported it: thank you for the quick report; please do not close, delete or comment on the pull request; the security on-call has it.
 **Timeline:** run started about an hour ago; reported now; token revoked: not yet; any publish since: unknown.
 
+## Human-run and read-back
+- **Revoke the npm publish token.** Runs it: the package owner, in their npm account. Confirms first: the run's log archive is downloaded. Verify: the account's token list no longer shows that token. No runbook gate covers this.
+- **Turn off the release workflow or its pull_request_target trigger.** Runs it: the repository owner. Confirms first: the pull request, its commits and the run are kept. Verify: the workflow shows disabled and no new release run starts. No runbook gate covers this.
+- **Deprecate any version no person released.** Runs it: the package owner, with the security on-call. Confirms first: the versions published since the run started are listed. Verify: the registry marks that version deprecated. No runbook gate covers this.
+
 ## Details
 
 - Step 1 is at npm, outside any Aegis runbook: the token owner revokes it in their npm account and proves it there.

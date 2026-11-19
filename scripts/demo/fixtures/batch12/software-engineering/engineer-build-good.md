@@ -78,6 +78,11 @@ if __name__ == "__main__":
 **Verify:** a second dry run finds 0 branches, and the remote's branch list no longer shows the logged names.
 **Ask next:** does anything (a deploy job, a long-lived release branch) read branches by name pattern, so it must be added to the names that are never deleted?
 
+## Human-run and read-back
+- **Turn on deleting a pull request's head branch on merge.** Runs it: the repository owner, in the repository settings. Confirms first: nothing reads merged branches by name. Verify: the next merged pull request's branch is gone.
+- **Merge the script through review.** Runs it: the repository owner; the runbook's merge gate covers it. Confirms first: the reviewer read the dry-run default and the count check. Verify: the pull request shows as merged.
+- **Only after the dry run's list is in the ticket: run the script with --apply.** Runs it: the repository owner, from a clone. Confirms first: the branches' owner agreed to the list and the count matches. Verify: a second dry run finds 0 branches. The runbook's safe-script gate covers this (Details).
+
 ## Details
 
 - Step 1 (merge the script through review): R1. Double-check: the pull request shows as merged.

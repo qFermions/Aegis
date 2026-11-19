@@ -1,0 +1,55 @@
+$ TMPDIR=<tmp> node --test scripts/demo/ask-first-you.test.js
+✖ a one-question Ask first reply without the word "you" passes the reply check (15.013167ms)
+✖ a reply that is not one question still needs "you"; a one-question reply still fails every other rule (2.297042ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63.968792
+
+✖ failing tests:
+
+test at scripts/demo/ask-first-you.test.js:19:1
+✖ a one-question Ask first reply without the word "you" passes the reply check (15.013167ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'it is not addressed to "you"'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/ask-first-you.test.js:20:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'it is not addressed to "you"' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/demo/ask-first-you.test.js:30:1
+✖ a reply that is not one question still needs "you"; a one-question reply still fails every other rule (2.297042ms)
+  AssertionError [ERR_ASSERTION]: bold: one question, so the "you" rule is not the reason
+      at TestContext.<anonymous> (<repo>/scripts/demo/ask-first-you.test.js:45:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit 1

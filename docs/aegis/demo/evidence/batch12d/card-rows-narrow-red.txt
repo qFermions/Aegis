@@ -1,0 +1,40 @@
+$ TMPDIR=<tmp> node --test scripts/demo/card-rows-narrow.test.js
+✖ an Ask first, Engineer or Incident answer with no card gets no card rows, and keeps the other rows (1.827583ms)
+✔ a Fix card answer or an unnamed answer with no card, and any card over 150 words, still fail (5.568917ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.476166
+
+✖ failing tests:
+
+test at scripts/demo/card-rows-narrow.test.js:26:1
+✖ an Ask first, Engineer or Incident answer with no card gets no card rows, and keeps the other rows (1.827583ms)
+  AssertionError [ERR_ASSERTION]: engineer: fix-card-first does not apply and is left off
+  + actual - expected
+  
+  + {
+  +   check: 'fix-card-first',
+  +   detail: 'there is no "## Fix" card',
+  +   plain: 'The Fix card comes first',
+  +   verdict: 'fail'
+  + }
+  - undefined
+  
+      at TestContext.<anonymous> (<repo>/scripts/demo/card-rows-narrow.test.js:29:43)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { check: 'fix-card-first', verdict: 'fail', plain: 'The Fix card comes first', detail: 'there is no "## Fix" card' },
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

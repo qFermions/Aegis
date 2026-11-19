@@ -1,0 +1,10 @@
+staged for commit "card-slots" on worktree-agent-aadc7d2f97259d5ca at parent 343132f5:
+M	docs/aegis/answer-format.md
+A	docs/aegis/demo/evidence/batch12d/card-slots-green.txt
+M	scripts/demo/answer.js
+A	scripts/demo/fixtures/batch12d/fix-card-slots.md
+M	scripts/demo/wiring.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

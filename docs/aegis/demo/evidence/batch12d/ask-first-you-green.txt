@@ -1,0 +1,12 @@
+$ TMPDIR=<tmp> node --test scripts/demo/ask-first-you.test.js
+✔ a one-question Ask first reply without the word "you" passes the reply check (17.177917ms)
+✔ a reply that is not one question still needs "you"; a one-question reply still fails every other rule (7.790125ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60.597167
+exit 0

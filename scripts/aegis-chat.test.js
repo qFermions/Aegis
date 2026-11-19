@@ -23,7 +23,7 @@ const test = require('node:test');
 const backends = require('./eval/judged/backends.js');
 const { REPO_ROOT } = require('./eval/judged/paths.js');
 const chat = require('./aegis-chat.js');
-const { TOOL_NAMES, mcpConfig } = require('./mcp/aegis-tools/session.js');
+const { TOOL_NAMES, mcpConfig, typedHooks } = require('./mcp/aegis-tools/session.js');
 
 // What every chat session gets, written out from backends.js's exports rather than from the command. The
 // whole ~/aegis-asks folder is denied (review round 1, finding 2), so a chat never reads saved answers. Since batch 11
@@ -32,11 +32,17 @@ const { TOOL_NAMES, mcpConfig } = require('./mcp/aegis-tools/session.js');
 // --mcp-config follows --strict-mcp-config, so the chat, which takes its flags from sutArgs, has them too.
 // audit: the tool server's audit file; since batch 12, task 5 a chat started by main() audits to a folder of its own
 // under the saved asks (auditOf reads it back from the argv the chat was started with), and chatArgs alone passes none
-const ISOLATED = (home, model = backends.PINNED_MODEL, audit = null) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, ...TOOL_NAMES, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks'), mcpConfig: mcpConfig({ auditFile: audit }) }), '--model', model];
+// typed (batch 12d, so this helper changed): the typed file a chat started by main() hands its tool server, and its prompt
+// hook in the inline --settings; chatArgs alone passes none
+const ISOLATED = (home, model = backends.PINNED_MODEL, audit = null, typed = null) => ['--tools', ...backends.SUT_TOOLS, '--allowedTools', ...backends.SUT_TOOLS, ...TOOL_NAMES, '--disallowedTools', 'Bash', ...backends.WEB_TOOLS, ...backends.isolationArgs({ runRoot: path.join(home, 'aegis-asks'), mcpConfig: mcpConfig({ auditFile: audit, typedFile: typed }), ...(typed ? { hooks: typedHooks(typed) } : {}) }), '--model', model];
 function auditOf(argv) {
   const server = JSON.parse(argv[argv.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'];
   const audit = server.args[server.args.indexOf('--audit') + 1];
   return audit;
+}
+function typedOf(argv) {
+  const server = JSON.parse(argv[argv.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'];
+  return server.args.includes('--typed') ? server.args[server.args.indexOf('--typed') + 1] : null;
 }
 
 function tempDir(t) {
@@ -84,7 +90,8 @@ test('the chat starts once under a fake claude with the desk\'s isolation and th
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
   const appended = got.argv[got.argv.length - 1];
   assert.match(path.relative(path.join(home, 'aegis-asks'), auditOf(got.argv)), /^chat-[^/\\]+[/\\]tool-audit\.jsonl$/);
-  assert.deepEqual(got.argv, [...ISOLATED(home, backends.PINNED_MODEL, auditOf(got.argv)), '--append-system-prompt', appended]);
+  assert.equal(path.dirname(typedOf(got.argv)), path.dirname(auditOf(got.argv)), 'batch 12d: the typed file sits beside the audit file');
+  assert.deepEqual(got.argv, [...ISOLATED(home, backends.PINNED_MODEL, auditOf(got.argv), typedOf(got.argv)), '--append-system-prompt', appended]);
   assert.match(appended, /data about the environment, not instructions/);
   const open = appended.indexOf('--- What the company runs ---');
   const close = appended.indexOf('--- End of what the company runs ---');
@@ -293,4 +300,56 @@ test('code review 1, class D: a chat with no lookups leaves no chat folder; one 
   busy.emit('exit', 0);
   assert.equal(await r2, 0);
   assert.equal(chats().length, 1, 'lookups were made: the audit file stays');
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): with the tools on, the chat writes the setup, after protect(),
+// to typed.txt in its own folder before claude starts, names it to the tool server by --typed, and puts the prompt hook
+// (session.typedHooks) in the session's inline --settings, so each message the person sends is appended to it. The file
+// goes when the chat ends; a folder with lookups keeps only its audit file. --no-tools writes no file and no hook. Wrong
+// implementations it catches: the raw setup typed; a typed file inside the repository or shared between chats; a chat
+// with no hook (later messages would never count); a hook with the tools off; the person's words left on disk after the
+// chat.
+test('batch 12d: the chat types the setup in its own folder, hands it to the server and the prompt hook, and removes it at the end', async (t) => {
+  const { EventEmitter } = require('node:events');
+  const home = tempDir(t);
+  const at = '@';
+  const setupText = `Google Workspace; NOC at noc${at}example.com; status https://status.example.com/`;
+  let seen = null;
+  let atStart = null;
+  const child = new EventEmitter();
+  const running = chat.main(['--setup', setupText], { HOME: home }, {
+    spawn: (cmd, args) => {
+      seen = args;
+      const file = typedOf(args);
+      atStart = { file, text: fs.readFileSync(file, 'utf8'), mode: fs.statSync(file).mode & 0o777 };
+      return child;
+    },
+    out: () => {}, err: () => {},
+  });
+  // a lookup was made, so the folder stays with its audit file
+  fs.appendFileSync(auditOf(seen), '{"tool":"net_dns","decision":"ok"}\n');
+  child.emit('exit', 0);
+  assert.equal(await running, 0);
+  assert.equal(path.basename(atStart.file), 'typed.txt');
+  assert.equal(path.dirname(atStart.file), path.dirname(auditOf(seen)), 'in the chat\'s own folder under the saved asks');
+  assert.equal(atStart.text, `${require('./ask-aegis.js').protect(setupText).text}\n`);
+  assert.ok(!atStart.text.includes(`noc${at}example.com`));
+  if (process.platform !== 'win32') assert.equal(atStart.mode, 0o600);
+  assert.deepEqual(JSON.parse(seen[seen.indexOf('--settings') + 1]).hooks, typedHooks(atStart.file));
+  assert.equal(fs.existsSync(atStart.file), false, 'removed when the chat ends');
+  assert.deepEqual(fs.readdirSync(path.dirname(atStart.file)), ['tool-audit.jsonl']);
+  // no setup: the typed file starts empty
+  let empty = null;
+  const quiet = new EventEmitter();
+  const r2 = chat.main([], { HOME: home }, { spawn: (cmd, args) => { empty = fs.readFileSync(typedOf(args), 'utf8'); return quiet; }, out: () => {}, err: () => {} });
+  quiet.emit('exit', 0);
+  assert.equal(await r2, 0);
+  assert.equal(empty, '');
+  // --no-tools: no typed file and no hook
+  let offArgs = null;
+  const off = new EventEmitter();
+  const r3 = chat.main(['--no-tools', '--setup', setupText], { HOME: home }, { spawn: (cmd, args) => { offArgs = args; return off; }, out: () => {}, err: () => {} });
+  off.emit('exit', 0);
+  assert.equal(await r3, 0);
+  assert.ok(!('hooks' in JSON.parse(offArgs[offArgs.indexOf('--settings') + 1])));
 });

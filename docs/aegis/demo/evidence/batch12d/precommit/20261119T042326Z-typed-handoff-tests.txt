@@ -1,0 +1,26 @@
+staged for commit "typed-handoff-tests" on worktree-agent-a84f13fda379436ea at parent a50d30c2:
+A	docs/aegis/demo/evidence/batch12d/typed-handoff-red.txt
+M	scripts/aegis-chat.test.js
+M	scripts/ask-aegis.test.js
+M	scripts/demo/customer-desk.test.js
+M	scripts/eval/judged/backends.test.js
+M	scripts/eval/judged/cli.test.js
+M	scripts/eval/judged/fixtures/fake-claude.js
+M	scripts/mcp/aegis-tools/session.test.js
+A	scripts/mcp/aegis-tools/typed-hook.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+
+╔══════════════════════════════════════════════╗
+║  Aegis Pre-Commit Safety Check               ║
+╚══════════════════════════════════════════════╝
+
+  File: scripts/demo/customer-desk.test.js
+    ⚠️  WARN  Line 210: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+⚠️  1 warning(s) found - review the flagged lines above.
+   These are dangerous cmdlets in scripts. Confirm they are intentional.
+   Commit will proceed. Add a ⚠️ comment in the script to acknowledge.
+
+exit 0

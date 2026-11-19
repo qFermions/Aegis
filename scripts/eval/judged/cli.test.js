@@ -296,3 +296,28 @@ test('batch 12, task 5: the tool server is on by default with an audit file per 
   await cli.main(['run', '--cases', dry.copy, '--no-tools'], dry.io, dry.deps);
   assert.doesNotMatch(dry.out.join('\n'), /mcp__aegis-tools__|--mcp-config/);
 });
+
+// Batch 12d. EXPECTED DECISION (written before the code): each case's session gets a typed file of its own in the
+// results folder, <case>-typed.txt, named to the tool server by --typed; when the session starts it holds the case's
+// setup (as protect() left it, the way the session gets it), ticket and evidence, one per line, and none of the runner's
+// own words. --no-tools writes none. Wrong implementations it catches: one typed file shared by every case (a host typed
+// in one case would open in the next); a setup typed before protect() (an address the session never saw); the runner's
+// framing in the file; a typed file written when no server reads it.
+test('batch 12d: each case\'s typed file, in the results folder, holds its setup, ticket and evidence when its session starts', async (t) => {
+  const { protect } = require('../../ask-aegis.js');
+  const s = setup(t);
+  const one = JSON.parse(G4_TEXT.split('\n')[0]);
+  const at = '@';
+  Object.assign(one, { setup: `Okta and Google Workspace; the NOC is noc${at}example.com`, ticket: 'The page https://status.example.com/ is blank for everyone.', evidence: 'curl says 503 from edge.example.net', follow_up: '' });
+  fs.writeFileSync(s.copy, `${JSON.stringify(one)}\n`);
+  await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  const call = s.calls().find((c) => c.role === 'sut');
+  assert.equal(call.typed.file, path.join(s.results, `${one.id}-typed.txt`));
+  assert.equal(call.typed.text, `${protect(one.setup).text}\n${one.ticket}\n${one.evidence}\n`);
+  assert.ok(call.typed.text.includes('[USER@DOMAIN.COM]') && !call.typed.text.includes(`noc${at}example.com`), 'the setup as protect() left it');
+  if (process.platform !== 'win32') assert.equal(call.typed.mode, 0o600);
+  const off = setup(t);
+  fs.writeFileSync(off.copy, `${JSON.stringify(one)}\n`);
+  await cli.main(['run', '--cases', off.copy, '--execute', '--results-dir', off.results, '--no-tools'], off.io, off.deps);
+  assert.equal(fs.existsSync(path.join(off.results, `${one.id}-typed.txt`)), false);
+});

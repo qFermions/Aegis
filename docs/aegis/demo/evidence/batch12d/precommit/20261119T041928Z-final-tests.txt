@@ -1,0 +1,7 @@
+staged for commit "final-tests" on worktree-agent-aadc7d2f97259d5ca at parent 2a6180d2:
+A	docs/aegis/demo/evidence/batch12d/final-full-suite-comparison.txt
+A	docs/aegis/demo/evidence/batch12d/final-targeted-tests.txt
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

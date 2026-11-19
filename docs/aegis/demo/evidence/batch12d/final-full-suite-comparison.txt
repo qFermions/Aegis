@@ -1,0 +1,59 @@
+$ TMPDIR=<tmp> node --test   (full suite, at the head of this worktree before this file was added)
+ℹ 37 names read: AEGION_DOMAIN AEGIS_AUDIT_DIR AEGIS_GRAPH_RUNS_DIR AEGIS_NETWORK_TRIPWIRE EXO_APP_ID EXO_CERTIFICATE_THUMBPRINT EXO_ORGANIZATION FLEET_API_TOKEN FLEET_URL GITHUB_ORG GITHUB_TOKEN GWS_ADMIN_SUBJECT GWS_CUSTOMER_ID GWS_SA_CLIENT_EMAIL GWS_SA_PRIVATE_KEY JAMF_CLIENT_ID JAMF_CLIENT_SECRET JAMF_URL JIRA_API_TOKEN JIRA_EMAIL JIRA_REQUEST_TYPE_ID JIRA_SERVICE_DESK_ID JIRA_SITE LINEAR_API_KEY LINEAR_ORG MS_CERT_SHA256 MS_CLIENT_ID MS_PRIVATE_KEY MS_SCOPE_CHECK_USER MS_TENANT_ID OKTA_CLIENT_ID OKTA_KEY_ID OKTA_ORG_URL OKTA_PRIVATE_KEY SLACK_ACCESS_LOGS_TOKEN SLACK_TEAM_ID SLACK_TOKEN
+ℹ tickets 175 · p50 0.11 ms · p95 0.32 ms · max 0.59 ms · budget p95 50 ms · one Node process start 31.47 ms
+ℹ tests 2540
+ℹ suites 0
+ℹ pass 2498
+ℹ fail 41
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 40742.038041
+exit 1
+
+failing names: 41; compared with docs/aegis/demo/evidence/batch12/baseline/failing-names.txt (41), both sorted:
+$ diff baseline-sorted failing-now-sorted
+no difference: the same 41 names
+
+failing now:
+PowerShell AST analyzer rejects bypass-shaped control flow
+actual checkpoint revalidation rejects drift or deletion and result failure preserves a proven assignment ID
+automation-bulk-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+automation-bulk-license: actual source gate is AST-dominated, explicit, and fail-closed
+automation-compliance-assignment: actual source gate is AST-dominated, explicit, and fail-closed
+automation-compliance-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+automation-token-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+device-full-wipe: actual source gate is AST-dominated, explicit, and fail-closed
+group rollback distinguishes verified recovery, unresolved recovery, and successful forward state
+install-exchange-quarantine: actual source gate is AST-dominated, explicit, and fail-closed
+install-exchange-spam: actual source gate is AST-dominated, explicit, and fail-closed
+install-exchange-whitelist: actual source gate is AST-dominated, explicit, and fail-closed
+install-graph-conditional-access: actual source gate is AST-dominated, explicit, and fail-closed
+install-teams-module: actual source gate is AST-dominated, explicit, and fail-closed
+mailbox-permission-remove: actual source gate is AST-dominated, explicit, and fail-closed
+mfa-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+password-cloud-reset: actual source gate is AST-dominated, explicit, and fail-closed
+password-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+print-queue-delete: actual source gate is AST-dominated, explicit, and fail-closed
+printer cleanup reports immutable completed, failed, and not-attempted sets when removal and restart fail
+quarantine-permanent-delete: actual source gate is AST-dominated, explicit, and fail-closed
+quarantine-release-all: actual source gate is AST-dominated, explicit, and fail-closed
+quarantine-release-one: actual source gate is AST-dominated, explicit, and fail-closed
+restricted-entity-unblock: actual source gate is AST-dominated, explicit, and fail-closed
+rollback-bulk-usage-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+rollback-bulk-usage-location: actual source gate is AST-dominated, explicit, and fail-closed
+rollback-group-change: actual source gate is AST-dominated, explicit, and fail-closed
+rollback-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+rollback-license-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+rollback-policy-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+safety-bulk-disable-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+safety-bulk-disable: actual source gate is AST-dominated, explicit, and fail-closed
+safety-delete-user-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+safety-delete-user: actual source gate is AST-dominated, explicit, and fail-closed
+safety-group-checkpoint-write: actual source gate is AST-dominated, explicit, and fail-closed
+safety-whatif-disable: actual source gate is AST-dominated, explicit, and fail-closed
+security-account-block: actual source gate is AST-dominated, explicit, and fail-closed
+security-session-revoke: actual source gate is AST-dominated, explicit, and fail-closed
+security-synced-ad-disable: actual source gate is AST-dominated, explicit, and fail-closed
+security-synced-cloud-gap-block: actual source gate is AST-dominated, explicit, and fail-closed
+sharepoint-access-revoke: actual source gate is AST-dominated, explicit, and fail-closed

@@ -218,9 +218,10 @@ function renderMarkdown(summary, meta) {
     '## Cases',
     '',
     // Card words: the answer's Fix card word count by the desk's counter, a measure and never a pass or fail (batch 11, task 7)
-    '| Case | Platform | Verdict | Score | Card words | Reasons |',
-    '|---|---|---|---|---|---|',
-    ...meta.cases.map((r) => `| ${r.id} | ${r.platform} | ${r.verdict} | ${r.total === null ? 'n/a' : `${r.total}/${r.max}`} | ${Number.isFinite(r.fix_card_words) ? r.fix_card_words : 'none'} | ${cell(r.reasons.join('; '))} |`),
+    // Tool server allowed / refused (batch 12d): counts only; the refused inputs stay in results.json
+    '| Case | Platform | Verdict | Score | Card words | Reasons | Tool server allowed / refused |',
+    '|---|---|---|---|---|---|---|',
+    ...meta.cases.map((r) => `| ${r.id} | ${r.platform} | ${r.verdict} | ${r.total === null ? 'n/a' : `${r.total}/${r.max}`} | ${Number.isFinite(r.fix_card_words) ? r.fix_card_words : 'none'} | ${cell(r.reasons.join('; '))} | ${r.tool_server ? `${r.tool_server.allowed} / ${r.tool_server.refused}` : 'n/a'} |`),
     '',
   ];
   return lines.join('\n');

@@ -2,10 +2,12 @@
 // tools.js: the four read-only tools of the aegis-tools MCP server (batch 12). AEGIS ADVISES; HUMANS EXECUTE:
 // these tools only look (a docs page, a DNS answer, the head of an HTTP answer, a certificate chain). None takes a
 // method, a body, a header or a credential, none follows a redirect without checking the next hop, and none
-// connects anywhere but the address the guard checked (guard.js).
+// connects anywhere but the address the guard checked (guard.js). net_dns, net_http and net_tls reach only a target in
+// scope (inScope, batch 12d): a listed host, or the exact host or URL the person typed.
 //
 // Every tool takes (args, ctx). ctx carries the injected network pieces (resolver, request, tlsConnect), the clock,
-// the step timeout, the abort signal of the call's deadline, and what the audit records (addresses, bytes, cached).
+// the step timeout, the abort signal of the call's deadline, what the audit records (addresses, bytes, cached), the
+// two allowlists (allowlist, probe) and typed(), the tokens of what the person typed.
 // A refusal or failure is thrown as a Refusal { state, reason }; the server turns it into a tool error.
 
 const net = require('node:net');
@@ -50,6 +52,55 @@ function docsTarget(raw, ctx, base) {
   const target = parseTarget(raw, DOCS_RULES, base);
   if (!ctx.allowlist.has(target.host)) throw new Refusal('refused_not_allowlisted', `${target.host} is not on the docs allowlist (config/docs-allowlist.json)`);
   return target;
+}
+
+// Scope (batch 12d, the owner's rule): net_dns, net_http and net_tls reach (a) a host on the docs allowlist, (b) a host
+// on the probe allowlist, or (c) the exact host (net_dns, net_tls) or the exact URL (net_http) the person typed this
+// session. ctx.typed() is the typed text's tokens, read by the server at each call; the model's own arguments, what a
+// tool returns and the repository never add to them.
+const HOST_RUN = /[\p{L}\p{M}\p{N}._-]+/gu;
+const IPV6_RUN = /[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*/g;
+const URL_RUN = /https?:\/\/\S+/gi;
+const SENTENCE_END = /[.,;:!?'"`*)\]}>]+$/;
+
+// { hosts, urls }: whole tokens of the typed text. A host token is a maximal run of host characters with the dots and
+// hyphens at its ends taken off, in lower case, or an IPv6 literal. A URL token runs from http:// or https:// to the
+// next space, without trailing sentence punctuation, kept as its WHATWG href with no fragment.
+function typedTokens(text) {
+  const s = String(text);
+  const hosts = new Set();
+  for (const [run] of s.matchAll(HOST_RUN)) {
+    const h = run.replace(/^[.-]+|[.-]+$/g, '').toLowerCase();
+    if (h) hosts.add(h);
+  }
+  for (const [run] of s.matchAll(IPV6_RUN)) {
+    const h = run.replace(/\.+$/, '').toLowerCase();
+    if (net.isIPv6(h)) hosts.add(h);
+  }
+  const urls = new Set();
+  for (const [run] of s.matchAll(URL_RUN)) {
+    try {
+      const u = new URL(run.replace(SENTENCE_END, ''));
+      u.hash = '';
+      urls.add(u.href);
+    } catch { /* not a URL: no token */ }
+  }
+  return { hosts, urls };
+}
+
+// target: the parsed URL (parseTarget) for net_http, the host as given for net_dns and net_tls. Equality only, so a
+// subdomain, a part of a typed name, another path or an added query is out of scope. Runs before any DNS query or
+// connection; a target in scope still meets the address guard.
+function inScope(ctx, tool, target) {
+  const http = tool === 'net_http';
+  const host = http ? target.host : String(target).toLowerCase().replace(/^\[|\]$/g, '').replace(/\.+$/, '');
+  if (ctx.allowlist.has(host) || ctx.probe.has(host)) return;
+  const typed = ctx.typed();
+  if (http ? typed.urls.has(target.u.href) : typed.hosts.has(host)) return;
+  const missed = http
+    ? 'it is not the exact URL the person typed in this session (a typed host alone opens no URL, and a path or query that was not typed is refused)'
+    : 'it is not a host name the person typed in this session (a subdomain or a part of a typed name does not count)';
+  throw new Refusal('refused_out_of_scope', `${(http ? target.u.href : String(target)).slice(0, 300)} is out of scope: its host is not on the docs allowlist (config/docs-allowlist.json) or the probe allowlist (config/probe-allowlist.json), and ${missed}`);
 }
 
 // A refusal at a redirect hop is a refused redirect, whatever refused it.
@@ -151,6 +202,7 @@ const isRedirect = (res) => res.status >= 300 && res.status < 400 && Boolean(res
 async function netHttp(args, ctx) {
   const started = Date.now();
   let target = parseTarget(args.url, HTTP_RULES);
+  inScope(ctx, 'net_http', target);
   const redirects = [];
   for (;;) {
     const pinned = await onHop(redirects.length, target.u.href, () => pin(target.host, ctx));
@@ -160,7 +212,12 @@ async function netHttp(args, ctx) {
       redirects.push({ url: target.u.href, status: first.status, location: location.slice(0, 500), address: pinned.address });
       if (redirects.length > MAX_REDIRECTS) throw new Refusal('refused_redirect', `more than ${MAX_REDIRECTS} redirects`);
       const from = target.u;
-      target = await onHop(redirects.length, location, () => parseTarget(location, HTTP_RULES, from));
+      // every hop meets the same scope rule as the first URL, before it is resolved (batch 12d)
+      target = await onHop(redirects.length, location, () => {
+        const next = parseTarget(location, HTTP_RULES, from);
+        inScope(ctx, 'net_http', next);
+        return next;
+      });
       continue;
     }
     const got = await exchange(ctx, target, pinned, 'GET', GET_CAP);
@@ -259,6 +316,7 @@ function mapAnswers(type, answers) {
 async function netDns(args, ctx) {
   const checked = guard.checkName(args.name);
   if (checked.state) throw new Refusal(checked.state, checked.reason);
+  inScope(ctx, 'net_dns', args.name);
   // absolute name: no search domain from the machine's resolver settings is appended
   const r = await guard.withTimeout(Promise.resolve().then(() => ctx.resolver().resolve(`${checked.name}.`, args.type)), ctx.stepMs);
   if (r.timedOut) throw new Refusal('timeout', `the ${args.type} query for ${checked.name} took over ${ctx.stepMs} ms`);
@@ -311,6 +369,7 @@ async function netTls(args, ctx) {
   const port = args.port === undefined ? 443 : args.port;
   if (!TLS_PORTS.includes(port)) throw new Refusal('refused_port', `port ${port} is refused; this tool takes port ${TLS_PORTS.join(' or ')} only`);
   const host = args.host.replace(/^\[|\]$/g, '');
+  inScope(ctx, 'net_tls', host);
   const pinned = await pin(host, ctx);
   const socket = await tlsOpen(ctx, pinned, port);
   try {
@@ -349,20 +408,20 @@ const TOOLS = Object.freeze({
     run: docsFetch,
   },
   net_dns: {
-    description: 'Look up public DNS records through public resolvers. Internal names (single-label, .local, .corp, .internal and the like) and A or AAAA answers in private address space are refused.',
-    inputSchema: { type: 'object', properties: { name: { type: 'string', maxLength: 253, description: 'A public DNS name, such as example.com' }, type: { type: 'string', enum: [...DNS_TYPES], description: 'The record type' } }, required: ['name', 'type'], additionalProperties: false },
+    description: 'Look up public DNS records through public resolvers, for a name on the docs allowlist, on the probe allowlist (pypi.org, registry.npmjs.org, slack-status.com, www.githubstatus.com), or one the person typed in this session, exactly as typed: a subdomain or a part of a typed name is refused (refused_out_of_scope). Internal names (single-label, .local, .corp, .internal and the like) and A or AAAA answers in private address space are refused.',
+    inputSchema: { type: 'object', properties: { name: { type: 'string', maxLength: 253, description: 'A DNS name on the docs or probe allowlist, or one the person typed, such as example.com' }, type: { type: 'string', enum: [...DNS_TYPES], description: 'The record type' } }, required: ['name', 'type'], additionalProperties: false },
     run: netDns,
   },
   net_http: {
-    description: 'Probe a public URL: HEAD, then a GET that reads at most 4 KB. Returns the status, selected response headers, the redirect chain (at most 5 hops) and timing. Sends no cookies, credentials or body; private addresses are refused.',
-    inputSchema: { type: 'object', properties: { url: { type: 'string', maxLength: 2048, description: 'An http or https URL on port 80, 443 or 8443' } }, required: ['url'], additionalProperties: false },
+    description: 'Probe a URL: HEAD, then a GET that reads at most 4 KB. The URL must be on a host of the docs allowlist or the probe allowlist (pypi.org, registry.npmjs.org, slack-status.com, www.githubstatus.com), any path, or be the exact URL the person typed in this session: a typed host alone, another path or an added query is refused (refused_out_of_scope), and every redirect hop meets the same rule. Returns the status, selected response headers, the redirect chain (at most 5 hops) and timing. Sends no cookies, credentials or body; private addresses are refused.',
+    inputSchema: { type: 'object', properties: { url: { type: 'string', maxLength: 2048, description: 'An http or https URL on port 80, 443 or 8443: on a listed host, or exactly as the person typed it' } }, required: ['url'], additionalProperties: false },
     run: netHttp,
   },
   net_tls: {
-    description: 'Read the TLS certificate chain of a public host: subject, issuer, names, validity, fingerprints, protocol, cipher, whether the chain verifies, and days to expiry. Sends nothing beyond the handshake.',
-    inputSchema: { type: 'object', properties: { host: { type: 'string', maxLength: 253, description: 'A public host name' }, port: { type: 'integer', description: '443 (the default) or 8443' } }, required: ['host'], additionalProperties: false },
+    description: 'Read the TLS certificate chain of a host on the docs allowlist, on the probe allowlist (pypi.org, registry.npmjs.org, slack-status.com, www.githubstatus.com), or one the person typed in this session, exactly as typed (anything else is refused_out_of_scope): subject, issuer, names, validity, fingerprints, protocol, cipher, whether the chain verifies, and days to expiry. Sends nothing beyond the handshake.',
+    inputSchema: { type: 'object', properties: { host: { type: 'string', maxLength: 253, description: 'A host name on the docs or probe allowlist, or one the person typed' }, port: { type: 'integer', description: '443 (the default) or 8443' } }, required: ['host'], additionalProperties: false },
     run: netTls,
   },
 });
 
-module.exports = { TOOLS, READ_ONLY, Refusal, RESOLVERS, DNS_TYPES, SELECTED_HEADERS, START, END, htmlToText, parseTarget };
+module.exports = { TOOLS, READ_ONLY, Refusal, RESOLVERS, DNS_TYPES, SELECTED_HEADERS, START, END, htmlToText, parseTarget, typedTokens };

@@ -1,0 +1,11 @@
+staged for commit "refused-record-code" on worktree-agent-a84f13fda379436ea at parent 4fe18252:
+A	docs/aegis/demo/evidence/batch12d/refused-record-green.txt
+M	scripts/demo/customer-desk.js
+M	scripts/eval/judged-eval.js
+M	scripts/eval/judged/backends.js
+M	scripts/eval/judged/report.js
+M	scripts/mcp/aegis-tools/README.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

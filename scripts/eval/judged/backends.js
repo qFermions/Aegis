@@ -114,10 +114,11 @@ function readDenyRules(runRoot = null, caseDirs = []) {
 
 // mcpConfig (batch 12): the --mcp-config text of the read-only aegis-tools server, placed right after
 // --strict-mcp-config so it is the one MCP server the session loads. The judge grades with no tools, so it never
-// takes one.
-function isolationArgs({ judge = false, runRoot = null, caseDirs = [], mcpConfig = null } = {}) {
-  if (judge && mcpConfig) throw new Error('the judge session takes no MCP server');
-  return ['--setting-sources', 'project', '--strict-mcp-config', ...(mcpConfig ? ['--mcp-config', mcpConfig] : []), '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot, caseDirs) } })];
+// takes one. hooks (batch 12d): the chat's prompt hook (session.typedHooks), added to the inline --settings only when
+// given; the judge never takes one either.
+function isolationArgs({ judge = false, runRoot = null, caseDirs = [], mcpConfig = null, hooks = null } = {}) {
+  if (judge && (mcpConfig || hooks)) throw new Error('the judge session takes no MCP server and no hook');
+  return ['--setting-sources', 'project', '--strict-mcp-config', ...(mcpConfig ? ['--mcp-config', mcpConfig] : []), '--settings', JSON.stringify({ claudeMdExcludes: excludedMemoryFiles(REPO_ROOT, os.homedir(), { judge }), autoMemoryEnabled: false, permissions: { deny: readDenyRules(runRoot, caseDirs) }, ...(hooks ? { hooks } : {}) })];
 }
 // The model every session names (batch 11 resumed): the one the commander's correctness run was measured on. With no
 // --model the CLI takes the settings file's default model, which can change from one day to the next, so a run
@@ -188,17 +189,21 @@ function buildSutPrompt(c) {
 // tools (batch 12, default true): load the read-only aegis-tools MCP server (scripts/mcp/aegis-tools/) and allow its
 // four tools; --tools lists built-in tools only, so the names go in --allowedTools alone. auditFile: the file the
 // server appends one line per call to (stderr when none). tools false is the argv from before batch 12, byte for byte.
-function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, caseDirs = [], persist = true, model = null, tools = true, auditFile = null }) {
+// typedFile (batch 12d): the file of what the person typed, named to the server by --typed (scope rule c). promptHook:
+// the chat's UserPromptSubmit hook, which appends each later message to typedFile; a print-mode session never takes it,
+// since its one prompt holds the runner's own words. Both need the tools on.
+function sutArgs({ prompt, maxTurns = DEFAULT_MAX_TURNS, web = false, resume = null, runRoot = null, caseDirs = [], persist = true, model = null, tools = true, auditFile = null, typedFile = null, promptHook = false }) {
   if (resume && !persist) throw new Error('a session with no persistence cannot resume');
   const builtIn = web ? [...SUT_TOOLS, ...WEB_TOOLS] : [...SUT_TOOLS];
   const allowed = tools ? [...builtIn, ...aegisTools.TOOL_NAMES] : builtIn;
   const disallowed = web ? ['Bash'] : ['Bash', ...WEB_TOOLS];
-  const mcpConfig = tools ? aegisTools.mcpConfig({ auditFile }) : null;
+  const mcpConfig = tools ? aegisTools.mcpConfig({ auditFile, typedFile }) : null;
+  const hooks = tools && promptHook && typedFile ? aegisTools.typedHooks(typedFile) : null;
   const args = ['-p', positional(prompt)];
   if (resume) args.push('--resume', resume);
   if (!persist) args.push('--no-session-persistence');
   args.push('--output-format', 'stream-json', '--verbose', '--max-turns', String(maxTurns),
-    '--tools', ...builtIn, '--allowedTools', ...allowed, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot, caseDirs, mcpConfig }), ...modelArgs(model));
+    '--tools', ...builtIn, '--allowedTools', ...allowed, '--disallowedTools', ...disallowed, ...isolationArgs({ runRoot, caseDirs, mcpConfig, hooks }), ...modelArgs(model));
   return args;
 }
 
@@ -239,6 +244,28 @@ function toolCallRecord(call) {
   for (const key of ['pattern', 'path', 'label', 'target']) if (typeof call[key] === 'string') rec[key] = cutText(call[key]);
   rec.subagent = Boolean(call.subagent);
   rec.error = Boolean(call.error);
+  return rec;
+}
+
+// What the tool server decided for a session (batch 12d), from its audit file (one JSON line per call): allowed, a call
+// it answered (decision ok); refused, every decision that starts with refused_; other, the rest (bad input, the call
+// cap, a timeout, a DNS, HTTP or TLS failure); and each refused call's tool, input as the audit keeps it, decision and
+// reason, in order. No file named or none written: every count 0. A line that is not JSON is skipped.
+function toolServerRecord(file) {
+  const rec = { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] };
+  let text = '';
+  try { text = file ? fs.readFileSync(file, 'utf8') : ''; } catch { return rec; }
+  for (const line of text.split('\n')) {
+    let e;
+    try { e = JSON.parse(line); } catch { continue; }
+    if (!e || typeof e !== 'object' || typeof e.decision !== 'string') continue;
+    rec.calls += 1;
+    if (e.decision === 'ok') rec.allowed += 1;
+    else if (e.decision.startsWith('refused_')) {
+      rec.refused += 1;
+      rec.refused_calls.push({ tool: e.tool, input: e.input, decision: e.decision, reason: e.reason });
+    } else rec.other += 1;
+  }
   return rec;
 }
 
@@ -378,19 +405,24 @@ function promptTooLong(prompt) {
 // sutArgs for both turns (batch 12). env is already scrubbed; model names the model of
 // both turns (PINNED_MODEL when none is given); runRoot, the run's
 // results folder, is denied to both turns (batch 8, task 10b), and so are caseDirs, the folders the case file
-// is read from (batch 11, task 7).
+// is read from (batch 11, task 7). typedFile (batch 12d): with the tools on, the case's setup, ticket and evidence (what
+// the person typed, none of the runner's framing) are written to it before the first turn, and the follow-up appended
+// before the second.
 async function runSut(c, opts) {
   const repoRoot = opts.repoRoot || REPO_ROOT;
   const base = { command: opts.command, prefixArgs: opts.prefixArgs, spawn: opts.spawn, env: opts.env, cwd: repoRoot, timeoutMs: opts.timeoutMs, graceMs: opts.graceMs };
-  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model, tools: opts.tools, auditFile: opts.auditFile };
+  const typedFile = opts.tools !== false && opts.typedFile ? opts.typedFile : null;
+  const wall = { runRoot: opts.runRoot, caseDirs: opts.caseDirs || [], model: opts.model, tools: opts.tools, auditFile: opts.auditFile, typedFile };
   const turns = [];
   const prompt = buildSutPrompt(c);
   if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c, repoRoot);
+  if (typedFile) aegisTools.writeTyped(typedFile, [c.setup, c.ticket, c.evidence].filter((s) => typeof s === 'string' && s !== '').join('\n'));
   turns.push(await runTurn(sutArgs({ prompt, maxTurns: opts.maxTurns, web: opts.web, ...wall }), base));
   if (c.follow_up !== '' && turns[0].state === 'OK') {
     if (!turns[0].session_id) {
       turns.push({ state: 'ERROR', reason: 'no session id to resume for the follow-up', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null });
     } else {
+      if (typedFile) aegisTools.writeTyped(typedFile, c.follow_up, { append: true });
       turns.push(await runTurn(sutArgs({ prompt: c.follow_up, maxTurns: opts.maxTurns, web: opts.web, resume: turns[0].session_id, ...wall }), base));
     }
   }
@@ -424,6 +456,6 @@ function sutRecord(turns, c, repoRoot = REPO_ROOT) {
 
 module.exports = {
   SUT_TOOLS, WEB_TOOLS, PINNED_MODEL, isModelName, OUTPUT_CAP_REASON, ranUnpriced, isolationArgs, excludedMemoryFiles, readDenyRules, gitDirs, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
-  envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, outsideReads,
+  envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, toolServerRecord, outsideReads,
   runChild, runTurn, runSut, promptTooLong,
 };

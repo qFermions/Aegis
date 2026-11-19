@@ -5,8 +5,8 @@
 //
 // Usage: node scripts/mcp/aegis-tools/live-probe.js
 //
-// It starts the real server as a child over stdio, with an audit file in a new temporary folder, and makes the eleven
-// calls below. The only hosts it may reach are the two public resolvers (1.1.1.1, 8.8.8.8), learn.microsoft.com,
+// It starts the real server as a child over stdio, with an audit file and a typed file (batch 12d) in a new temporary
+// folder, and makes the twelve calls below. The only hosts it may reach are the two public resolvers (1.1.1.1, 8.8.8.8), learn.microsoft.com,
 // example.com and expired.badssl.com; localtest.me is resolved only (it points at 127.0.0.1, so the guard must refuse
 // it before any connection). The other refused targets are refused before any packet leaves.
 // It prints each call with what was expected and what came back, then the audit lines. Exit 0 when every call came
@@ -35,7 +35,11 @@ const CALLS = [
   ['net_http', { url: 'http://localtest.me/' }, 'refused_private_address'],
   ['net_tls', { host: 'expired.badssl.com' }, 'ok', (b) => b.expired === true && b.verified === false],
   ['net_tls', { host: 'example.com' }, 'ok', (b) => b.verified === true && b.expired === false],
+  // batch 12d: not typed, on neither list, so refused before any packet leaves
+  ['net_dns', { name: 'not-typed.example.com', type: 'A' }, 'refused_out_of_scope'],
 ];
+// What "the person typed" for this probe (batch 12d): the probe's own targets, so each still meets the check it is for.
+const TYPED = 'example.com https://example.com/ http://169.254.169.254/latest/meta-data/ http://localhost/ http://10.0.0.1/ http://localtest.me/ expired.badssl.com\n';
 
 function summary(tool, body, text) {
   if (!body.ok) return `${body.state}: ${body.reason}`;
@@ -51,7 +55,9 @@ function summary(tool, body, text) {
 async function main() {
   const dir = makeTempDir('aegis-tools-probe-');
   const auditFile = path.join(dir, 'audit.jsonl');
-  const child = childProcess.spawn(process.execPath, [path.join(__dirname, 'server.js'), '--audit', auditFile], { stdio: ['pipe', 'pipe', 'inherit'] });
+  const typedFile = path.join(dir, 'typed.txt');
+  fs.writeFileSync(typedFile, TYPED, { mode: 0o600 });
+  const child = childProcess.spawn(process.execPath, [path.join(__dirname, 'server.js'), '--audit', auditFile, '--typed', typedFile], { stdio: ['pipe', 'pipe', 'inherit'] });
   const waiting = new Map();
   readline.createInterface({ input: child.stdout }).on('line', (line) => {
     const msg = JSON.parse(line);

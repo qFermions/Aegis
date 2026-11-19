@@ -135,7 +135,7 @@ function intFlag(opts, name, def, lo, hi) {
 }
 
 function commandPreview(config) {
-  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: '<results>/<case>-tool-audit.jsonl' }).join(' ');
+  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: '<results>/<case>-tool-audit.jsonl', typedFile: '<results>/<case>-typed.txt' }).join(' ');
   const jud = backends.judgeArgs({ prompt: '<judge prompt>', model: config.judge_model }).map((a) => (a === '' ? '""' : a)).join(' ');
   return { sut: `claude ${sut}`, judge: `claude ${jud}` };
 }
@@ -172,6 +172,7 @@ function notRunRecord(c, reason) {
     change_class: c.expected.change_class, escalate: c.expected.escalate,
     sut, checks: [], judge: null, rows: null, total: null, max: null, verdict: 'INCONCLUSIVE', reasons: [reason], off_model: false,
     ...batch12Record(c, sut),
+    tool_server: backends.toolServerRecord(null),
   };
 }
 
@@ -268,8 +269,9 @@ async function runCommand(opts, io, deps) {
       io.out(report.terminalLine(r));
       continue;
     }
-    // each case's tool calls are audited to a file of its own in the results folder (batch 12, task 5)
-    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: path.join(dir, `${c.id}-tool-audit.jsonl`) });
+    // each case's tool calls are audited to a file of its own in the results folder (batch 12, task 5), and what the
+    // person typed (the case's setup, ticket, evidence and follow-up) goes to the server in a typed file there (batch 12d)
+    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: path.join(dir, `${c.id}-tool-audit.jsonl`), typedFile: path.join(dir, `${c.id}-typed.txt`) });
     // the Fix card's words by the desk's own counter; null when the answer has no card. A measure, never a pass or fail.
     const card = typeof sut.answer === 'string' ? fixCard(sut.answer) : null;
     // the batch 12 checks (fix-card-fits, claims-match-calls, fetched-citations) count like any check: one that fails fails the case
@@ -282,6 +284,8 @@ async function runCommand(opts, io, deps) {
       change_class: c.expected.change_class, escalate: c.expected.escalate,
       sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons, off_model: Boolean(v.off_model),
       ...batch12Record(c, sut),
+      // the tool server's calls allowed and refused, and each refused one with its reason, from the case's audit (batch 12d)
+      tool_server: backends.toolServerRecord(path.join(dir, `${c.id}-tool-audit.jsonl`)),
     };
     results.push(r);
     io.out(report.terminalLine(r));

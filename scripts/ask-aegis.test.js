@@ -101,13 +101,15 @@ test('the session argv is backends.sutArgs plus the budget, and nothing else', a
   const calls = s.calls();
   assert.equal(calls.length, 1, 'one session');
   const call = calls[0];
-  // since batch 12, task 5 the tool server audits to tool-audit.jsonl beside the saved answer
+  // since batch 12, task 5 the tool server audits to tool-audit.jsonl beside the saved answer; since batch 12d it reads
+  // what the person typed from typed.txt there (this test changed for that one argument)
   const audit = path.join(asksIn(s.home)[0], 'tool-audit.jsonl');
-  const expected = [...backends.sutArgs({ prompt: call.prompt, runRoot: path.join(s.home, 'aegis-asks'), maxTurns: 40, persist: false, auditFile: audit }), '--max-budget-usd', '3.00'];
+  const typedFile = path.join(asksIn(s.home)[0], 'typed.txt');
+  const expected = [...backends.sutArgs({ prompt: call.prompt, runRoot: path.join(s.home, 'aegis-asks'), maxTurns: 40, persist: false, auditFile: audit, typedFile }), '--max-budget-usd', '3.00'];
   assert.deepEqual(call.args, expected.filter((a) => a !== call.prompt));
   // the isolation backends.js builds sits in the argv whole; since batch 12 it carries the read-only aegis-tools
   // server (sutArgs loads it by default), whose four tool names are allowed and never listed in --tools
-  const iso = backends.isolationArgs({ runRoot: path.join(s.home, 'aegis-asks'), mcpConfig: mcpConfig({ auditFile: audit }) });
+  const iso = backends.isolationArgs({ runRoot: path.join(s.home, 'aegis-asks'), mcpConfig: mcpConfig({ auditFile: audit, typedFile }) });
   const at = call.args.indexOf('--setting-sources');
   assert.deepEqual(call.args.slice(at, at + iso.length), iso);
   for (const flag of ['--tools', '--allowedTools']) {
@@ -628,6 +630,36 @@ test('batch 12, task 5: the tool server is on with an audit file beside the answ
   assert.equal(await ask.main(['The printer will not print', '--no-tools'], off.env, off.deps), 0, off.stderr());
   assert.ok(!off.calls()[0].args.includes('--mcp-config'));
   assert.ok(!off.calls()[0].args.some((a) => /mcp__aegis-tools__/.test(a)));
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): the session's tool server reads what the person typed from
+// typed.txt in the ask folder; when the session starts it holds the setup and the ticket as sent, after protect(), one
+// per line, and none of the command's own words; it is removed when the session ends, so the saved set is unchanged; a
+// failed ask leaves no folder. --no-tools writes none. Wrong implementations it catches: the raw ticket typed (an address
+// protect() masked would open as a host); the built prompt typed (the command's own lines, docs/aegis/answer-format.md
+// among them, would open as hosts); a typed file left beside the answer or keeping a failed ask's folder.
+test('batch 12d: the typed file holds the setup and ticket as sent, after protect(), and goes when the ask ends', async (t) => {
+  const at = '@';
+  const ticket = `Mail to mail.example.org bounces; reply to alex${at}example.com`;
+  const setupText = 'Google Workspace; status at https://status.example.com/';
+  const s = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main([ticket, '--setup', setupText, '--reply-to', 'asker'], s.env, s.deps), 3, s.stderr());
+  const [dir] = asksIn(s.home);
+  const call = s.calls()[0];
+  assert.equal(call.typed.file, path.join(dir, 'typed.txt'));
+  assert.equal(call.typed.text, `${ask.protect(setupText).text}\n${ask.protect(ticket).text}\n`);
+  assert.ok(call.typed.text.includes('[USER@DOMAIN.COM]') && !call.typed.text.includes(`alex${at}example.com`));
+  for (const own of ['A person trying Aegis', 'answer-format.md', 'What the company runs']) assert.ok(!call.typed.text.includes(own), own);
+  if (process.platform !== 'win32') assert.equal(call.typed.mode, 0o600);
+  assert.equal(fs.existsSync(path.join(dir, 'typed.txt')), false, 'removed when the session ends');
+  const failed = setup(t, { mode: 'invalid' });
+  const out = path.join(failed.dir, 'out-failed');
+  assert.equal(await ask.main(['The printer will not print', '--results-dir', out], failed.env, failed.deps), 2);
+  assert.equal(failed.calls()[0].typed.text, 'The printer will not print\n');
+  assert.equal(fs.existsSync(out), false, 'a failed ask with no lookup leaves no folder');
+  const off = setup(t, { answer: NEW_ANSWER });
+  assert.equal(await ask.main(['The printer will not print', '--no-tools'], off.env, off.deps), 0, off.stderr());
+  assert.equal(off.calls()[0].typed, null);
 });
 
 // Code review 1 of batch 12, class C: the tool server creates its audit file in the results folder when the session

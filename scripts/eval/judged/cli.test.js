@@ -296,3 +296,61 @@ test('batch 12, task 5: the tool server is on by default with an audit file per 
   await cli.main(['run', '--cases', dry.copy, '--no-tools'], dry.io, dry.deps);
   assert.doesNotMatch(dry.out.join('\n'), /mcp__aegis-tools__|--mcp-config/);
 });
+
+// Batch 12d. EXPECTED DECISION (written before the code): each case's session gets a typed file of its own in the
+// results folder, <case>-typed.txt, named to the tool server by --typed; when the session starts it holds the case's
+// setup (as protect() left it, the way the session gets it), ticket and evidence, one per line, and none of the runner's
+// own words. --no-tools writes none. Wrong implementations it catches: one typed file shared by every case (a host typed
+// in one case would open in the next); a setup typed before protect() (an address the session never saw); the runner's
+// framing in the file; a typed file written when no server reads it.
+test('batch 12d: each case\'s typed file, in the results folder, holds its setup, ticket and evidence when its session starts', async (t) => {
+  const { protect } = require('../../ask-aegis.js');
+  const s = setup(t);
+  const one = JSON.parse(G4_TEXT.split('\n')[0]);
+  const at = '@';
+  Object.assign(one, { setup: `Okta and Google Workspace; the NOC is noc${at}example.com`, ticket: 'The page https://status.example.com/ is blank for everyone.', evidence: 'curl says 503 from edge.example.net', follow_up: '' });
+  fs.writeFileSync(s.copy, `${JSON.stringify(one)}\n`);
+  await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  const call = s.calls().find((c) => c.role === 'sut');
+  assert.equal(call.typed.file, path.join(s.results, `${one.id}-typed.txt`));
+  assert.equal(call.typed.text, `${protect(one.setup).text}\n${one.ticket}\n${one.evidence}\n`);
+  assert.ok(call.typed.text.includes('[USER@DOMAIN.COM]') && !call.typed.text.includes(`noc${at}example.com`), 'the setup as protect() left it');
+  if (process.platform !== 'win32') assert.equal(call.typed.mode, 0o600);
+  const off = setup(t);
+  fs.writeFileSync(off.copy, `${JSON.stringify(one)}\n`);
+  await cli.main(['run', '--cases', off.copy, '--execute', '--results-dir', off.results, '--no-tools'], off.io, off.deps);
+  assert.equal(fs.existsSync(path.join(off.results, `${one.id}-typed.txt`)), false);
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): each case's record in results.json holds tool_server, read
+// from the case's own audit file: calls, allowed (answered), refused (every decision that starts with refused_), other,
+// and refused_calls (tool, input as the audit keeps it, decision, reason); a case that did not run holds zeros, so a
+// per-lane or per-mode sum never meets a missing value. report.md's Cases table shows allowed / refused per case. Wrong
+// implementations it catches: counts taken from the session's stream (it does not say which refusal, or why); one
+// audit file read for every case; a report that shows the refused inputs (they may hold ticket text).
+test('batch 12d: each case records its tool server calls allowed and refused, with every refused call and its reason, and the report shows the counts', async (t) => {
+  const refusedEntry = { time: 't', tool: 'net_http', input: { url: 'https://leak.example.net/?d=ticket-text' }, decision: 'refused_out_of_scope', reason: 'https://leak.example.net/?d=ticket-text is out of scope: not listed, not typed', addresses: [], bytes: 0, duration_ms: 1 };
+  const redirectEntry = { time: 't', tool: 'net_http', input: { url: 'https://pypi.org/x' }, decision: 'refused_redirect', reason: 'redirect 1 to https://files.example.net/ is refused: out of scope', addresses: ['151.101.1.69'], bytes: 0, duration_ms: 2 };
+  const okEntry = { time: 't', tool: 'net_dns', input: { name: 'pypi.org', type: 'A' }, decision: 'ok', addresses: [], bytes: 0, duration_ms: 1 };
+  const s = setup(t, { sut: { audit_entries: [okEntry, refusedEntry, okEntry, redirectEntry] } });
+  fs.writeFileSync(s.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', s.copy, '--execute', '--results-dir', s.results], s.io, s.deps);
+  const json = JSON.parse(fs.readFileSync(path.join(s.results, 'results.json'), 'utf8'));
+  const r = json.cases[0];
+  assert.deepEqual(r.tool_server, {
+    calls: 4, allowed: 2, refused: 2, other: 0,
+    refused_calls: [refusedEntry, redirectEntry].map((e) => ({ tool: e.tool, input: e.input, decision: e.decision, reason: e.reason })),
+  });
+  const md = fs.readFileSync(path.join(s.results, 'report.md'), 'utf8');
+  assert.ok(md.includes('| Case | Platform | Verdict | Score | Card words | Reasons | Tool server allowed / refused |'), md.slice(md.indexOf('## Cases')));
+  const row = md.split('\n').find((l) => l.startsWith(`| ${r.id} |`));
+  assert.match(row, /\| 2 \/ 2 \|$/);
+  assert.ok(!md.includes('leak.example.net'), 'the report shows counts, never the refused inputs');
+  // a case that did not run holds zeros
+  const capped = setup(t);
+  fs.writeFileSync(capped.copy, `${G4_TEXT.split('\n')[0]}\n`);
+  await cli.main(['run', '--cases', capped.copy, '--execute', '--results-dir', capped.results, '--budget-usd', '0.01'], capped.io, capped.deps);
+  const notRun = JSON.parse(fs.readFileSync(path.join(capped.results, 'results.json'), 'utf8')).cases[0];
+  assert.equal(notRun.verdict, 'INCONCLUSIVE');
+  assert.deepEqual(notRun.tool_server, { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] });
+});

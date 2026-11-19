@@ -1620,6 +1620,39 @@ test('batch 12, task 5: the desk loads the tool server with an audit file per ti
   assert.doesNotMatch(out.join(''), /--mcp-config/);
 });
 
+// Batch 12d. EXPECTED DECISION (written before the code): each ticket's session gets a typed file beside its debug log,
+// <ticket>-typed.txt, named to the tool server by --typed; when the session starts it holds the customer's profile and
+// the ticket text the intake accepted (the setup and the words the session is given as the person's own), one per line,
+// and none of the desk's framing. It stays with the ticket's other files. --no-tools writes none. Wrong implementations
+// it catches: the raw email or Slack item typed (values the intake hid would open as hosts); the desk's own lines typed;
+// one typed file for the whole run.
+test('batch 12d: the desk hands each session a typed file beside its debug log: the customer profile and the ticket text', async (t) => {
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' } });
+  const [call] = r.calls();
+  const file = path.join(r.results, 'customers', 'B', 'tickets', 'T7-typed.txt');
+  assert.equal(call.typed.file, file);
+  const customer = customersData.loadData().customers.find((c) => c.id === 'B');
+  assert.equal(call.typed.text, `${customersData.profileText(customer).trim()}\n${r.ticket('T7').ticket_text}\n`);
+  for (const own of ['A customer ticket came in', '--- Customer profile ---', 'replay lookup']) assert.ok(!call.typed.text.includes(own), own);
+  if (process.platform !== 'win32') assert.equal(call.typed.mode, 0o600);
+  assert.ok(fs.existsSync(file), 'kept with the ticket\'s other files');
+  const off = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, argv: ['--no-tools'] });
+  assert.equal(off.calls()[0].typed, null);
+  assert.equal(fs.existsSync(path.join(off.results, 'customers', 'B', 'tickets', 'T7-typed.txt')), false);
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): each ticket's record in run.json holds tool_server, read from
+// the ticket's own audit file after its session: calls, allowed, refused (every decision that starts with refused_),
+// other, and refused_calls (tool, input as the audit keeps it, decision, reason). Wrong implementations it catches: a
+// desk that records no refusals (a blocked exfiltration attempt would leave no trace in the run); one that reads
+// another ticket's audit file; one that drops the reason.
+test('batch 12d: the desk records each ticket\'s tool server calls allowed and refused, with every refused call and its reason', async (t) => {
+  const refused = { time: 't', tool: 'net_dns', input: { name: 'ticket-text.example.net', type: 'TXT' }, decision: 'refused_out_of_scope', reason: 'ticket-text.example.net is out of scope: not listed, not typed', addresses: [], bytes: 0, duration_ms: 1 };
+  const ok = { time: 't', tool: 'net_dns', input: { name: 'pypi.org', type: 'A' }, decision: 'ok', addresses: ['151.101.1.69'], bytes: 0, duration_ms: 1 };
+  const r = await runDesk(t, { only: ['T7'], answers: { T7: 'Which site?\nGate: none' }, sut: { audit_entries: [ok, refused] } });
+  assert.deepEqual(r.ticket('T7').tool_server, { calls: 2, allowed: 1, refused: 1, other: 0, refused_calls: [{ tool: refused.tool, input: refused.input, decision: refused.decision, reason: refused.reason }] });
+});
+
 // Batch 12, task 13: the guard's first guess of a session's cost moves toward measured costs. On 2026-11-18 thirteen
 // demo sessions cost 0.18 to 0.84 US dollars each (docs/aegis/demo/evidence/batch12/full-run-10 and full-run-11), and
 // the old guess of 2.00 stopped T8m, T9m, T7 and T8 with money left. Wrong implementation: a guess still at 2.00 (the

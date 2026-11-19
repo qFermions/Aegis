@@ -32,6 +32,7 @@ const { PHONE_LITERAL, replaceEmails, isCanonicalPlaceholder } = require('./tier
 const { fixCard, PARTS, deskBlock, MODE_LINE, withoutModeLine } = require('./demo/answer.js');
 const { askerReply, replyProblems, isAskFirst } = require('./demo/senior-rules.js');
 const { catalog } = require('./demo/catalog.js');
+const { writeTyped } = require('./mcp/aegis-tools/session.js');
 
 const REPO_ROOT = paths.REPO_ROOT;
 // the desk's turns and time limit (scripts/demo/customer-desk.js, DESK_MAX_TURNS and DESK_SESSION_TIMEOUT_MS)
@@ -168,9 +169,10 @@ function buildPrompt(ticket, setup, replyTo = null) {
   });
 }
 
-// tools and auditFile: the read-only tool server (batch 12, task 5), on by default, its calls audited beside the answer
-function askArgs(prompt, runRoot, maxUsd, model = null, { tools = true, auditFile = null } = {}) {
-  return [...backends.sutArgs({ prompt, runRoot, maxTurns: MAX_TURNS, persist: false, model, tools, auditFile }), '--max-budget-usd', maxUsd];
+// tools and auditFile: the read-only tool server (batch 12, task 5), on by default, its calls audited beside the answer;
+// typedFile (batch 12d): what the person typed, for the server's scope
+function askArgs(prompt, runRoot, maxUsd, model = null, { tools = true, auditFile = null, typedFile = null } = {}) {
+  return [...backends.sutArgs({ prompt, runRoot, maxTurns: MAX_TURNS, persist: false, model, tools, auditFile, typedFile }), '--max-budget-usd', maxUsd];
 }
 
 // The desk's session environment (scripts/demo/customer-desk.js sessionEnv, not exported there).
@@ -279,9 +281,20 @@ async function main(argv = process.argv.slice(2), env = process.env, deps = {}) 
   const say = args.replyTo ? io.err : io.out;
   say('Asking Aegis. It reads only and changes nothing; this can take a few minutes.\n');
   const backend = deps.backend || { command: 'claude', prefixArgs: [] };
+  // What the person typed, the setup and the ticket as sent (after protect()), for the tool server's scope (batch 12d):
+  // written before the session, read by the server at each call, and removed when the session ends.
+  const typedFile = args.tools ? path.join(dir, 'typed.txt') : null;
+  if (typedFile) {
+    try { writeTyped(typedFile, [setupText.text, ticket.text].filter(Boolean).join('\n')); } catch (e) {
+      io.err(`ask-aegis: cannot write the typed file in the results folder (${e.code || 'error'}). Nothing was sent.\n`);
+      if (made !== undefined) try { fs.rmdirSync(dir); } catch { /* not empty or gone: left as it is */ }
+      return 1;
+    }
+  }
   // Every saved ask is denied to the session, so one ask never reads another's answer (review round 1,
   // finding 2). A --results-dir elsewhere is empty when the session starts.
-  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: askArgs(prompt, path.join(homeOf(env), ASKS_DIR), args.maxUsd, args.model, { tools: args.tools, auditFile: path.join(dir, 'tool-audit.jsonl') }), cwd: REPO_ROOT, env: sessionEnv(env), spawn: deps.spawn, timeoutMs: deps.timeoutMs || TIMEOUT_MS, graceMs: deps.graceMs });
+  const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: askArgs(prompt, path.join(homeOf(env), ASKS_DIR), args.maxUsd, args.model, { tools: args.tools, auditFile: path.join(dir, 'tool-audit.jsonl'), typedFile }), cwd: REPO_ROOT, env: sessionEnv(env), spawn: deps.spawn, timeoutMs: deps.timeoutMs || TIMEOUT_MS, graceMs: deps.graceMs });
+  if (typedFile) try { fs.unlinkSync(typedFile); } catch { /* gone already */ }
   const stream = backends.parseStream(run.stdout);
   const turn = backends.summarizeTurn(stream, run);
   if (turn.state !== 'OK') {

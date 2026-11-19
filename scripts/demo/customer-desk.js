@@ -33,6 +33,7 @@ const changes = require('../audit/change-record.js');
 const backends = require('../eval/judged/backends.js');
 const checks = require('../eval/judged/checks.js');
 const paths = require('../eval/judged/paths.js');
+const { writeTyped } = require('../mcp/aegis-tools/session.js');
 const { SMOKE_USD_PER_SESSION } = require('../eval/judged-eval.js');
 const intake = require('../intake/intake.js');
 const { clarify } = require('../intake/clarify.js');
@@ -188,15 +189,20 @@ function sessionEnv(env) {
 // session record, since the desk never resumes one.
 // Each session keeps a debug log, the proof of what the CLI applied, and is capped at what is left of a limit. model: the
 // run's model (batch 11 resumed), so no session takes the settings file's default.
-// tools: the read-only tool server (batch 12, task 5), on by default; its calls are audited beside the ticket's debug log.
+// tools: the read-only tool server (batch 12, task 5), on by default; its calls are audited beside the ticket's debug log,
+// and what the person typed goes to it in the typed file there (batch 12d).
+const typedFileFor = (debugFile) => debugFile.replace(/-debug\.log$/, '-typed.txt');
 function sessionArgs(prompt, runRoot, debugFile, maxUsd, model = null, tools = true) {
   const auditFile = debugFile.replace(/-debug\.log$/, '-tool-audit.jsonl');
-  const args = [...backends.sutArgs({ prompt, runRoot, maxTurns: DESK_MAX_TURNS, persist: false, model, tools, auditFile }), '--debug-file', debugFile];
+  const args = [...backends.sutArgs({ prompt, runRoot, maxTurns: DESK_MAX_TURNS, persist: false, model, tools, auditFile, typedFile: typedFileFor(debugFile) }), '--debug-file', debugFile];
   return maxUsd === null ? args : [...args, '--max-budget-usd', maxUsd];
 }
 
-async function askAegis(prompt, ctx, debugFile, maxUsd) {
+// typed: what the person typed (the customer's profile and the ticket text the intake accepted), written to the typed
+// file before the session when the tools are on (batch 12d)
+async function askAegis(prompt, ctx, debugFile, maxUsd, typed = '') {
   const backend = ctx.backend;
+  if (ctx.tools) writeTyped(typedFileFor(debugFile), typed);
   const run = await backends.runChild({ command: backend.command, prefixArgs: backend.prefixArgs || [], args: sessionArgs(prompt, ctx.runDir, debugFile, maxUsd, ctx.model, ctx.tools), cwd: REPO_ROOT, env: sessionEnv(ctx.env), spawn: ctx.spawn, timeoutMs: ctx.sessionTimeoutMs });
   const stream = backends.parseStream(run.stdout);
   return { turn: backends.summarizeTurn(stream, run), stdout: run.stdout, init: stream.init };
@@ -518,9 +524,12 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       const kase = sessionCase(text, customer, lookup.json ? lookup.json.result : `refused (exit ${lookup.code})`, data.profileText(customer));
       const prompt = backends.buildSutPrompt(kase);
       if (backends.promptTooLong(prompt)) { sessionReason = 'session did not finish: the prompt is too long for one argument'; return { result: sessionReason, model_session: false }; }
-      const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`), ctx.maxUsd);
+      const typed = [String(data.profileText(customer) || '').trim(), text].filter(Boolean).join('\n');
+      const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`), ctx.maxUsd, typed);
       // the tools the session listed (batch 12, task 5): the record shows which were available
       rec.tools_available = turn.tools_available;
+      // the tool server's calls allowed and refused, and each refused one with its reason, from this ticket's audit (batch 12d)
+      rec.tool_server = backends.toolServerRecord(path.join(tickets, `${ticket.id}-tool-audit.jsonl`));
       // a session that ran and reported no cost (killed at the timeout or the output cap, or started with no result): what
       // it spent is unknown; read through the judged runner's shared reader, never the cap reason's wording (code
       // review 3, finding 14)

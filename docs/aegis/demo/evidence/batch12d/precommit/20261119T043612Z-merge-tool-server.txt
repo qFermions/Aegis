@@ -1,0 +1,58 @@
+staged for commit "merge-tool-server" on feat/batch12-expert-lanes at parent f6965066:
+A	config/probe-allowlist.json
+A	docs/aegis/demo/evidence/batch12d/full-battery-compare.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041428Z-scope-tests.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T041828Z-scope-code.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T042326Z-typed-handoff-tests.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T042750Z-typed-handoff-code.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T042925Z-refused-record-tests.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T043033Z-refused-record-code.txt
+A	docs/aegis/demo/evidence/batch12d/precommit/20261119T043257Z-final-runs.txt
+A	docs/aegis/demo/evidence/batch12d/refused-record-green.txt
+A	docs/aegis/demo/evidence/batch12d/refused-record-red.txt
+A	docs/aegis/demo/evidence/batch12d/scope-green.txt
+A	docs/aegis/demo/evidence/batch12d/scope-mutations.txt
+A	docs/aegis/demo/evidence/batch12d/scope-red.txt
+A	docs/aegis/demo/evidence/batch12d/tool-server-tripwire.txt
+A	docs/aegis/demo/evidence/batch12d/tools/compare-failing.js
+A	docs/aegis/demo/evidence/batch12d/tools/mutate-scope.js
+A	docs/aegis/demo/evidence/batch12d/touched-final.txt
+A	docs/aegis/demo/evidence/batch12d/typed-handoff-green.txt
+A	docs/aegis/demo/evidence/batch12d/typed-handoff-red.txt
+M	scripts/aegis-chat.js
+M	scripts/aegis-chat.test.js
+M	scripts/ask-aegis.js
+M	scripts/ask-aegis.test.js
+M	scripts/demo/customer-desk.js
+M	scripts/demo/customer-desk.test.js
+M	scripts/eval/judged-eval.js
+M	scripts/eval/judged/backends.js
+M	scripts/eval/judged/backends.test.js
+M	scripts/eval/judged/cli.test.js
+M	scripts/eval/judged/fixtures/fake-claude.js
+M	scripts/eval/judged/report.js
+M	scripts/mcp/aegis-tools/README.md
+M	scripts/mcp/aegis-tools/live-probe.js
+M	scripts/mcp/aegis-tools/server.js
+M	scripts/mcp/aegis-tools/server.test.js
+M	scripts/mcp/aegis-tools/session.js
+M	scripts/mcp/aegis-tools/session.test.js
+M	scripts/mcp/aegis-tools/tools.js
+A	scripts/mcp/aegis-tools/typed-hook.js
+A	scripts/mcp/aegis-tools/typed-hook.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+
+╔══════════════════════════════════════════════╗
+║  Aegis Pre-Commit Safety Check               ║
+╚══════════════════════════════════════════════╝
+
+  File: scripts/demo/customer-desk.test.js
+    ⚠️  WARN  Line 210: Prompt-injection marker (ignore-previous-instructions)
+      Guidance: Review the operation, add the required warning/confirmation gate, and keep it only if intentional.
+
+⚠️  1 warning(s) found - review the flagged lines above.
+   These are dangerous cmdlets in scripts. Confirm they are intentional.
+   Commit will proceed. Add a ⚠️ comment in the script to acknowledge.
+
+exit 0

@@ -132,6 +132,97 @@ test('the tool server is on by default for the system under test, never for the 
   assert.ok(!third.args.includes('--mcp-config'));
 });
 
+// ── Batch 12d: the typed file ───────────────────────────────────────────────────────────────────────────────────────
+// EXPECTED DECISIONS (written before the code)
+// - sutArgs({ typedFile }) hands the tool server --typed <file> when the tools are on. promptHook: true (the chat only)
+//   also puts session.typedHooks(typedFile) in the session's inline --settings as "hooks"; a print-mode session never
+//   gets the hook, since its one prompt holds the runner's own words. With the tools off neither appears, and the judge
+//   never takes a hook.
+// - runSut with opts.typedFile writes what the person typed before the first turn starts: the case's setup, ticket and
+//   evidence, one per line, none of the runner's framing; it appends the follow-up before the second turn.
+const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
+const typedServerArgs = (args) => JSON.parse(args[args.indexOf('--mcp-config') + 1]).mcpServers['aegis-tools'].args.slice(1);
+
+// Wrong implementations it catches: a typed file that never reaches the server's arguments; a prompt hook on every
+// session (a judged or ask session's -p prompt, with the runner's framing words, would join the typed set); a hook left in
+// with the tools off; a judge that can be given a hook.
+test('batch 12d: sutArgs hands the server the typed file, and the prompt hook only when asked; off and the judge get neither', () => {
+  const { typedHooks } = require('../../mcp/aegis-tools/session.js');
+  const audit = path.join(os.tmpdir(), 'b12d-audit.jsonl');
+  const file = path.join(os.tmpdir(), 'b12d-typed.txt');
+  const on = backends.sutArgs({ prompt: 'P', auditFile: audit, typedFile: file });
+  assert.deepEqual(typedServerArgs(on), ['--audit', audit, '--typed', file]);
+  assert.ok(!('hooks' in settingsOf(on)), 'a print-mode session gets no prompt hook');
+  const chat = backends.sutArgs({ prompt: '', persist: false, typedFile: file, promptHook: true });
+  assert.deepEqual(settingsOf(chat).hooks, typedHooks(file));
+  assert.ok(!('hooks' in settingsOf(backends.sutArgs({ prompt: '', promptHook: true }))), 'no typed file: no hook');
+  const off = backends.sutArgs({ prompt: 'P', tools: false, typedFile: file, promptHook: true });
+  assert.deepEqual(off, backends.sutArgs({ prompt: 'P', tools: false }), 'off: the typed file and the hook leave no trace');
+  assert.throws(() => backends.isolationArgs({ judge: true, hooks: typedHooks(file) }), /judge/);
+  assert.ok(!('hooks' in settingsOf(backends.judgeArgs({ prompt: 'J' }))));
+});
+
+// Wrong implementations it catches: a typed file written after the session started (the server would read nothing); one
+// that holds the built prompt (the evidence header and the setup's marker lines are the runner's words, and a file name
+// in them would become a typed host); the follow-up typed before the first turn, or never; a file other users can read.
+test('batch 12d: runSut writes the person\'s words to the typed file before the first turn, and the follow-up before the second', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-typed-sut-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const typedFile = path.join(dir, 'B1-typed.txt');
+  const f = fake(t, { sut: { answer: 'a', follow_up_answer: 'b' } });
+  const c = kase({ setup: 'Google Workspace; status page https://status.example.com/', ticket: 'Mail to mail.example.org bounces.', evidence: 'Log: 550 from mx.example.org', follow_up: 'Also check https://www.example.net/health' });
+  await backends.runSut(c, { ...f.opts, env: { PATH: process.env.PATH }, typedFile });
+  const [first, second] = f.calls();
+  assert.equal(first.typed.file, typedFile);
+  assert.equal(first.typed.text, 'Google Workspace; status page https://status.example.com/\nMail to mail.example.org bounces.\nLog: 550 from mx.example.org\n');
+  assert.equal(second.typed.text, `${first.typed.text}Also check https://www.example.net/health\n`);
+  if (process.platform !== 'win32') assert.equal(first.typed.mode, 0o600);
+  for (const framing of [backends.EVIDENCE_HEADER, '--- What the company runs ---', 'It replaces the default environment']) assert.ok(!second.typed.text.includes(framing), framing);
+  // with the tools off, no typed file is written and none is named
+  const g = fake(t, { sut: { answer: 'a' } });
+  const offFile = path.join(dir, 'off-typed.txt');
+  await backends.runSut(kase(), { ...g.opts, env: { PATH: process.env.PATH }, typedFile: offFile, tools: false });
+  assert.equal(fs.existsSync(offFile), false);
+  assert.equal(g.calls()[0].typed, null);
+});
+
+// Batch 12d. EXPECTED DECISION (written before the code): toolServerRecord(auditFile) reads the tool server's audit file
+// and returns { calls, allowed, refused, other, refused_calls }: allowed is a call the server answered (decision ok),
+// refused every decision that starts with refused_ (out of scope, a refused redirect, a private address, a refused name,
+// port, scheme or user info, off the docs list), other the rest (bad input, the call cap, a timeout, a DNS, HTTP or TLS
+// failure); refused_calls keeps each refused call's tool, its input as the audit keeps it, the decision and the reason,
+// in order. No file, or none named: every count 0. Wrong implementations it catches: refused counted as out-of-scope
+// alone (a refused redirect or a private address left out); the call cap or bad input counted as allowed; a record that
+// drops the reason or the input; one that keeps what the audit has beyond those (addresses, bytes, timing).
+test('batch 12d: toolServerRecord counts allowed, refused and other calls from the audit file and lists each refused call', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-tool-record-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const file = path.join(dir, 'B1-tool-audit.jsonl');
+  const entry = (tool, input, decision, reason) => ({ time: '2026-11-18T00:00:00.000Z', tool, input, decision, ...(reason ? { reason } : {}), addresses: ['93.184.215.14'], bytes: 10, duration_ms: 3 });
+  const lines = [
+    entry('net_dns', { name: 'pypi.org', type: 'A' }, 'ok'),
+    entry('net_http', { url: 'https://leak.example.net/?d=ticket' }, 'refused_out_of_scope', 'https://leak.example.net/?d=ticket is out of scope: ...'),
+    entry('net_dns', { name: 'x.example.com', type: 'TXT' }, 'dns_failed', 'x.example.com does not exist (NXDOMAIN)'),
+    entry('net_http', { url: 'https://www.example.com/a' }, 'refused_redirect', 'redirect 1 to https://x.example.net/ is refused: out of scope'),
+    entry('net_tls', { host: '10.0.0.1', port: 443 }, 'refused_private_address', '10.0.0.1 is in private space'),
+    entry('net_dns', { name: 'example.com', type: 'A' }, 'call_cap_reached', 'this session has used its 30 tool calls'),
+    entry('docs_fetch', { url: 'https://learn.microsoft.com/x' }, 'ok'),
+    entry('net_dns', { name: 'example.com', type: 'PTR' }, 'bad_input', 'type must be one of A, AAAA'),
+  ];
+  fs.writeFileSync(file, `${lines.map((l) => JSON.stringify(l)).join('\n')}\n`);
+  assert.deepEqual(backends.toolServerRecord(file), {
+    calls: 8, allowed: 2, refused: 3, other: 3,
+    refused_calls: [
+      { tool: 'net_http', input: { url: 'https://leak.example.net/?d=ticket' }, decision: 'refused_out_of_scope', reason: 'https://leak.example.net/?d=ticket is out of scope: ...' },
+      { tool: 'net_http', input: { url: 'https://www.example.com/a' }, decision: 'refused_redirect', reason: 'redirect 1 to https://x.example.net/ is refused: out of scope' },
+      { tool: 'net_tls', input: { host: '10.0.0.1', port: 443 }, decision: 'refused_private_address', reason: '10.0.0.1 is in private space' },
+    ],
+  });
+  const none = { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] };
+  assert.deepEqual(backends.toolServerRecord(path.join(dir, 'missing.jsonl')), none);
+  assert.deepEqual(backends.toolServerRecord(null), none);
+});
+
 test('the exclusions cover the judge\'s temporary folder too, and never the repository\'s own CLAUDE.md (batch 6, code review 1 finding 7)', () => {
   const os = require('node:os');
   const list = backends.excludedMemoryFiles();

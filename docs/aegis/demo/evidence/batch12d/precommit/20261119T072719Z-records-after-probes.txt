@@ -1,0 +1,9 @@
+staged for commit "records-after-probes" on feat/batch12-expert-lanes at parent 3ea44d29:
+M	PROJECT_STATE.md
+M	checks.md
+M	docs/aegis/demo/evidence/batch12d/judged-dev-run/summary.md
+M	progress.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

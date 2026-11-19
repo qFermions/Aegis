@@ -62,6 +62,9 @@ const HOST_RUN = /[\p{L}\p{M}\p{N}._-]+/gu;
 const IPV6_RUN = /[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*/g;
 const URL_RUN = /https?:\/\/\S+/gi;
 const SENTENCE_END = /[.,;:!?'"`*)\]}>]+$/;
+// A bracketed placeholder ([USER@DOMAIN.COM], [UPN], [DT-First,Last]) is the privacy step's or a runbook's text, never
+// a host the person typed. No colon in the class, so an IPv6 literal keeps its brackets.
+const PLACEHOLDER = /\[[A-Za-z@][A-Za-z0-9_@.#,-]*\]/g;
 
 // { hosts, urls }: whole tokens of the typed text. A host token is a maximal run of host characters with the dots and
 // hyphens at its ends taken off, in lower case, or an IPv6 literal. A URL token runs from http:// or https:// to the
@@ -69,7 +72,10 @@ const SENTENCE_END = /[.,;:!?'"`*)\]}>]+$/;
 function typedTokens(text) {
   const s = String(text);
   const hosts = new Set();
-  for (const [run] of s.matchAll(HOST_RUN)) {
+  // hosts come from the text with its placeholders taken out (the breaker's class 1 finding: ask-aegis wrote
+  // [USER@DOMAIN.COM] for an email address and domain.com read as typed); URLs below stay verbatim
+  const unmasked = s.replace(PLACEHOLDER, ' ');
+  for (const [run] of unmasked.matchAll(HOST_RUN)) {
     const h = run.replace(/^[.-]+|[.-]+$/g, '').toLowerCase();
     if (h) hosts.add(h);
   }

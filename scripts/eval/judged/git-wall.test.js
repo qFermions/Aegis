@@ -71,3 +71,14 @@ test('gitDirs: a checkout gives .git; a linked worktree adds the folder its .git
   fs.writeFileSync(path.join(tree, '.git'), 'not a git file\n');
   assert.deepEqual(backends.gitDirs(tree), [path.join(tree, '.git')], 'a .git file that names nothing');
 });
+
+// Security review of batch 12d, a gap older than the batch. Wrong implementation this catches: the deny list written
+// for the checkout alone, while agent worktrees under .claude/worktrees are whole copies of it: each holds the case
+// file, progress.md, checks.md, the demo's expected answers and a .git file with a local path, and none was denied.
+test('the agent worktrees inside the repository are denied whole, to every sealed session', () => {
+  const rule = abs(path.join(REPO_ROOT, '.claude', 'worktrees', '**'));
+  assert.ok(backends.readDenyRules().includes(rule), 'in the pinned rules');
+  for (const args of [backends.sutArgs({ prompt: 'P' }), backends.sutArgs({ prompt: 'F', resume: 'sess-1' }), askArgs('P', os.tmpdir(), '1'), chatArgs(null, os.tmpdir())]) {
+    assert.ok(denyOf(args).includes(rule));
+  }
+});

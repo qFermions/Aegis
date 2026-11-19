@@ -1,0 +1,33 @@
+✔ the deny rules name .git itself and everything under it (0.593875ms)
+✔ every sealed session carries the .git rules: first turn, follow-up, ask-aegis and the chat (0.888ms)
+✔ gitDirs: a checkout gives .git; a linked worktree adds the folder its .git file names and the shared one (1.648334ms)
+✖ the agent worktrees inside the repository are denied whole, to every sealed session (0.283875ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 45.718875
+
+✖ failing tests:
+
+test at scripts/eval/judged/git-wall.test.js:78:1
+✖ the agent worktrees inside the repository are denied whole, to every sealed session (0.283875ms)
+  AssertionError [ERR_ASSERTION]: in the pinned rules
+      at TestContext.<anonymous> (<repo>/scripts/eval/judged/git-wall.test.js:80:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit 1

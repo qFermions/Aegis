@@ -8,14 +8,14 @@ Every answer has one of four modes (section 9): the Fix card (helpdesk work, sec
 
 Unless another mode applies, the answer's first line is `Mode: Fix card` and the next is a section headed exactly `## Fix`, before anything else, with these six parts in this order:
 
-| Part | What it holds |
-|---|---|
-| **What's wrong:** | One sentence. |
-| **Do this:** | 3 to 5 numbered steps in plain words. Each step is one action a tech takes in an admin portal or on the phone, with the portal path where there is one (Admin center → Users → ...). Section 2 sets which step comes first and which comes last. |
-| **Done when:** | One line a tech can see with their own eyes. When Aegis will check the change, say what it will check, in plain words ("Aegis then checks the old sign-in method is gone"). |
-| **Stop if:** | One line: the signal that turns this into a different problem. |
-| **Tell the user now:** | At most 3 short sentences the tech sends the person who asked, right away: what happens next and what they should do. |
-| **Tell the user when done:** | At most 3 short sentences for after the change is made and Aegis's double-check passed: the confirmation. |
+| Part | What it holds | Slot (words) |
+|---|---|---|
+| **What's wrong:** | One sentence: the cause line. | 12 |
+| **Do this:** | 3 to 5 numbered steps in plain words, each at most 14 words. Each step is one action a tech takes in an admin portal or on the phone, with the portal path where there is one (Admin center → Users → ...). Section 2 sets which step comes first and which comes last. | 70 (five steps of 14) |
+| **Done when:** | One line a tech can see with their own eyes: the check line. When Aegis will check the change, say what it will check, in plain words ("Aegis then checks the old sign-in method is gone"). | 16 |
+| **Stop if:** | One line: the signal that turns this into a different problem. | 10 |
+| **Tell the user now:** | At most 3 short sentences the tech sends the person who asked, right away: what happens next and what they should do. | 14 |
+| **Tell the user when done:** | At most 3 short sentences for after the change is made and Aegis's double-check passed: the confirmation. | 10 |
 
 The two messages to the user:
 
@@ -33,7 +33,9 @@ The assumed setup line:
 
 Length and Details:
 
-- The card is at most 150 words. The one line that points to Details is not counted.
+- The card is at most 150 words, and it holds that cap by construction: it is built from the six slots above, each with its own budget. A slot counts the words after its label, the way the desk counts the card (markdown marks, step numbers and arrows are not words). The six labels are 17 words; with the slot budgets (12, 70, 16, 10, 14 and 10) the card is at most 149 words.
+- The card is written last, from Details: first work the ticket out under `## Details` (the reasons, the risks, the PowerShell, the ticket note), then fill each slot with only what the tech needs to act. What does not fit a slot stays in Details; it is never squeezed into a longer step.
+- The one line that points to Details is not counted. The desk fails only a card over 150 words (its "Fix card is 150 words or fewer" row, and the judged runner's `fix-card-fits`); a slot over its budget fails nothing on its own, it is the warning that the card will not fit.
 - When a ticket needs more (an offboarding across several systems, a security incident), the card says so in that one line after "Tell the user when done", such as "This needs a longer plan across four systems: see Details.", and the full plan follows under `## Details`.
 - No gate id, R class, change record, confirmation phrase or `Gate:` line in the card.
 
@@ -94,9 +96,30 @@ A senior engineer in any lane applies these on every ticket they cover, on every
 
 > Example: "Can you turn off the upload block for the design team? People keep getting stopped." The whole answer: "What exactly does the message say when an upload is stopped, which site or app is it, and does it happen for one file type or all of them?"
 
-**e. The Fix card fits.** The card is 150 words or fewer (section 1). Detail moves to Details: the card holds the steps, Details holds the reasons, the PowerShell, the risks and the ticket note. The desk's "Fix card is 150 words or fewer" row fails a longer card, and the judged runner's `fix-card-fits` check fails the case. The Engineer and Incident answers have their own budgets (section 9).
+**e. The Fix card fits, slot by slot.** The card is written last, from Details, into six fixed slots (section 1): one cause line of at most 12 words, at most five steps of at most 14 words each, one check line ("Done when") of at most 16, a stop line of at most 10, and the two messages of at most 14 and 10. The slots sum to 149 words with their labels, so a card that keeps them is 150 words or fewer. Everything that does not fit a slot moves to Details: the why of each step, the PowerShell, the risks, the rollback and the ticket note. The desk's "Fix card is 150 words or fewer" row fails a longer card, and the judged runner's `fix-card-fits` check fails the case; no check fails a single slot. The Engineer and Incident answers have their own budgets (section 9).
 
-> Example: a card whose "Do this" steps each carry a sentence of why is over the cap; the why moves under Details, one line per step, and each step keeps only its action and its portal path.
+> Example, a card built from its slots (the why of each step sits in Details):
+
+````markdown
+Mode: Fix card
+## Fix
+**What's wrong:** the front-desk label printer prints blank labels since its driver update.
+**Do this:**
+1. On the front-desk PC, open Printers & scanners and read the driver version.
+2. Print the printer's own test label from its button.
+3. If it prints, roll back the driver in Device Manager → Roll Back Driver.
+**Done when:** a label printed from the PC shows its text.
+**Stop if:** the printer's own test label is blank too.
+**Tell the user now:** IT is looking at the label printer. Please write labels by hand meanwhile.
+**Tell the user when done:** The label printer prints normally again.
+
+## Details
+(Why each step, the risk of the rollback and the ticket note.)
+
+```aegis-desk
+Gate: none
+```
+````
 
 ## 3. Details
 
@@ -134,7 +157,7 @@ Mode: Fix card
 2. Ask [FIRST_NAME] to empty Deleted Items, then send a test message.
 3. If it still bounces, turn on the archive mailbox in Others → Manage mailbox archive.
 **Done when:** a test message to [UPN] arrives. Aegis then checks the archive shows as on.
-**Stop if:** the mailbox is not near its limit; then the bounce has another cause.
+**Stop if:** the mailbox is far below its limit.
 **Tell the user now:** IT is looking at your mailbox space. Please empty your Deleted Items folder.
 **Tell the user when done:** Your archive is on, so new mail arrives again.
 

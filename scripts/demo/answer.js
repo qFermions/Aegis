@@ -9,13 +9,17 @@ const CARD_HEADING = /^##[ \t]+Fix[ \t]*$/;
 const NEXT_SECTION = /^#{1,2}[ \t]+\S/;
 // The six parts, in their order (batch 9, task 2: "Tell the user" became two lines, the message to send now
 // and the one to send when the double-check passed). A part is a line that starts with its label, bold or not.
+// budget: the part's slot in words, its label not counted (batch 12d, answer-format section 1); "Do this" is five steps
+// of STEP_BUDGET. With the labels' 17 words the budgets sum to 149, so a card that keeps every slot keeps the 150-word
+// cap. Nothing fails a single slot: the desk row and the judged check still read only the card's total.
+const STEP_BUDGET = 14;
 const PARTS = Object.freeze([
-  { key: 'wrong', label: "What's wrong" },
-  { key: 'doThis', label: 'Do this' },
-  { key: 'doneWhen', label: 'Done when' },
-  { key: 'stopIf', label: 'Stop if' },
-  { key: 'tellNow', label: 'Tell the user now' },
-  { key: 'tellDone', label: 'Tell the user when done' },
+  { key: 'wrong', label: "What's wrong", budget: 12 },
+  { key: 'doThis', label: 'Do this', budget: 5 * STEP_BUDGET },
+  { key: 'doneWhen', label: 'Done when', budget: 16 },
+  { key: 'stopIf', label: 'Stop if', budget: 10 },
+  { key: 'tellNow', label: 'Tell the user now', budget: 14 },
+  { key: 'tellDone', label: 'Tell the user when done', budget: 10 },
 ]);
 // The two parts that speak to the customer, not to the tech: no step is read in them, and the boundary
 // check does not read them either (scripts/eval/judged/checks.js).
@@ -139,6 +143,14 @@ function fixCard(answer) {
   }
   const text = own.join('\n').trim();
   return { present: true, first: at === firstLine, text, parts, order, steps, words: words(text) - (pointer ? words(pointer) : 0) - (assumedAt < 0 ? 0 : words(own[assumedAt])), lines: tagged, pointer, assumed };
+}
+
+// The labels' words as the card's count counts them, and each part's words against its slot (batch 12d): the measure
+// the card-words tool prints. "Do this" is the text on its label line and every step; words outside any part (a line
+// after a blank one) are in the card's count but in no slot.
+const CARD_LABEL_WORDS = PARTS.reduce((n, p) => n + words(`${p.label}:`), 0);
+function cardSlots(card) {
+  return PARTS.map((p) => ({ key: p.key, label: p.label, budget: p.budget, words: words(p.key === 'doThis' ? [card.parts.doThis || '', ...card.steps].join(' ') : card.parts[p.key] || '') }));
 }
 
 // What is wrong with a card's shape, one plain clause each; empty when it has the five parts in order
@@ -510,4 +522,4 @@ function withoutModeLine(text) {
   return lines.join('\n');
 }
 
-module.exports = { MODE_LINE, withoutModeLine, ASSUMED_LINE, defaultOrgTokens, PARTS, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };
+module.exports = { MODE_LINE, withoutModeLine, ASSUMED_LINE, defaultOrgTokens, PARTS, STEP_BUDGET, CARD_LABEL_WORDS, cardSlots, USER_PARTS, userMessageProblems, changeIn, stepChange, deskBlock, fixCard, cardProblems, commandIn, deskOnlyIn, DEFAULT_FACTS, defaultFactsIn, answerChecks, answerSteps, onlyLooks, words, sentences, CHANGE_WORD };

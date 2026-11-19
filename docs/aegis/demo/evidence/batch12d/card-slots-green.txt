@@ -1,0 +1,14 @@
+$ TMPDIR=<tmp> node --test scripts/demo/card-slots.test.js
+✔ the six labels and the six slot budgets sum to 149, under the 150-word cap (0.647625ms)
+✔ section 1 gives each part its slot budget, the same numbers as the code (0.287583ms)
+✔ the example cards of sections 2 and 6 and the batch 12d fixture keep every slot (2.023042ms)
+✔ a single slot over its budget fails nothing; a card over 150 words still fails the desk row and the judged check (10.11975ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63.555417
+exit 0

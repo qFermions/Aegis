@@ -11,14 +11,14 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 |---|---|---|---|---|
 | Apple | 2 | 0 | 0 | 0 |
 | Fleet | 5 | 9 | 7 | 2 |
-| General | 26 | 2 | 2 | 0 |
+| General | 44 | 14 | 14 | 0 |
 | GitHub | 5 | 12 | 0 | 12 |
 | Google | 16 | 36 | 25 | 11 |
 | Jamf | 7 | 18 | 13 | 5 |
 | Jira | 2 | 0 | 0 | 0 |
 | Linear | 4 | 5 | 0 | 5 |
 | Meraki | 3 | 0 | 0 | 0 |
-| Microsoft | 50 | 43 | 40 | 3 |
+| Microsoft | 32 | 31 | 28 | 3 |
 | Okta | 4 | 14 | 8 | 6 |
 | Slack | 6 | 18 | 1 | 17 |
 | Unite | 3 | 0 | 0 | 0 |
@@ -27,14 +27,14 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 
 | Vendor | Runbook | In scope | Section (line) | First heavy gate | Verdict | Reason |
 |---|---|---|---|---|---|---|
-| Microsoft | backup-restore-test | no | Phase D: Put the data back (R3, last) (107) | backup-restore-test-replace-live-portal | pass | a lighter step line (line 109) comes first |
-| Microsoft | cloud-access-denied | no | Azure: assign a role at the narrowest scope to a group (144) | cloud-access-denied-azure-assign-portal | pass | a lighter step line (line 146) comes first |
-| Microsoft | cloud-access-denied | no | AWS: add one scoped inline policy to the role (163) | cloud-access-denied-aws-policy-portal | pass | a lighter step line (line 165) comes first |
-| Microsoft | cloud-access-denied | no | Add one conditional binding (HUMAN-RUN, the project owner) (198) | cloud-access-denied-gcp-binding | pass | a lighter step line (line 200) comes first |
-| Microsoft | cloud-cost-spike | no | Last: delete the disk (R3) (138) | cloud-cost-spike-delete-disk-portal | pass | a lighter step line (line 140) comes first |
-| Microsoft | cloud-network-block | no | Add one inbound rule (HUMAN-RUN, the network owner) (115) | cloud-network-block-aws-sg-ingress | pass | a lighter step line (line 117) comes first |
-| Microsoft | cloud-network-block | no | Azure: one inbound rule on the NSG (147) | cloud-network-block-azure-nsg-portal | pass | a lighter step line (line 149) comes first |
-| Microsoft | cloud-network-block | no | Create one firewall rule (HUMAN-RUN, the network owner) (168) | cloud-network-block-gcp-firewall | pass | a lighter step line (line 170) comes first |
+| General | backup-restore-test | no | Phase D: Put the data back (R3, last) (107) | backup-restore-test-replace-live-portal | pass | a lighter step line (line 109) comes first |
+| General | cloud-access-denied | no | Azure: assign a role at the narrowest scope to a group (144) | cloud-access-denied-azure-assign-portal | pass | a lighter step line (line 146) comes first |
+| General | cloud-access-denied | no | AWS: add one scoped inline policy to the role (163) | cloud-access-denied-aws-policy-portal | pass | a lighter step line (line 165) comes first |
+| General | cloud-access-denied | no | Add one conditional binding (HUMAN-RUN, the project owner) (198) | cloud-access-denied-gcp-binding | pass | a lighter step line (line 200) comes first |
+| General | cloud-cost-spike | no | Last: delete the disk (R3) (138) | cloud-cost-spike-delete-disk-portal | pass | a lighter step line (line 140) comes first |
+| General | cloud-network-block | no | Add one inbound rule (HUMAN-RUN, the network owner) (115) | cloud-network-block-aws-sg-ingress | pass | a lighter step line (line 117) comes first |
+| General | cloud-network-block | no | Azure: one inbound rule on the NSG (147) | cloud-network-block-azure-nsg-portal | pass | a lighter step line (line 149) comes first |
+| General | cloud-network-block | no | Create one firewall rule (HUMAN-RUN, the network owner) (168) | cloud-network-block-gcp-firewall | pass | a lighter step line (line 170) comes first |
 | Microsoft | conditional-access | yes | Create a new policy - step by step (129) | conditional-access-enable-portal | pass | ca-policy-create (line 131) comes first |
 | Microsoft | device-wipe | yes | PowerShell - for reference only (47) | device-full-wipe | pass | device-remote-lock-preview (line 26) comes first |
 | Microsoft | device-wipe | yes | Step-by-step fix (portal first) (24) | device-full-wipe-portal | pass | device-remote-lock-preview (line 26) comes first |
@@ -54,7 +54,7 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Fleet | fleet-policy-failures | no | Phase 2: Fix one host (R2, or R3 for a security setting; gated) (58) | fleet-policy-failures-run-script-portal | fail | fleet-policy-failures-run-script-portal (line 66) has no lighter step before it in this section |
 | Fleet | fleet-policy-failures | no | Phase 5: Keep it fixed (R3, gated, after independent review) (124) | fleet-policy-failures-automation-portal | fail | fleet-policy-failures-automation-portal (line 130) has no lighter step before it in this section |
 | Fleet | fleet-vulnerable-software | no | Phase 4: Roll it to the other exposed hosts (R3, gated, after independent review) (108) | fleet-vulnerable-software-install-automation-portal | pass | fleet-vulnerable-software-patch-policy-portal (line 114) comes first |
-| Microsoft | git-recovery | no | Backup, then move your own branch (HUMAN-RUN) (211) | git-recovery-local-reset | pass | a lighter step line (line 213) comes first |
+| General | git-recovery | no | Backup, then move your own branch (HUMAN-RUN) (211) | git-recovery-local-reset | pass | a lighter step line (line 213) comes first |
 | GitHub | github-branch-protection | no | Phase B: Add a classic rule (R2) (86) | github-branch-protection-add-rule-portal | fail | github-branch-protection-add-rule-portal (line 94) has no lighter step before it in this section |
 | GitHub | github-branch-protection | no | Phase C: Strengthen the classic rule (R2) (115) | github-branch-protection-strengthen-rule-portal | fail | github-branch-protection-strengthen-rule-portal (line 123) has no lighter step before it in this section |
 | GitHub | github-branch-protection | no | Phase D: Rulesets to Active (R2) (143) | github-branch-protection-create-ruleset-portal | fail | github-branch-protection-create-ruleset-portal (line 149) has no lighter step before it in this section |
@@ -129,7 +129,7 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Linear | linear-workspace-admin | no | Phase C: More than 10 issues at once (R3, after independent review) (140) | linear-workspace-admin-bulk-move-portal | fail | linear-workspace-admin-bulk-move-portal (line 153) has no lighter step before it in this section |
 | Linear | linear-workspace-admin | no | Phase D: Suspend or unsuspend a member (R3 / R2) (199) | linear-workspace-admin-suspend-portal | fail | linear-workspace-admin-suspend-portal (line 208) has no lighter step before it in this section |
 | Linear | linear-workspace-admin | no | Phase E: Export workspace data (R3) (251) | linear-workspace-admin-export-portal | fail | linear-workspace-admin-export-portal (line 258) has no lighter step before it in this section |
-| Microsoft | linux-server-triage | no | Remove old journal files (HUMAN-RUN, last resort) (145) | linux-server-triage-vacuum-journal | pass | a lighter step line (line 147) comes first |
+| General | linux-server-triage | no | Remove old journal files (HUMAN-RUN, last resort) (145) | linux-server-triage-vacuum-journal | pass | a lighter step line (line 147) comes first |
 | Microsoft | mfa-issue | yes | A new way in: the Temporary Access Pass (still step 1) (44) | mfa-temporary-access-pass-portal | pass | a user check line (line 46) comes first |
 | Microsoft | mfa-issue | yes | Require re-register MFA: not the lost-or-replaced-device path (80) | mfa-require-reregister-portal | pass | a lighter step line (line 84) comes first |
 | Microsoft | offboard | yes | STEP 1 - ⚠️ Disable the account (on-prem first - source of authority) (27) | offboard-ad-disable-portal | pass | the section says why no lighter step applies |
@@ -162,7 +162,7 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Microsoft | phishing-bec | no | Phase B: Block the sender, then remove the message (56) | phishing-bec-purge-portal | pass | phishing-bec-block-sender-portal (line 62) comes first |
 | General | printer-issue | no | PowerShell - for reference only (54) | print-queue-delete | pass | printer-network-add-initial (line 27) comes first |
 | General | printer-issue | no | Step-by-step fix (19) | print-queue-delete-portal | pass | printer-network-add-initial (line 27) comes first |
-| Microsoft | safe-script | no | The apply run (HUMAN-RUN) (69) | safe-script-apply | pass | a lighter step line (line 71) comes first |
+| General | safe-script | no | The apply run (HUMAN-RUN) (69) | safe-script-apply | pass | a lighter step line (line 71) comes first |
 | Microsoft | security-alert-triage | no | PowerShell - block one verified cloud-only account (59) | security-account-block | fail | security-account-block (line 68) has no lighter step before it in this section |
 | Microsoft | security-alert-triage | no | PowerShell - contain one verified synchronized identity (87) | security-synced-ad-disable | fail | security-synced-ad-disable (line 101) has no lighter step before it in this section |
 | Slack | slack-app-approval | no | Phase D: Require approval for every app (R3) (137) | slack-app-approval-require-portal | fail | slack-app-approval-require-portal (line 144) has no lighter step before it in this section |
@@ -183,7 +183,7 @@ In the fixed scope (the identity, sign-in, MFA and device runbooks of Microsoft,
 | Slack | slack-security-settings | no | Phase H: Block SMS as a two-factor method (R3, paid plans) (242) | slack-security-settings-sms-block-portal | fail | slack-security-settings-sms-block-portal (line 254) has no lighter step before it in this section |
 | Slack | slack-user-lifecycle | no | Phase D: Leaver, deactivate the account (R3, after review) (174) | slack-user-lifecycle-deactivate-portal | fail | slack-user-lifecycle-deactivate-portal (line 182) has no lighter step before it in this section |
 | Slack | slack-user-lifecycle | no | Phase G: Sessions, and a request that arrives inside Slack (R3 for everyone) (297) | slack-user-lifecycle-session-reset-portal | fail | slack-user-lifecycle-session-reset-portal (line 307) has no lighter step before it in this section |
-| Microsoft | terraform-plan-review | no | Apply a reviewed plan that replaces or destroys (HUMAN-RUN, after the review) (177) | terraform-plan-review-apply-replace | pass | a lighter step line (line 179) comes first |
+| General | terraform-plan-review | no | Apply a reviewed plan that replaces or destroys (HUMAN-RUN, after the review) (177) | terraform-plan-review-apply-replace | pass | a lighter step line (line 179) comes first |
 
 ## Runbooks with no heavy gate
 

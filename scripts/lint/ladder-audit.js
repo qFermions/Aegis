@@ -46,7 +46,12 @@ const SCOPE = Object.freeze([
 const PREFIX_VENDOR = [['gws-', 'Google'], ['okta-', 'Okta'], ['jamf-', 'Jamf'], ['fleet-', 'Fleet'], ['github-', 'GitHub'], ['slack-', 'Slack'], ['linear-', 'Linear'], ['jira-', 'Jira'], ['mac-', 'Apple'], ['meraki-', 'Meraki'], ['unite-', 'Unite']];
 // Microsoft and Google are separate rows, never one: a runbook with no vendor prefix is a Microsoft one
 // (the default environment's platform), apart from the general ones that name no platform.
-const GENERAL = new Set(['aegis', 'aegis-update', 'ai-engineer-drill', 'board-report', 'cloud-lab', 'daily-start', 'daily-wrap', 'devops-drill', 'draft-email', 'escalation-note', 'field', 'incident-report', 'lan-wan', 'printer-issue', 'ps-error-decode', 'ps-script', 'runbook', 'sip-trunk-status', 'ticket-response', 'troubleshoot', 'vendor-email', 'vent', 'vpn-check', 'wifi-issue', 'write-sop', 'zoom-room-issue']);
+const GENERAL = new Set(['aegis', 'aegis-update', 'ai-engineer-drill', 'board-report', 'cloud-lab', 'daily-start', 'daily-wrap', 'devops-drill', 'draft-email', 'escalation-note', 'field', 'incident-report', 'lan-wan', 'printer-issue', 'ps-error-decode', 'ps-script', 'runbook', 'sip-trunk-status', 'ticket-response', 'troubleshoot', 'vendor-email', 'vent', 'vpn-check', 'wifi-issue', 'write-sop', 'zoom-room-issue',
+  // the 18 vendor-neutral lane runbooks of batch 12: infrastructure, networking, software engineering (batch 12d, task 5)
+  'backup-restore-test', 'cloud-access-denied', 'cloud-cost-spike', 'cloud-network-block', 'k8s-pod-failure', 'linux-server-triage', 'terraform-plan-review',
+  'dns-troubleshoot', 'mtu-path-issue', 'tls-certificate', 'vpn-tunnel-down', 'zero-trust-block',
+  'ci-failure', 'code-review-checklist', 'debug-stack-trace', 'dependency-problem', 'git-recovery', 'safe-script',
+]);
 function vendorOf(name) {
   const hit = PREFIX_VENDOR.find(([p]) => name.startsWith(p));
   if (hit) return hit[1];

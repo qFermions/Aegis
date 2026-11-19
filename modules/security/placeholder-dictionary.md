@@ -137,6 +137,13 @@ balancer; examples use the documentation ranges 192.0.2.0/24, 198.51.100.0/24, 2
 2001:db8::/32) · `[SUBNET]` (a network in CIDR form, such as a VPN's protected subnet) · `[INTERFACE]`
 (a network interface name on a host, such as a WireGuard or tunnel interface). None is env-backed.
 
+Networking runbooks, added with batch 12d (2026-11-18): `[SITE_A]` / `[SITE_B]` (the two
+office sites at the ends of a site-to-site VPN, when a runbook speaks of any pair of sites and not
+of the default environment's `[@Aegion_SITE_2]`) · `[SITE_B_HOST]` (a host name at the far site,
+used to test reachability across the tunnel) · `[SITE_B_GATEWAY]` (the far site's subnet gateway
+address) · `[SWITCH_NAME]` (a network switch's name, as the network dashboard lists it) ·
+`[VLAN_ID]` (a VLAN number).
+
 Infrastructure and cloud lane (batch 12, 2026-11-14, `knowledge/infrastructure/` and its
 runbooks): `[ACCOUNT_ID]` (an AWS account ID) · `[SUBSCRIPTION_ID]` (an Azure subscription
 ID) · `[PROJECT_ID]` (a Google Cloud project ID) · `[RESOURCE_GROUP]` (an Azure resource

@@ -1,0 +1,39 @@
+✔ a section whose heavy gate comes after a lighter gate passes (1.451125ms)
+✔ a section whose first heavy gate has nothing lighter before it fails, and the reason names the gate (0.180209ms)
+✔ a "No lighter step: <reason>" line passes the section, and an empty one does not (0.154833ms)
+✔ heavy means R3, or a reset, wipe, erase, delete or re-register in the id or the Effect line (0.15325ms)
+✔ a lighter PREVIEW ONLY marker or a user check counts; a heavy PREVIEW ONLY marker does not (0.120708ms)
+✔ a heading inside a code fence does not start a section (0.074583ms)
+✔ Microsoft and Google are separate vendors, by runbook name (0.048875ms)
+✔ on the real runbooks, --check exits 0: the saved audit is fresh and the fixed scope passes (25.70775ms)
+✔ the runbook's own name in a gate id does not make the gate heavy (0.173875ms)
+✔ code review 1, finding 9: a <details> summary starts its own section (0.199042ms)
+✔ code review 2: a <details> twin inherits the lighter steps listed before it; a Try first line is an admin step only when it names a gate or phase (0.449625ms)
+✔ code review 2: an R3 scripted twin stays heavy even when its portal twin is lighter (0.110333ms)
+✔ code review 3: twins pair by the runbook's own read-back lines, each heavy gate inherits only its own twin's steps, and nothing after it counts (0.198542ms)
+✔ the 18 vendor-neutral lane runbooks of batch 12 are General, and each is a real runbook (0.121875ms)
+✔ all command files have valid description frontmatter (27.981083ms)
+✔ the bundled Claude plugin uses the canonical manifest and resolvable command paths (0.516166ms)
+✔ fresh release staging includes the public password-reset runbook without weakening credential ignores (17.371542ms)
+✔ fresh release staging includes the public Google password-reset runbook (G1) without weakening credential ignores (13.208584ms)
+✔ working-tree JSON parses and every tracked or non-ignored file is strict UTF-8 text (280.840583ms)
+✔ Markdown fences are balanced (25.140417ms)
+✔ working-tree text files end with a newline and have no UTF-8 BOM (50.498375ms)
+✔ legacy parallel tenant and operator placeholders are absent (81.301166ms)
+✔ every [@Aegion_*] org token used in a tracked file is defined in the placeholder dictionary (90.620416ms)
+✔ the six networking placeholders the lane runbooks use are in the placeholder dictionary (0.166917ms)
+✔ CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized) (0.076625ms)
+✔ CLAUDE.md stays under 20,000 bytes so every session loads it whole (batch 1, A5b) (0.048458ms)
+✔ the Extended Confirmation Gate quotes the SR-2 list exactly as the security doctrine states it (0.299125ms)
+✔ CLAUDE.md keeps the always-on script gates every turn needs (review round 1 of batch 1) (0.088ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 620.131792
+exit 0
+ladder-audit: 157 sections audited, the fixed scope passes
+ladder-audit --check exit 0

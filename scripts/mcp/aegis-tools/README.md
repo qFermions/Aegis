@@ -49,19 +49,21 @@ path, a query string or a made-up subdomain. A target is allowed only when:
    typed in this session: the ticket, the setup, pasted evidence and later chat messages, handed over by the launcher
    in the typed file (`--typed`).
 
-For a host on list 1 or 2, `net_http` may take any path, with one exception: on `registry.npmjs.org` a tarball or
-registry API path (any path with `/-/`) is allowed only as the exact URL the person typed, because npm publishes
-download counts per package version and a path the model chooses could signal to a package's owner; a package's
-metadata path stays allowed. Matching is by whole token and equality, case-insensitive, never by substring, prefix or
+For a host on list 1 or 2, `net_http` may take any path, with one exception: on `registry.npmjs.org` only a metadata
+path is allowed (the root, `/<package>`, `/@scope/<package>`, and one more segment for a version or tag, with no
+percent sign), because npm publishes download counts per package version and a tarball path the model chooses could
+signal to a package's owner; the registry decodes `%2D` and `%2F`, so the rule lists what is allowed. Any other
+registry path is allowed only as the exact URL the person typed. Matching is by whole token and equality, case-insensitive, never by substring, prefix or
 suffix:
 
 - A host token is a maximal run of letters, digits, marks, dots, hyphens and underscores in the typed text, with the
   dots and hyphens at its ends taken off (so a host at the end of a sentence counts); an IPv6 literal counts too. Typed
   `mail.example.com` does not allow `example.com`; typed `example.com` does not allow `ample.com`, `x.example.com`
   or `example.com.attacker.example`. A host inside a typed URL is typed.
-- A bracketed placeholder is not typed text: host tokens are taken from the typed text with every placeholder of the
-  form `[USER@DOMAIN.COM]`, `[UPN]` or `[DT-First,Last]` removed, so the address the privacy step masks opens no host.
-  A host the person wrote inside square brackets is not typed either; an IPv6 literal keeps its brackets.
+- A bracketed placeholder is not typed text: a run of non-space text that holds a placeholder of the form
+  `[USER@DOMAIN.COM]`, `[UPN]` or `[DT-First,Last]` gives no host token and no URL token, so the address the privacy
+  step masks opens no host, and what stands next to it is not split off as a host of its own. A host the person wrote
+  inside square brackets is not typed either; an IPv6 literal keeps its brackets.
 - A URL token runs from `http://` or `https://` to the next space, without trailing sentence punctuation, and is
   compared with the `net_http` URL after WHATWG normalization of both (`new URL(x).href`, fragment dropped). A typed URL
   does not allow the same host with another path, another query, an added query, or a prefix of the typed URL. A typed

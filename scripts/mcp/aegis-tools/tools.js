@@ -64,18 +64,21 @@ const URL_RUN = /https?:\/\/\S+/gi;
 const SENTENCE_END = /[.,;:!?'"`*)\]}>]+$/;
 // A bracketed placeholder ([USER@DOMAIN.COM], [UPN], [DT-First,Last]) is the privacy step's or a runbook's text, never
 // a host the person typed. No colon in the class, so an IPv6 literal keeps its brackets.
-const PLACEHOLDER = /\[[A-Za-z@][A-Za-z0-9_@.#,-]*\]/g;
+const PLACEHOLDER = /\[[A-Za-z@][A-Za-z0-9_@.#,-]*\]/;
+// What net_http may ask of registry.npmjs.org when the URL was not typed: the root, a package, a scoped package, and
+// one more segment (a version or a tag). No percent sign, so nothing the registry decodes into another path.
+const NPM_METADATA = /^\/(?:(?:@[A-Za-z0-9._~-]+\/)?[A-Za-z0-9._~][A-Za-z0-9._~-]*(?:\/[A-Za-z0-9._~-]+)?\/?)?$/;
 
 // { hosts, urls }: whole tokens of the typed text. A host token is a maximal run of host characters with the dots and
 // hyphens at its ends taken off, in lower case, or an IPv6 literal. A URL token runs from http:// or https:// to the
 // next space, without trailing sentence punctuation, kept as its WHATWG href with no fragment.
 function typedTokens(text) {
-  const s = String(text);
+  // a run of non-space text that holds a placeholder is no typed text at all (the breaker's findings: ask-aegis wrote
+  // [USER@DOMAIN.COM] for an email address and domain.com read as typed; taking out the placeholder alone would split
+  // one typed run into a host of its own, and a URL the privacy step changed is not a URL the person typed)
+  const s = String(text).split(/(\s+)/).map((run) => (PLACEHOLDER.test(run) ? ' ' : run)).join('');
   const hosts = new Set();
-  // hosts come from the text with its placeholders taken out (the breaker's class 1 finding: ask-aegis wrote
-  // [USER@DOMAIN.COM] for an email address and domain.com read as typed); URLs below stay verbatim
-  const unmasked = s.replace(PLACEHOLDER, ' ');
-  for (const [run] of unmasked.matchAll(HOST_RUN)) {
+  for (const [run] of s.matchAll(HOST_RUN)) {
     const h = run.replace(/^[.-]+|[.-]+$/g, '').toLowerCase();
     if (h) hosts.add(h);
   }
@@ -100,13 +103,14 @@ function typedTokens(text) {
 function inScope(ctx, tool, target) {
   const http = tool === 'net_http';
   const host = http ? target.host : String(target).toLowerCase().replace(/^\[|\]$/g, '').replace(/\.+$/, '');
-  // npm publishes download counts per package version, so a tarball or registry API path the model chooses (any path
-  // with /-/) could signal to whoever owns the package (the breaker's class 2 finding); package metadata paths stay
-  const counted = http && host === 'registry.npmjs.org' && target.u.pathname.includes('/-/');
+  // npm publishes download counts per package version, so a tarball path the model chooses could signal to whoever
+  // owns the package (the breaker's class 2 finding). Only a metadata path is listed-host traffic; the registry
+  // decodes %2D and %2F, so the rule names what is allowed and never searches the path for /-/.
+  const counted = http && host === 'registry.npmjs.org' && !NPM_METADATA.test(target.u.pathname);
   if ((ctx.allowlist.has(host) || ctx.probe.has(host)) && !counted) return;
   const typed = ctx.typed();
   if (http ? typed.urls.has(target.u.href) : typed.hosts.has(host)) return;
-  if (counted) throw new Refusal('refused_out_of_scope', `${target.u.href.slice(0, 300)} is out of scope: a tarball or registry API path on registry.npmjs.org is allowed only as the exact URL the person typed, because npm publishes download counts; a package's metadata path (https://registry.npmjs.org/<package>) is allowed`);
+  if (counted) throw new Refusal('refused_out_of_scope', `${target.u.href.slice(0, 300)} is out of scope: on registry.npmjs.org only a package's metadata path (https://registry.npmjs.org/<package> or <package>/<version>, with no percent sign) is allowed unless the person typed the exact URL, because npm publishes download counts for tarballs`);
   const missed = http
     ? 'it is not the exact URL the person typed in this session (a typed host alone opens no URL, and a path or query that was not typed is refused)'
     : 'it is not a host name the person typed in this session (a subdomain or a part of a typed name does not count)';

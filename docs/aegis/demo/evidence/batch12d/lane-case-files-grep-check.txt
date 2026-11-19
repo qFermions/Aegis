@@ -1,0 +1,12 @@
+Would a repository-wide Grep of either judged run have matched a lane case file of batch 12? Every Grep in the two reading records that did not fail and whose path is the repository root, docs, docs/aegis or not given, its pattern (as the record keeps it, cut at 300 characters; a leading (?i) read as the ignore-case flag) tried as a JavaScript regular expression against each line of the four files. The record keeps neither the tool output nor the output mode (file names only is the tool default), so this shows what could have matched, not what the session was shown. No case text is printed: only the ids of the case lines a pattern matches.
+
+batch 12 DEV03: a Grep with path <repo> matches the case line(s) of SEC02, SEC14 (not its own case)
+batch 12 DEV10: a Grep with path <repo> matches the case line(s) of SEC02 (not its own case)
+batch 12 SEC03: a Grep with path <repo> matches the case line(s) of SEC03 (its own case among them)
+batch 12 SEC04: a Grep with path <repo> matches the case line(s) of SEC04 (its own case among them)
+batch 12 INF13: a Grep with path <repo> matches the case line(s) of INF13 (its own case among them)
+batch 12: repository-wide Greps tried 17; with a match in a lane case file 5, its own case among the matches in 3; patterns not tried 0
+
+batch 12d DEV23: a Grep with path <repo> matches the case line(s) of SEC04 (not its own case)
+batch 12d SEC14: a Grep with path (none) matches the case line(s) of SEC02, SEC14 (its own case among them)
+batch 12d: repository-wide Greps tried 11; with a match in a lane case file 2, its own case among the matches in 1; patterns not tried 0

@@ -1,0 +1,1 @@
+Reply with the single word ok. The host probe-hook.example.org is only mentioned here.

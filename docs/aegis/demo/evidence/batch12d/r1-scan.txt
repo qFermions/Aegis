@@ -1,0 +1,24 @@
+Scan of what batch 12d added (git diff 80397eaa..HEAD, the lines that start with +), at 34e90096. Counts only for the personal patterns; the patterns themselves are not written here.
+added lines: 31206
+added lines with a long dash (U+2014): 0
+added lines with this machine's account name (any case): 0; with a home path (/Users/, as written): 0
+added lines with the owner's given name or email local part: 0
+commit messages of the batch (git log 80397eaa..HEAD --format=%B) with a long dash: 0; with the account name or home path: 0
+
+Long dashes that were in a tracked file of the batch for a time: docs/aegis/demo/evidence/batch12d/tools/merge-run.js held one as a literal from 4446177a to 56bdf526 (the character it replaces; now written by its code). Lines the batch did not add keep older ones in two files it touched: CLAUDE.md, 1 (the label 'Temporary exception', which answers print, left as it is) and modules/security/placeholder-dictionary.md, 11 lines.
+
+Host names in the added lines outside the evidence folder, other than example names (example.com, .net, .org, .test, .example) and file names:
+  registry.npmjs.org (32)
+  pypi.org (32)
+  www.githubstatus.com (10)
+  slack-status.com (10)
+  learn.microsoft.com (10)
+  code.claude.com (7)
+  domain.com (6)
+  s.io (2)
+  capped.io (2)
+  ample.com (2)
+  x.learn.microsoft.com (1)
+  off.io (1)
+  files.pypi.org (1)
+  expired.badssl.com (1)

@@ -1,5 +1,4 @@
-# mutation run: node <tmp>/mutate.js <repo>, each wrong implementation applied to tools.js or server.js in turn, server.test.js run, the file restored
-# a mutation is CAUGHT when at least one test fails; the tests that failed are listed under it
+$ node docs/aegis/demo/evidence/batch12d/tools/mutate-scope.js <repo>   (at 34e90096, after the tokenizer fixes of the two code reviews)
 CAUGHT: a typed host matched by suffix (a subdomain of a typed name passes)
   ✖ batch 12d: refused: a subdomain that was not typed, a long label in front of a typed domain included (net_dns, net_tls, net_http)
   ✖ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added
@@ -7,9 +6,11 @@ CAUGHT: a typed URL matched by host only (any path or query on it passes)
   ✖ batch 12d: refused: a typed host with a path or query that was not typed (net_http), and a typed bare host for any URL
   ✖ batch 12d: refused: a redirect from an allowed URL to a host or URL out of scope, before that hop is resolved or requested
   ✖ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added
+  ✖ batch 12d: a typed URL that ends in a bracket or other punctuation is typed as written, and without the punctuation
 CAUGHT: a typed URL matched by prefix
   ✖ batch 12d: refused: a typed host with a path or query that was not typed (net_http), and a typed bare host for any URL
   ✖ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added
+  ✖ batch 12d: a typed URL that ends in a bracket or other punctuation is typed as written, and without the punctuation
 CAUGHT: typed text matched as a substring
   ✖ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added
 CAUGHT: a typed bare host opens a URL on it
@@ -17,24 +18,30 @@ CAUGHT: a typed bare host opens a URL on it
   ✖ batch 12d: refused: a typed host with a path or query that was not typed (net_http), and a typed bare host for any URL
   ✖ batch 12d: refused: a redirect from an allowed URL to a host or URL out of scope, before that hop is resolved or requested
   ✖ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added
+  ✖ batch 12d: a typed URL that ends in a bracket or other punctuation is typed as written, and without the punctuation
 CAUGHT: redirect hops not scope-checked
   ✖ batch 12d: refused: a redirect from an allowed URL to a host or URL out of scope, before that hop is resolved or requested
+  ✖ batch 12d: a tarball or API path on registry.npmjs.org is out of scope unless it is the exact typed URL
 CAUGHT: scope checked after the guard (net_tls)
   ✖ batch 12d: refused: a subdomain that was not typed, a long label in front of a typed domain included (net_dns, net_tls, net_http)
   ✖ batch 12d: refused: a host that only a fetched page mentions
   ✖ batch 12d: refused: a host that only a file in the repository mentions
   ✖ batch 12d: a typed private address passes the scope check and the address guard refuses it
   ✖ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added
+  ✖ batch 12d: a bracketed placeholder is not typed text: [USER@DOMAIN.COM] opens no host
 CAUGHT: the probe allowlist ignored
   ✖ batch 12d: a docs-allowlist host and a probe-allowlist host are allowed for net_dns, net_tls and net_http on any path, with nothing typed
   ✖ batch 12d: refused: a redirect from an allowed URL to a host or URL out of scope, before that hop is resolved or requested
   ✖ batch 12d: no typed file, an empty, missing, linked or unreadable one, or a directory: only the two lists apply, and stderr says so
+  ✖ batch 12d: a tarball or API path on registry.npmjs.org is out of scope unless it is the exact typed URL
 CAUGHT: the typed file read once, at the first call
   ✖ batch 12d: the exact typed host is allowed for net_dns and net_tls, and the exact typed URL for net_http
   ✖ batch 12d: a typed private address passes the scope check and the address guard refuses it
   ✖ batch 12d: refused: a redirect from an allowed URL to a host or URL out of scope, before that hop is resolved or requested
   ✖ batch 12d: no typed file, an empty, missing, linked or unreadable one, or a directory: only the two lists apply, and stderr says so
   ✖ batch 12d: a message appended to the typed file after the server started is honoured on the next call
+  ✖ batch 12d: a tarball or API path on registry.npmjs.org is out of scope unless it is the exact typed URL
+  ✖ batch 12d: a typed URL that ends in a bracket or other punctuation is typed as written, and without the punctuation
 CAUGHT: a typed file read through a link
   ✖ batch 12d: no typed file, an empty, missing, linked or unreadable one, or a directory: only the two lists apply, and stderr says so
 CAUGHT: no scope at all on net_dns
@@ -45,5 +52,6 @@ CAUGHT: no scope at all on net_dns
   ✖ batch 12d: refused: a substring or prefix of a typed host or URL, and a typed URL with a query added
   ✖ batch 12d: no typed file, an empty, missing, linked or unreadable one, or a directory: only the two lists apply, and stderr says so
   ✖ batch 12d: a message appended to the typed file after the server started is honoured on the next call
+  ✖ batch 12d: a bracketed placeholder is not typed text: [USER@DOMAIN.COM] opens no host
 11 of 11 mutations caught
 exit 0

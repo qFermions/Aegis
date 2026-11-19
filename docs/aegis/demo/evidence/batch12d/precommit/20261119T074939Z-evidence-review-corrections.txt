@@ -1,0 +1,26 @@
+staged for commit "evidence-review-corrections" on feat/batch12-expert-lanes at parent 34e90096:
+M	PROJECT_STATE.md
+M	checks.md
+M	docs/aegis/demo/evidence/batch12d/card-words-after.txt
+A	docs/aegis/demo/evidence/batch12d/case-file-hash.txt
+M	docs/aegis/demo/evidence/batch12d/code-review.md
+A	docs/aegis/demo/evidence/batch12d/examples-vs-cases.txt
+A	docs/aegis/demo/evidence/batch12d/guard-pin-docsfetch-unchanged.txt
+M	docs/aegis/demo/evidence/batch12d/judged-dev-run/summary.md
+A	docs/aegis/demo/evidence/batch12d/lane-case-files-grep-check.txt
+A	docs/aegis/demo/evidence/batch12d/probes/chat-interactive.txt
+A	docs/aegis/demo/evidence/batch12d/probes/hook-subagent-typed-after.txt
+A	docs/aegis/demo/evidence/batch12d/probes/hook-subagent.txt
+A	docs/aegis/demo/evidence/batch12d/probes/hook-typed-after.txt
+A	docs/aegis/demo/evidence/batch12d/probes/hook.txt
+A	docs/aegis/demo/evidence/batch12d/progress-at-1ad628c2.md
+A	docs/aegis/demo/evidence/batch12d/progress-at-e0b512cf.md
+A	docs/aegis/demo/evidence/batch12d/r1-scan.txt
+M	docs/aegis/demo/evidence/batch12d/real-session-probes.md
+M	docs/aegis/demo/evidence/batch12d/scope-mutations.txt
+A	docs/aegis/demo/evidence/batch12d/swe10-rerun/results.json
+M	progress.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

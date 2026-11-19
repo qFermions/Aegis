@@ -21,3 +21,4 @@ SWE01 | 144 | cause 0/12, steps 0/70, done 0/16, stop 0/10, now 0/14, when-done 
 cards: 17 of 82 answers; median 155 words; over 150: 9; slots over budget: 15 cards
 
 self-check: every count matches the fix_card_words a results.json recorded
+exit 0

@@ -2,11 +2,15 @@
 
 The cases are the builders' own: DEV01 to DEV24 from earlier batches and the 58 lane cases (SEC, NET, INF, SWE) written by the lane builders next to the rules and runbooks they test. This run shows the pipeline and the rules at work; it is not an independent measure of answer quality. No case text is shown here.
 
+## A doubt on both runs' answers
+
+Until commit `3ea44d29`, after this run, the four lane case files of batch 12 (the 58 lane cases with their expected decisions) sat in a folder the sessions could read. No session read them directly, but a few repository-wide searches could have matched a case line: in this run two, the session's own case for SEC14; in batch 12's run five, its own case for SEC03, SEC04 and INF13 (`../lane-case-files-grep-check.txt`). What those sessions were shown is not recorded. None of those cases passed, so no pass in either run rests on it.
+
 ## How it ran
 
 - Part 1: `node scripts/eval/judged-eval.js run --cases <tmp>/aegis-b12d-cases/dev-cases.jsonl --execute --results-dir <tmp>/aegis-b12d-judged --budget-usd 30`, run `20261119T045020Z-5303979a`, at commit `1aa47a39`. It judged 47 cases; the sessions of the last 35 (NET10 onward) did not start and each returned ERROR at no cost. Why they did not start was not established; it happened when the session that started the run reached its usage limit. Spent 14.78 US dollars.
 - Part 2: the same command on a case file that holds only those 35 cases (`<tmp>/aegis-b12d-cases-part2/dev-cases.jsonl`), `--results-dir <tmp>/aegis-b12d-judged-part2 --budget-usd 15.2`, run `20261119T065201Z-9f0837a1`, at commit `0889ee98`. All 35 ran. Spent 8.42 US dollars.
-- Joined by `docs/aegis/demo/evidence/batch12d/tools/merge-run.js` into `results.json` here (each case from the part it ran in; local paths masked; each long dash in the model's text written as a hyphen), with the tool audit files in `audit/`. The case file was the committed `scripts/eval/judged/dev-cases.jsonl`, byte for byte.
+- Joined by `docs/aegis/demo/evidence/batch12d/tools/merge-run.js` into `results.json` here (each case from the part it ran in; local paths masked; each long dash in the model's text written as a hyphen), with the tool audit files in `audit/`. The case file was the committed `scripts/eval/judged/dev-cases.jsonl`, byte for byte (`../case-file-hash.txt`).
 - Models: system under test and judge `claude-opus-5-5` on every case. Tool server on; WebFetch and WebSearch off; the same isolation as batch 12, plus this batch's deny rules for `.git`.
 - Limit 30 US dollars; spent 23.20 in all (the runs' own totals; the per-case costs in `results.json` sum to 23.10).
 

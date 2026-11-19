@@ -1,0 +1,10 @@
+Do the examples this batch added come from a case or a desk ticket? Each key phrase of the five examples, searched without regard to case in the dev case file, the four lane case files and the desk's customers folder. Counts of matching lines only; no case text is printed.
+"deploy script": dev-cases.jsonl 0, lane case files 0, scripts/demo/customers 0
+"staging server": dev-cases.jsonl 0, lane case files 0, scripts/demo/customers 0
+"label printer": dev-cases.jsonl 0, lane case files 0, scripts/demo/customers 0
+"wiki": dev-cases.jsonl 0, lane case files 0, scripts/demo/customers 0
+"search index": dev-cases.jsonl 0, lane case files 0, scripts/demo/customers 0
+"kiosk": dev-cases.jsonl 0, lane case files 0, scripts/demo/customers 0
+"meeting-room": dev-cases.jsonl 0, lane case files 0, scripts/demo/customers 0
+"meeting room": dev-cases.jsonl 0, lane case files 0, scripts/demo/customers 0
+"tablet": dev-cases.jsonl 0, lane case files 0, scripts/demo/customers 0

@@ -1045,3 +1045,39 @@ test('batch 12d: a tarball or API path on registry.npmjs.org is out of scope unl
   await refusedWith(enc, 'net_http', { url: 'https://registry.npmjs.org/some-package/latest' }, 'refused_redirect');
   assert.equal(enc.deps.request.sent.length, 1, 'only the first request was sent');
 });
+
+// ── Batch 12d, code review 1 ──────────────────────────────────────────────────────────────────────────────────
+// Finding 3. Wrong implementation it catches: token patterns that backtrack from every start position, so one long
+// unbroken run of hex digits, or a URL followed by a long run of punctuation, makes typedTokens quadratic; the scan is
+// synchronous at each call, so the call's deadline cannot fire and the server answers nothing meanwhile (measured before
+// the fix: 7 seconds for a 120 KB run). IPv6 literals still count, alone, in brackets, in a URL, at a sentence's end.
+test('batch 12d: typedTokens is linear on one long run of hex digits or of punctuation, and still reads IPv6 literals', () => {
+  const { typedTokens } = require('./tools.js');
+  const timed = (text) => { const t0 = process.hrtime.bigint(); const out = typedTokens(text); return { out, ms: Number(process.hrtime.bigint() - t0) / 1e6 }; };
+  const hex = timed(`dump ${'0123456789abcdef'.repeat(7500)} end, and example.org`);
+  assert.ok(hex.ms < 1000, `a 120 KB hex run took ${hex.ms.toFixed(0)} ms`);
+  assert.ok(hex.out.hosts.has('example.org'));
+  const colons = timed(`${'ab:'.repeat(40000)} and example.org`);
+  assert.ok(colons.ms < 1000, `a 120 KB run with colons took ${colons.ms.toFixed(0)} ms`);
+  assert.equal([...colons.out.hosts].some((h) => h.includes(':')), false, 'a run longer than any address is no address');
+  const punct = timed(`see https://example.org/a${')'.repeat(120000)} and so on`);
+  assert.ok(punct.ms < 1000, `a URL with 120 KB of punctuation after it took ${punct.ms.toFixed(0)} ms`);
+  const v6 = typedTokens('The resolver is 2001:db8::53. The site is https://[2001:db8::1]/status and [2001:db8::2] too, or fe80::1.');
+  for (const h of ['2001:db8::53', '2001:db8::1', '2001:db8::2', 'fe80::1']) assert.ok(v6.hosts.has(h), h);
+  assert.ok(v6.urls.has('https://[2001:db8::1]/status'));
+});
+
+// Finding 5. Wrong implementation it catches: trailing sentence punctuation always stripped from a typed URL, so a URL
+// that really ends in a bracket, a quote or an asterisk is refused, and only a shorter URL nobody typed is allowed.
+test('batch 12d: a typed URL that ends in a bracket or other punctuation is typed as written, and without the punctuation', async () => {
+  const { typedTokens } = require('./tools.js');
+  const asTyped = 'https://docs.example.org/wiki/DNS_(disambiguation)';
+  const typed = typedTokens(`Is ${asTyped} reachable? Also see https://example.org/a.`);
+  assert.ok(typed.urls.has(asTyped), 'the URL as the person typed it');
+  assert.ok(typed.urls.has('https://docs.example.org/wiki/DNS_(disambiguation'), 'and with the sentence punctuation taken off, which is what a sentence may have meant');
+  assert.ok(typed.urls.has('https://example.org/a'));
+  assert.equal(typed.urls.has('https://example.org/'), false, 'nothing shorter than that');
+  const s = scoped(`Is ${asTyped} reachable?`, { resolver: learn({ 'docs.example.org': { A: [PUBLIC_IP] } }), request: fakeHttp({ [`HEAD ${asTyped}`]: { status: 200, headers: {} }, [`GET ${asTyped}`]: { status: 200, headers: {}, body: 'x' } }) });
+  assert.equal((await call(s, 'net_http', { url: asTyped })).isError, false);
+  await outOfScope(s, 'net_http', { url: 'https://docs.example.org/wiki/DNS_' });
+});

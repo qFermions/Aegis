@@ -1,0 +1,7 @@
+staged for commit "red-cr1-typed-tokens" on feat/batch12-expert-lanes at parent 2366f2a0:
+A	docs/aegis/demo/evidence/batch12d/cr1-typed-tokens-red.txt
+M	scripts/mcp/aegis-tools/server.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

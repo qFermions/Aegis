@@ -253,6 +253,9 @@ async function runCommand(opts, io, deps) {
   // the first case on another model than the pin: no later case would count, so none starts (code review 2, finding 12)
   let offModel = null;
   for (const c of list) {
+    // a results folder used before: this case's audit and typed files of the earlier run go before anything is decided,
+    // so a case the run does not start leaves none behind (code review 2 of batch 12d, finding 5)
+    for (const name of ['tool-audit.jsonl', 'typed.txt']) { try { fs.rmSync(path.join(dir, `${c.id}-${name}`), { force: true }); } catch { /* left as it is */ } }
     if (offModel) {
       const r = notRunRecord(c, `not run: ${offModel} was not measured on the pinned model (its session ran on another model or did not say which), so no later case would count`);
       results.push(r);

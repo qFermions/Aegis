@@ -416,9 +416,10 @@ async function runSut(c, opts) {
   let typedFile = opts.tools !== false && opts.typedFile ? opts.typedFile : null;
   const turns = [];
   const prompt = buildSutPrompt(c);
-  if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c, repoRoot);
-  // the server appends to the audit file, so a results folder used before would give this case the earlier run's calls
+  // the server appends to the audit file, so a results folder used before would give this case the earlier run's calls;
+  // cleared before any return, so a case whose session never starts holds none either (code review 2, finding 5)
   if (opts.auditFile) { try { fs.rmSync(opts.auditFile, { force: true }); } catch { /* left as it is */ } }
+  if (promptTooLong(prompt)) return sutRecord([{ state: 'ERROR', reason: 'prompt too long for one argument', answer: null, num_turns: null, duration_ms: 0, model: null, cost_usd: null, session_id: null }], c, repoRoot);
   // a typed file that cannot be written does not stop the run: the session then names none and reaches only the two lists
   const typed = (text, how) => { try { aegisTools.writeTyped(typedFile, text, how); return true; } catch { return false; } };
   if (typedFile && !typed([c.setup, c.ticket, c.evidence].filter((s) => typeof s === 'string' && s !== '').join('\n'))) typedFile = null;

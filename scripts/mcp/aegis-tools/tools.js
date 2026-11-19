@@ -105,7 +105,9 @@ function typedTokens(text) {
   }
   for (const [run] of s.matchAll(ADDRESS_RUN)) {
     if (run.length > ADDRESS_MAX || !run.includes(':')) continue;
-    const h = run.replace(/\.+$/, '').toLowerCase(); // at most 46 characters, so this cannot run long
+    // at most 46 characters, so these cannot run long; one colon at the end is a sentence's unless the address ends
+    // in two (code review 2, finding 12)
+    const h = run.replace(/\.+$/, '').replace(/([^:]):$/, '$1').toLowerCase();
     if (net.isIPv6(h)) hosts.add(h);
   }
   const urls = new Set();

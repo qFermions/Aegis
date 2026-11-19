@@ -69,10 +69,32 @@ const DEFAULT_RUN_ROOT = 'aegis-demo-runs';
 // The CLI's absolute form: // then the path from the file system root, with forward slashes.
 const absoluteReadRule = (p) => `Read(//${p.split(path.sep).join('/').replace(/^\/+/, '').replace(/^([A-Za-z]):/, (m, d) => d.toLowerCase())})`;
 
+// This repository's own .git (batch 12d, task 2): its history, branches and commits are Aegis's, never the asker's,
+// and in a linked worktree the .git file and the folder it names hold a local path. The entry is always listed; a
+// linked worktree adds the git folder its .git file names and the shared folder behind that one.
+function gitDirs(repoRoot = REPO_ROOT) {
+  const dirs = [path.join(repoRoot, '.git')];
+  try {
+    const m = /^gitdir:\s*(.+)$/m.exec(fs.readFileSync(dirs[0], 'utf8'));
+    if (m) {
+      const gitDir = path.resolve(repoRoot, m[1].trim());
+      dirs.push(gitDir);
+      dirs.push(path.resolve(gitDir, fs.readFileSync(path.join(gitDir, 'commondir'), 'utf8').trim()));
+    }
+  } catch { /* a checkout (.git is a folder), no .git, or no commondir file: what was found so far stands */ }
+  return dirs;
+}
+
 // caseDirs: the folders a judged run's case file is read from (paths.caseFolders), denied like the results
 // folder, so a session cannot read the expected decisions it is graded against (batch 11, task 7).
 function readDenyRules(runRoot = null, caseDirs = []) {
   const rules = READ_DENIED.map((p) => absoluteReadRule(path.join(REPO_ROOT, p)));
+  // .git as given and as resolved, the entry itself and everything under it
+  for (const dir of gitDirs()) {
+    for (const form of [dir, effectivePath(dir)]) {
+      for (const rule of [absoluteReadRule(form), absoluteReadRule(path.join(form, '**'))]) if (!rules.includes(rule)) rules.push(rule);
+    }
+  }
   // both forms of a folder behind a link, since the CLI may match either; effectivePath resolves the nearest
   // folder that exists, so a dry run lists what the real run will
   for (const root of [path.join(os.homedir(), DEFAULT_RUN_ROOT), ...(runRoot ? [path.resolve(runRoot)] : [])]) {
@@ -401,7 +423,7 @@ function sutRecord(turns, c, repoRoot = REPO_ROOT) {
 }
 
 module.exports = {
-  SUT_TOOLS, WEB_TOOLS, PINNED_MODEL, isModelName, OUTPUT_CAP_REASON, ranUnpriced, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
+  SUT_TOOLS, WEB_TOOLS, PINNED_MODEL, isModelName, OUTPUT_CAP_REASON, ranUnpriced, isolationArgs, excludedMemoryFiles, readDenyRules, gitDirs, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
   envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, outsideReads,
   runChild, runTurn, runSut, promptTooLong,
 };

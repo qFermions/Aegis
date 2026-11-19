@@ -59,9 +59,20 @@ function docsTarget(raw, ctx, base) {
 // session. ctx.typed() is the typed text's tokens, read by the server at each call; the model's own arguments, what a
 // tool returns and the repository never add to them.
 const HOST_RUN = /[\p{L}\p{M}\p{N}._-]+/gu;
-const IPV6_RUN = /[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*/g;
+// One class and nothing after it, so the match is linear on any text: a pattern with a colon between two such runs
+// backtracked from every start position, and one long run of hex digits took seconds at each call (code review 1 of
+// batch 12d, finding 3). The longest IPv6 literal is 45 characters; one more for a sentence's dot.
+const ADDRESS_RUN = /[0-9A-Fa-f:.]+/g;
+const ADDRESS_MAX = 46;
 const URL_RUN = /https?:\/\/\S+/gi;
-const SENTENCE_END = /[.,;:!?'"`*)\]}>]+$/;
+const SENTENCE_END = new Set('.,;:!?\'"`*)]}>');
+// The run without the sentence punctuation at its end, by a loop from the end (a pattern anchored at the end is
+// quadratic on a long run of punctuation).
+function withoutSentenceEnd(run) {
+  let end = run.length;
+  while (end > 0 && SENTENCE_END.has(run[end - 1])) end -= 1;
+  return run.slice(0, end);
+}
 // A bracketed placeholder ([USER@DOMAIN.COM], [UPN], [DT-First,Last]) is the privacy step's or a runbook's text, never
 // a host the person typed. No colon in the class, so an IPv6 literal keeps its brackets.
 const PLACEHOLDER = /\[[A-Za-z@][A-Za-z0-9_@.#,-]*\]/;
@@ -71,7 +82,7 @@ const NPM_METADATA = /^\/(?:(?:@[A-Za-z0-9._~-]+\/)?[A-Za-z0-9._~][A-Za-z0-9._~-
 
 // { hosts, urls }: whole tokens of the typed text. A host token is a maximal run of host characters with the dots and
 // hyphens at its ends taken off, in lower case, or an IPv6 literal. A URL token runs from http:// or https:// to the
-// next space, without trailing sentence punctuation, kept as its WHATWG href with no fragment.
+// next space, as written and without trailing sentence punctuation, each kept as its WHATWG href with no fragment.
 function typedTokens(text) {
   // a run of non-space text that holds a placeholder is no typed text at all (the breaker's findings: ask-aegis wrote
   // [USER@DOMAIN.COM] for an email address and domain.com read as typed; taking out the placeholder alone would split
@@ -82,17 +93,22 @@ function typedTokens(text) {
     const h = run.replace(/^[.-]+|[.-]+$/g, '').toLowerCase();
     if (h) hosts.add(h);
   }
-  for (const [run] of s.matchAll(IPV6_RUN)) {
-    const h = run.replace(/\.+$/, '').toLowerCase();
+  for (const [run] of s.matchAll(ADDRESS_RUN)) {
+    if (run.length > ADDRESS_MAX || !run.includes(':')) continue;
+    const h = run.replace(/\.+$/, '').toLowerCase(); // at most 46 characters, so this cannot run long
     if (net.isIPv6(h)) hosts.add(h);
   }
   const urls = new Set();
+  // a URL counts as the person wrote it and without the sentence punctuation at its end: a URL may really end in a
+  // bracket or a quote, and a sentence may end right after one (code review 1 of batch 12d, finding 5)
   for (const [run] of s.matchAll(URL_RUN)) {
-    try {
-      const u = new URL(run.replace(SENTENCE_END, ''));
-      u.hash = '';
-      urls.add(u.href);
-    } catch { /* not a URL: no token */ }
+    for (const form of new Set([run, withoutSentenceEnd(run)])) {
+      try {
+        const u = new URL(form);
+        u.hash = '';
+        urls.add(u.href);
+      } catch { /* not a URL: no token */ }
+    }
   }
   return { hosts, urls };
 }

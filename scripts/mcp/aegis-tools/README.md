@@ -64,7 +64,8 @@ suffix:
   `[USER@DOMAIN.COM]`, `[UPN]` or `[DT-First,Last]` gives no host token and no URL token, so the address the privacy
   step masks opens no host, and what stands next to it is not split off as a host of its own. A host the person wrote
   inside square brackets is not typed either; an IPv6 literal keeps its brackets.
-- A URL token runs from `http://` or `https://` to the next space, without trailing sentence punctuation, and is
+- A URL token runs from `http://` or `https://` to the next space. It counts as written and also without the sentence
+  punctuation at its end (a URL may really end in a bracket or a quote, and a sentence may end right after one), and is
   compared with the `net_http` URL after WHATWG normalization of both (`new URL(x).href`, fragment dropped). A typed URL
   does not allow the same host with another path, another query, an added query, or a prefix of the typed URL. A typed
   bare host (no scheme) allows no `net_http` URL, only `net_dns` and `net_tls` for that host.

@@ -209,7 +209,8 @@ test('batch 11, task 6: --reply-to asker starts the chat with the voice; another
   const code = await chat.main(['--reply-to', 'asker'], env, { ...c.deps, backend: { command: process.execPath, prefixArgs: [fake, log] } });
   assert.equal(code, 0, c.stderr());
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
-  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, backends.PINNED_MODEL, auditOf(got.argv)));
+  // batch 12d: the chat's typed file and its prompt hook are part of the isolation now (this line changed for them)
+  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, backends.PINNED_MODEL, auditOf(got.argv), typedOf(got.argv)));
   assert.match(got.argv[got.argv.length - 1], /section 8/);
 
   const refused = io();
@@ -234,7 +235,8 @@ test('batch 11 resumed: the chat runs on claude-opus-5-5 unless --model names an
   const c = io();
   assert.equal(await chat.main(['--model', 'claude-sonnet-5-5', '--reply-to', 'asker'], env, { ...c.deps, backend: { command: process.execPath, prefixArgs: [fake, log] } }), 0, c.stderr());
   const got = JSON.parse(fs.readFileSync(log, 'utf8'));
-  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, 'claude-sonnet-5-5', auditOf(got.argv)));
+  // batch 12d: the chat's typed file and its prompt hook are part of the isolation now (this line changed for them)
+  assert.deepEqual(got.argv.slice(0, -2), ISOLATED(home, 'claude-sonnet-5-5', auditOf(got.argv), typedOf(got.argv)));
   assert.deepEqual(chat.chatArgs(null, path.join('/h/me', 'aegis-asks')).slice(-2), ['--model', 'claude-opus-5-5']);
   for (const argv of [['--model', 'two words'], ['--model']]) {
     const refused = io();

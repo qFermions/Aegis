@@ -1,0 +1,15 @@
+staged for commit "typed-handoff-code" on worktree-agent-a84f13fda379436ea at parent 2125411f:
+A	docs/aegis/demo/evidence/batch12d/typed-handoff-green.txt
+M	scripts/aegis-chat.js
+M	scripts/aegis-chat.test.js
+M	scripts/ask-aegis.js
+M	scripts/demo/customer-desk.js
+M	scripts/eval/judged-eval.js
+M	scripts/eval/judged/backends.js
+M	scripts/mcp/aegis-tools/README.md
+M	scripts/mcp/aegis-tools/session.js
+A	scripts/mcp/aegis-tools/typed-hook.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

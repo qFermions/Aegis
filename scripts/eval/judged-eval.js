@@ -135,7 +135,7 @@ function intFlag(opts, name, def, lo, hi) {
 }
 
 function commandPreview(config) {
-  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: '<results>/<case>-tool-audit.jsonl' }).join(' ');
+  const sut = backends.sutArgs({ prompt: '<ticket>', maxTurns: config.max_turns, web: config.web, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: '<results>/<case>-tool-audit.jsonl', typedFile: '<results>/<case>-typed.txt' }).join(' ');
   const jud = backends.judgeArgs({ prompt: '<judge prompt>', model: config.judge_model }).map((a) => (a === '' ? '""' : a)).join(' ');
   return { sut: `claude ${sut}`, judge: `claude ${jud}` };
 }
@@ -268,8 +268,9 @@ async function runCommand(opts, io, deps) {
       io.out(report.terminalLine(r));
       continue;
     }
-    // each case's tool calls are audited to a file of its own in the results folder (batch 12, task 5)
-    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: path.join(dir, `${c.id}-tool-audit.jsonl`) });
+    // each case's tool calls are audited to a file of its own in the results folder (batch 12, task 5), and what the
+    // person typed (the case's setup, ticket, evidence and follow-up) goes to the server in a typed file there (batch 12d)
+    const sut = await backends.runSut(c, { ...backend, repoRoot, maxTurns: config.max_turns, web: config.web, runRoot: dir, caseDirs: config.case_dirs, model: config.model, tools: config.tools, auditFile: path.join(dir, `${c.id}-tool-audit.jsonl`), typedFile: path.join(dir, `${c.id}-typed.txt`) });
     // the Fix card's words by the desk's own counter; null when the answer has no card. A measure, never a pass or fail.
     const card = typeof sut.answer === 'string' ? fixCard(sut.answer) : null;
     // the batch 12 checks (fix-card-fits, claims-match-calls, fetched-citations) count like any check: one that fails fails the case

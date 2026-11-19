@@ -10,7 +10,8 @@ writes is its audit log.
 | `server.js` | JSON-RPC 2.0 over stdin and stdout, the call cap, the per-call deadline, the audit |
 | `tools.js` | the four tools |
 | `guard.js` | the address guard: name checks, private ranges, resolution through public resolvers |
-| `session.js` | `SERVER_NAME`, `TOOL_NAMES` and `mcpConfig()` for the session's command line |
+| `session.js` | `SERVER_NAME`, `TOOL_NAMES` and `mcpConfig()` for the session's command line; `writeTyped()` and `typedHooks()` for the typed file (batch 12d) |
+| `typed-hook.js` | the chat's `UserPromptSubmit` hook: appends each message the person sends to the typed file (batch 12d) |
 | `../../../config/docs-allowlist.json` | the hosts `docs_fetch` may read |
 | `../../../config/probe-allowlist.json` | four more hosts `net_dns`, `net_http` and `net_tls` may reach (batch 12d) |
 | `live-probe.js` | a manual check against the real network (not a test) |
@@ -130,6 +131,34 @@ one MCP server it loads, and the four names `mcp__aegis-tools__docs_fetch`, `mcp
 `mcp__aegis-tools__net_http` and `mcp__aegis-tools__net_tls` go in `--allowedTools` (not `--tools`, which lists built-in
 tools only). WebFetch and WebSearch stay disallowed unless `web` is true. With `tools: false` the argv is the one from
 before batch 12, byte for byte. The judge never gets the server: `isolationArgs` refuses an MCP config for it.
+
+### The typed file (batch 12d)
+
+Every entrypoint that starts a sealed session writes what the person typed to a typed file in the run's own folder,
+never inside the repository, through `session.writeTyped` (created 0600, never through a symbolic link), and names it
+to the server: `sutArgs({ typedFile })` adds `--typed <file>` to `--mcp-config`. Those folders are already read-denied
+to the session. Only the person's words go in, never a runner's framing, a tool result, a fetched page or a file.
+
+| Entrypoint | Typed file | What it holds | Afterwards |
+|------------|------------|---------------|------------|
+| judged runner (`judged-eval.js`, `backends.runSut`) | `<results>/<case>-typed.txt` | the case's setup (after `protect()`), ticket and evidence before the first turn; the follow-up appended before the second | kept |
+| `ask-aegis.js` | `~/aegis-asks/<run id>/typed.txt` | the setup and the ticket as sent, after `protect()` | removed when the session ends |
+| Customer Desk (`customer-desk.js`) | `<run>/customers/<id>/tickets/<ticket>-typed.txt` | the customer's profile and the ticket text the intake accepted | kept with the ticket's files |
+| chat (`aegis-chat.js`, also behind `start-aegis.js`) | `~/aegis-asks/chat-<run id>/typed.txt` | the setup (after `protect()`), then each message the person sends | removed when the chat ends |
+
+With `--no-tools` no typed file is written. The chat cannot see what the person types, so its inline `--settings` (the
+one `isolationArgs` builds) carries a `hooks` value, `session.typedHooks(file)`: one `UserPromptSubmit` command hook in
+exec form (`command` this Node binary, `args` `typed-hook.js` and the typed file, no shell). Claude Code runs it with the
+event's JSON on stdin each time the person submits a message; `typed-hook.js` appends the `prompt` field, and nothing
+else, to the typed file, prints nothing to stdout (Claude Code adds such a hook's stdout to the model's context) and
+always exits 0 (exit 2 would block the message). Any other event, input that is not JSON, or a link at the path writes
+nothing. Sources: https://code.claude.com/docs/en/hooks (the `UserPromptSubmit` input and exit codes, exec form with
+`args`), https://code.claude.com/docs/en/settings (`--settings` takes inline JSON and can set any key a user settings
+file can, `hooks` among them) and https://code.claude.com/docs/en/cli-reference (`--settings`). Not verified in a real
+session: that the hook fires there (the installed Claude Code must know exec form and run hooks from inline settings
+in this folder). If it does not fire, the chat only loses rule (c) for later messages: a host or URL the person types
+after the start is refused like any other, the safe direction. A print-mode session (judged, ask, desk) never gets the
+hook: its one prompt holds the runner's own words.
 
 ```
 node scripts/mcp/aegis-tools/server.js [--audit <file>] [--typed <file>]

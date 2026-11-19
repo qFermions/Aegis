@@ -1,0 +1,7 @@
+staged for commit "red-toolbox-rule" on feat/batch12-expert-lanes at parent effbb082:
+A	docs/aegis/demo/evidence/batch12d/toolbox-rule-red.txt
+M	scripts/repository-structure.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

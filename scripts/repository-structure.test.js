@@ -167,6 +167,17 @@ test('the six networking placeholders the lane runbooks use are in the placehold
   }
 });
 
+// Batch 12d, task 2. Wrong implementations this catches: a later trim of CLAUDE.md (it sits at its byte limit) that
+// drops the rule; the rule kept in one of the two files only; a rule that names the repository and not what it forbids.
+test("the toolbox rule is in CLAUDE.md and in the answer format: this repository is never the asker's environment", () => {
+  for (const file of ['CLAUDE.md', path.join('docs', 'aegis', 'answer-format.md')]) {
+    const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
+    assert.match(text, /This repository is Aegis's toolbox, never the asker's environment/, file);
+    assert.match(text, /files, paths, branches or commits/, file);
+    assert.match(text, /what (?:you|it would) need from (?:them|the asker)/, file);
+  }
+});
+
 test('CLAUDE.md stays within the 40k-char limit its banner pins (chars, LF-normalized)', () => {
   const content = fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8').replace(/\r\n/g, '\n');
   assert.ok(content.length <= 40000, `CLAUDE.md is ${content.length} chars; Claude Code truncates the tail past 40,000`);

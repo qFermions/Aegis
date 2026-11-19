@@ -279,6 +279,8 @@ test('the read limits: the deny list is pinned, the rules are absolute, and what
     // batch 8, task 10a: the older baseline folders hold ticket-to-route results (full-run-1 causes.md,
     // "A gap in the deny list")
     repo('docs/aegis/**/baseline/**'), repo('docs/baseline/**'),
+    // security review of batch 12d: agent worktrees are whole copies of the checkout
+    repo('.claude/worktrees/**'),
     // batch 12d, task 2: this repository's own .git, the entry and its contents, as given and as resolved; in a
     // linked worktree also the git folders its .git file leads to (git-wall.test.js pins what gitDirs returns)
     ...new Set(backends.gitDirs().flatMap((d) => [d, effectivePath(d)]).flatMap((d) => [abs(d), abs(path.join(d, '**'))])),

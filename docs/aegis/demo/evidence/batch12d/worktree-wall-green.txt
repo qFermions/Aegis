@@ -1,0 +1,42 @@
+✔ the SUT and judge command lines match the spec; --web moves the web tools to the allowed set (2.974291ms)
+✔ both sessions load only the repository's own settings, also when resumed, on the web, or with a judge model (batch 6, task 9) (1.257292ms)
+✔ the tool server is on by default for the system under test, never for the judge, and off leaves the old argv (batch 12) (74.919292ms)
+✔ batch 12d: sutArgs hands the server the typed file, and the prompt hook only when asked; off and the judge get neither (0.802916ms)
+✔ batch 12d: runSut writes the person's words to the typed file before the first turn, and the follow-up before the second (76.204875ms)
+✔ batch 12d: toolServerRecord counts allowed, refused and other calls from the audit file and lists each refused call (0.70775ms)
+✔ the exclusions cover the judge's temporary folder too, and never the repository's own CLAUDE.md (batch 6, code review 1 finding 7) (0.357709ms)
+✔ under a stale TMPDIR the exclusions cover the system temporary folder the judge falls back to (0.36925ms)
+✔ the read limits: the deny list is pinned, the rules are absolute, and what Aegis needs stays readable (batch 7, task 4) (18.291625ms)
+✔ sutArgs takes no persistence only when asked, and the judge never persists (batch 7, task 5) (0.83975ms)
+✔ the prompt is the ticket, plus the evidence after the pasted-evidence header (0.045708ms)
+✔ the scrub list is every NAME= of .env.example plus the secret suffixes (0.179583ms)
+✔ the child runs from the repository root with a scrubbed environment (names only are checked) (24.227417ms)
+✔ a case with a follow_up resumes the first turn's session and records both answers, turns, cost and model (44.791958ms)
+✔ a slow child is stopped at the timeout: state TIMEOUT, and SIGKILL follows a child that ignores SIGTERM (809.70225ms)
+✔ output that is not stream-json, an error result, or a missing executable is ERROR (42.522792ms)
+✔ parseStream takes the result text, else the last assistant text, and counts invalid lines (0.100583ms)
+✔ batch 12: summarizeTurn records the tools and MCP servers the init event listed (0.065333ms)
+✔ the case folder joins the deny list in its given and resolved forms, after the pinned rules (2.922375ms)
+✔ caseFolders gives the folders to deny, and refuses a folder that holds the repository (1.929917ms)
+✔ the dry run still exits 4 and its command preview lists the case folder rule, through main and the real CLI (35.43475ms)
+✔ every system-under-test turn of a run denies the case folder, the follow-up included (405.540166ms)
+✔ a case file in a folder that holds the repository is refused (exit 1) before anything is read or started (0.729167ms)
+✔ the stream gives one record per tool call: Read, Grep, Glob, Agent, a subagent call, a refused read, a long pattern (0.266958ms)
+✔ outsideReads names each path read outside the repository, in its given or its real form (1.000875ms)
+✔ caseVerdict: reads inside the repository leave the verdict; a read outside makes it INCONCLUSIVE and names the path (0.13625ms)
+✔ the Fix card word count: per case by the desk's counter, null with no card, and min, median and max in the summary (0.669625ms)
+✔ a run records the tool calls, the outside reads and the card words in results.json and report.md (1071.781416ms)
+✔ report.md lists each case's Fix card word count in its Cases table, and "none" for an answer with no card (0.176083ms)
+✔ the deny rules name .git itself and everything under it (0.624375ms)
+✔ every sealed session carries the .git rules: first turn, follow-up, ask-aegis and the chat (0.985875ms)
+✔ gitDirs: a checkout gives .git; a linked worktree adds the folder its .git file names and the shared one (1.661041ms)
+✔ the agent worktrees inside the repository are denied whole, to every sealed session (0.693667ms)
+ℹ tests 33
+ℹ suites 0
+ℹ pass 33
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1567.935833
+exit 0

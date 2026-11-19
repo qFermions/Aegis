@@ -1,0 +1,9 @@
+staged for commit "fix-worktree-wall" on feat/batch12-expert-lanes at parent a9a6a207:
+A	docs/aegis/demo/evidence/batch12d/security-review.md
+A	docs/aegis/demo/evidence/batch12d/worktree-wall-green.txt
+M	scripts/eval/judged/backends.js
+M	scripts/eval/judged/backends.test.js
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

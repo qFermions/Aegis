@@ -186,6 +186,27 @@ test('batch 12d: runSut writes the person\'s words to the typed file before the 
   assert.equal(g.calls()[0].typed, null);
 });
 
+// Code review 1 of batch 12d, findings 2 and 12. Wrong implementations it catches: a results folder used twice gives the
+// second run the first run's tool calls, because the server appends to the case's audit file and nothing empties it; a
+// typed file that cannot be written (a link left at its path, a full disk) throws out of runSut, which ends a paid run
+// before its results are saved, where the session should start with no typed file and reach only the two lists.
+test('batch 12d: runSut starts each case with an empty audit file, and a typed file that cannot be written does not stop the run', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aegis-typed-reuse-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const auditFile = path.join(dir, 'B1-tool-audit.jsonl');
+  fs.writeFileSync(auditFile, `${JSON.stringify({ time: '2026-11-18T00:00:00.000Z', tool: 'net_dns', input: { name: 'old.example.com', type: 'A' }, decision: 'refused_out_of_scope', reason: 'from an earlier run' })}\n`);
+  const f = fake(t, { sut: { answer: 'a' } });
+  await backends.runSut(kase(), { ...f.opts, env: { PATH: process.env.PATH }, auditFile, typedFile: path.join(dir, 'B1-typed.txt') });
+  assert.deepEqual(backends.toolServerRecord(auditFile), { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] }, 'the earlier run\'s line is gone');
+  // the typed file's path is a folder: writeTyped throws, the session still runs, and it names no typed file
+  const blocked = path.join(dir, 'B2-typed.txt');
+  fs.mkdirSync(blocked);
+  const g = fake(t, { sut: { answer: 'a', follow_up_answer: 'b' } });
+  const sut = await backends.runSut(kase({ follow_up: 'And now?' }), { ...g.opts, env: { PATH: process.env.PATH }, typedFile: blocked });
+  assert.equal(sut.state, 'OK');
+  assert.deepEqual(g.calls().map((c) => c.typed), [null, null], 'neither turn names a typed file');
+});
+
 // Batch 12d. EXPECTED DECISION (written before the code): toolServerRecord(auditFile) reads the tool server's audit file
 // and returns { calls, allowed, refused, other, refused_calls }: allowed is a call the server answered (decision ok),
 // refused every decision that starts with refused_ (out of scope, a refused redirect, a private address, a refused name,

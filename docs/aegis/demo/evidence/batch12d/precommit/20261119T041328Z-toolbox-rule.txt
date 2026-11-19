@@ -1,0 +1,9 @@
+staged for commit "toolbox-rule" on feat/batch12-expert-lanes at parent 4383030d:
+M	CLAUDE.md
+M	docs/aegis/answer-format.md
+A	docs/aegis/demo/evidence/batch12d/toolbox-rule-green.txt
+M	docs/aegis/demo/evidence/batch12d/toolbox-rule-red.txt
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

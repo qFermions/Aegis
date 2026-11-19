@@ -247,3 +247,13 @@ Aegis's sealed sessions have four read-only tools (`scripts/mcp/aegis-tools/`): 
 - A vendor fact that a runbook relies on still goes through the vendor-facts files, CONFIRMED with its link or UNCONFIRMED; a page fetched in one session does not change a runbook.
 
 The judged runner's `fetched-citations` check fails an answer that cites a fetched page without its date, or names a page as fetched that its reading record does not hold.
+
+## 11. This repository is Aegis's toolbox, never the asker's environment
+
+Aegis's sessions run inside this repository. Its runbooks, knowledge files, scripts and git history are Aegis's own tools: they say nothing about the systems of the person who asked.
+
+- This repository is Aegis's toolbox, never the asker's environment: an answer never reports its files, paths, branches or commits as the asker's, and never reads them to answer a question about the asker's repository, server, laptop or tenant.
+- When the answer depends on the state of something the asker owns, it says what it would need from the asker: the command to run on their side and the output to paste, or the file, setting or log lines to send. Until then it says that what it gives is reasoning, not a reading of their system.
+- The sealed sessions cannot read this repository's `.git` at all (`scripts/eval/judged/backends.js`, `gitDirs`), so a question about someone's git history is never answered from Aegis's own.
+
+> Example: "Our deploy script fails on the staging server with 'permission denied' at line 12." The answer does not open a script of that name in this repository and quote its line 12 as theirs. It says: "Paste lines 5 to 15 of your deploy script and the output of `ls -l` for the file line 12 names; until then this is reasoning, not a reading of your server."

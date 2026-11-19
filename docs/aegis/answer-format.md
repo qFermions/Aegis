@@ -223,7 +223,7 @@ Each mode's reply (section 9):
 
 ## 9. The four modes and how Aegis picks one
 
-The answer's first line names the mode, exactly as below, and the rest of the answer holds that mode's parts in order. The `aegis-desk` block (section 5) still closes every answer except Ask first, where the desk asks for it holding only `Gate: none`. Budgets count words outside fenced code blocks; the mode line, an Assumed setup line, the closing `## Human-run and read-back` section of an Engineer or Incident answer, the Details section and the `aegis-desk` block are not counted.
+The answer's first line names the mode, exactly as below, and the rest of the answer holds that mode's parts in order. The `aegis-desk` block (section 5) still closes every answer except Ask first, where the desk asks for it holding only `Gate: none`. Budgets count words outside fenced code blocks; the mode line, an Assumed setup line, the closing `## Human-run and read-back` section of an Engineer or Incident answer, the Details section and the `aegis-desk` block are not counted. The desk's three card rows (the card comes first, has its parts, is 150 words or fewer) do not apply to an Ask first, Engineer or Incident answer that has no card and are left off its page; an answer in Fix card mode, or with no mode line, that has no card still fails them.
 
 | Mode | First line | Use it when | Parts, in order | Budget |
 |---|---|---|---|---|

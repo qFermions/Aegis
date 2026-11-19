@@ -337,10 +337,17 @@ function answerChecks(answer, { profile = '', ticket = '' } = {}) {
   const facts = defaultFactsIn(block.body, profile);
   const now = card.present && card.parts.tellNow !== undefined ? userMessageProblems(card.parts.tellNow, ticket) : null;
   const row = (check, ok, plain, detail) => ({ check, verdict: ok ? 'pass' : 'fail', plain, detail });
+  // The three card rows read an answer that has a card. An answer whose mode line names Ask first, Engineer answer or
+  // Incident answer and that has no card rightly has none: the rows do not apply and are left off, as the desk leaves
+  // off every answer row that does not apply (batch 12d, task 4a, the owner's decision). With no mode line, or with
+  // "Mode: Fix card", a missing card still fails them.
+  const first = block.body.split(/\r?\n/).find((l) => l.trim() !== '') || '';
+  const named = (MODE_LINE.exec(first) || [])[1];
+  const noCardMode = !card.present && Boolean(named) && !/^fix card$/i.test(named);
   return [
-    row('fix-card-first', card.present && card.first, 'The Fix card comes first', card.present ? (card.first ? 'the answer opens with "## Fix"' : 'the card is not the first thing in the answer') : 'there is no "## Fix" card'),
+    ...(noCardMode ? [] : [row('fix-card-first', card.present && card.first, 'The Fix card comes first', card.present ? (card.first ? 'the answer opens with "## Fix"' : 'the card is not the first thing in the answer') : 'there is no "## Fix" card'),
     row('fix-card-parts', card.present && shape.length === 0, 'The Fix card has its five parts in order', shape.length ? shape.join('; ') : 'what is wrong, do this (3 to 5 steps), done when, stop if, tell the user'),
-    row('fix-card-words', card.present && card.words <= 150, 'The Fix card is 150 words or fewer', card.present ? `${card.words} words${card.pointer ? ', not counting the line that points to Details' : ''}` : 'there is no "## Fix" card'),
+    row('fix-card-words', card.present && card.words <= 150, 'The Fix card is 150 words or fewer', card.present ? `${card.words} words${card.pointer ? ', not counting the line that points to Details' : ''}` : 'there is no "## Fix" card')]),
     row('no-command', command === null, 'The answer asks the tech to run no command', command ? `a command outside the aegis-desk block: ${command}` : 'none outside the aegis-desk block'),
     row('customer-facts', facts.length === 0, "The answer uses only this customer's facts", facts.length ? `names ${facts.join('; ')}, which the customer profile does not have` : 'no default-environment fact the profile lacks'),
     row('user-message-now', now !== null && now.length === 0, 'The message to the user now makes no done claim', now === null ? 'there is no "Tell the user now" line' : (now.length ? `"${card.parts.tellNow}": ${now.join('; ')}` : 'it says what happens next, with no done claim and no time the tech does not control')),

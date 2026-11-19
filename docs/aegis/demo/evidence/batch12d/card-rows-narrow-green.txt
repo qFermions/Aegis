@@ -1,0 +1,12 @@
+$ TMPDIR=<tmp> node --test scripts/demo/card-rows-narrow.test.js
+✔ an Ask first, Engineer or Incident answer with no card gets no card rows, and keeps the other rows (3.812042ms)
+✔ a Fix card answer or an unnamed answer with no card, and any card over 150 words, still fail (6.388375ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67.389625
+exit 0

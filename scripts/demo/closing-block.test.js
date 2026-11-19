@@ -140,3 +140,35 @@ test('every good Engineer and Incident lane fixture closes with the block and pa
     }
   }
 });
+
+// Code review of batch 12d, finding 1. Wrong implementations this catches: the two checks satisfied by the section's
+// heading alone, whose words ("Human-run", "read-back") are in their patterns, so a bare heading passed an R3 answer;
+// the fixed "No change is advised yet" line read as a read-back; a Verify part anywhere in the answer (every Engineer
+// answer has one) read as the closing section's read-back.
+test('the closing section counts only by its lines: the heading alone, or the no-change line, passes neither check', () => {
+  const body = ['Mode: Engineer answer', '## Engineer answer', '**Recommendation:** drop the old reporting database.', '**Verify:** the reports page loads.'].join('\n');
+  const desk = '\n```aegis-desk\nGate: none\n```\n';
+  const cases = {
+    'the heading alone': `${body}\n\n${HEADING}\n${desk}`,
+    'the no-change line': `${body}\n\n${HEADING}\n- No change is advised yet, so nothing is run and nothing is read back.\n${desk}`,
+    'a line with no parts': `${body}\n\n${HEADING}\n- **Drop the old database.** Someone does it.\n${desk}`,
+  };
+  for (const [name, answer] of Object.entries(cases)) {
+    const rows = deskRows(answer);
+    assert.equal(rows['human-confirmation'].verdict, 'fail', `${name}: human-confirmation`);
+    assert.equal(rows['read-back'].verdict, 'fail', `${name}: read-back`);
+  }
+  const line = (parts) => `${body}\n\n${HEADING}\n- **Drop the old database.** ${parts} No runbook gate covers this.\n${desk}`;
+  const full = deskRows(line('Runs it: the database owner. Confirms first: last night\'s backup restores to a copy. Verify: the reports page loads from the new database.'));
+  assert.equal(full['human-confirmation'].verdict, 'pass');
+  assert.equal(full['read-back'].verdict, 'pass');
+  const noVerify = deskRows(line('Runs it: the database owner. Confirms first: last night\'s backup restores to a copy.'));
+  assert.equal(noVerify['human-confirmation'].verdict, 'pass');
+  assert.equal(noVerify['read-back'].verdict, 'fail', 'who runs it, with no Verify part');
+  const noRunner = deskRows(line('Verify: the reports page loads from the new database.'));
+  assert.equal(noRunner['human-confirmation'].verdict, 'fail', 'a Verify part, with nobody named to run it');
+  assert.equal(noRunner['read-back'].verdict, 'pass');
+  // bold labels, as a model may write them
+  const bold = deskRows(line('**Runs it:** the database owner. **Confirms first:** the backup restores. **Verify:** the reports page loads.'));
+  assert.deepEqual([bold['human-confirmation'].verdict, bold['read-back'].verdict], ['pass', 'pass']);
+});

@@ -1,0 +1,87 @@
+$ for each commit of 80397eaa..HEAD: the scan files it adds under docs/aegis/demo/evidence/batch12d/precommit/ (git diff-tree --no-commit-id --name-status -r -m --first-parent <commit>)
+1 f7c31b5f docs(batch 12d): hypothesis, baseline of the touched tests, and the commit helper that saves each pre
+1 e0b512cf docs(batch 12d): progress.md with the hypothesis and what verified means, written before the first ed
+1 b0952e26 test(batch 12d): red tests for the .git wall (task 2) and the lane cleanups (task 5)
+1 dc7c19e7 fix(batch 12d): the commit helper writes the scanner's long dash as a hyphen in the saved scans
+1 b4823c4b feat(batch 12d): the sealed sessions cannot read this repository's .git (task 2)
+1 effbb082 feat(batch 12d): the 18 vendor-neutral lane runbooks are General, and six networking placeholders joi
+1 09172f16 test(batch 12d): Engineer and Incident answers close with a Human-run and read-back section that the 
+1 c7f31ad7 feat(batch 12d): Engineer and Incident answers close with Human-run and read-back: who runs each chan
+1 4383030d test(batch 12d): red test that the toolbox rule is in CLAUDE.md and in the answer format (task 2)
+1 343132f5 test(batch 12d): the Fix card's six slots and their budgets sum to 149 by the desk's counter; red run
+1 76f7aaf5 docs(batch 12d): this repository is Aegis's toolbox, never the asker's environment (task 2)
+1 b59b8cab feat(batch 12d): the Fix card is built last, from Details, into six slots whose budgets sum to 149 wo
+1 3b529a25 test(batch 12d): the desk's three card rows do not apply to an Ask first, Engineer or Incident answer
+1 d60c551c test(batch 12d): scope tests for net_dns, net_http and net_tls, red before the code
+1 86a44023 feat(batch 12d): the desk's card rows apply only to answers with a card, or in Fix card mode, or with
+1 8601fdc3 test(batch 12d): a one-question Ask first reply passes the reply check's "you" rule; red run
+1 e3ccc3e9 feat(batch 12d): a one-question Ask first reply need not say "you"; every other reply rule still hold
+1 2a6180d2 docs(batch 12d): card-words.js measures each saved Fix card by the desk's counter and slot by slot; t
+1 65b4ea2e docs(batch 12d): the tool that prints two dev judged runs side by side, per lane and per mode (task 7
+1 a50d30c2 feat(batch 12d): scope net_dns, net_http and net_tls to the two allowlists and what the person typed
+1 a256975d docs(batch 12d): final runs: the targeted set 502 of 502, the full suite fails the same 41 names as b
+19 73c19ace merge(batch 12d): the answers builder's branch (tasks 3 and 4)
+1 2125411f test(batch 12d): typed handoff tests for every entrypoint and the chat's prompt hook, red before the 
+1 354fa9f8 test(batch 12d): red test that CLAUDE.md names the closing section and the slot-built card (task 3)
+1 3ff6bf0e docs(batch 12d): CLAUDE.md names the closing section of Engineer and Incident answers and the slot-bu
+1 f6965066 docs(batch 12d): progress after the answers merge; tasks 2, 3, 4 and 5 done, task 1 with its builder
+1 5e8be0dc feat(batch 12d): every sealed session hands the tool server what the person typed
+1 4fe18252 test(batch 12d): the judged record, its report and the desk record keep every tool server refusal, re
+1 021887a6 feat(batch 12d): the judged record, its report and the desk record keep every tool server refusal
+1 b85515ab docs(batch 12d): final runs of the scope work: touched suites, tripwire, full suite against the basel
+30 ae9fbb6a merge(batch 12d): the tool server builder's branch (task 1)
+1 275163af docs(batch 12d): the files a session reads say what the lookups reach, and what to do after a refusal
+1 1ad628c2 docs(batch 12d): run predictions written before the task 7 run; progress after the tool server merge
+1 e198eb2d test(batch 12d): red tests for the breaker's two findings on the network tools
+1 a6bbd346 fix(batch 12d): a bracketed placeholder is not typed text, so [USER@DOMAIN.COM] opens no host
+1 1e29fd7a fix(batch 12d): a tarball or registry API path on registry.npmjs.org is out of scope unless the perso
+1 3d3418ca test(batch 12d): red tests for the breaker's retest: encoded npm tarball paths, and a run split by a 
+1 1aa47a39 fix(batch 12d): registry.npmjs.org takes only metadata paths, and a run that holds a placeholder is n
+2 cd5444b6 docs(batch 12d): the breaker's three rounds on task 1, with the scripts and outputs the scan accepts
+1 a9a6a207 test(batch 12d): red test that the agent worktrees inside the repository are denied to the sealed ses
+1 7f01f1b6 fix(batch 12d): the agent worktrees inside the repository are denied to the sealed sessions
+1 4cd5151b test(batch 12d): red test that the closing section counts only by its lines (code review 1, finding 1
+1 bb4a33ec fix(batch 12d): the human-confirmation and read-back checks read the closing section by its lines, ne
+1 8c9e29ea test(batch 12d): red test for a reused audit file and a typed file that cannot be written (code revie
+1 4abdd3b8 fix(batch 12d): a judged case starts with an empty audit file, and a typed file that cannot be writte
+1 1deb001d test(batch 12d): red test that a closed terminal or a kill removes the chat's typed file (code review
+1 7cd9743f fix(batch 12d): a closed terminal or a kill removes the chat's typed file at once (code review 1, fin
+1 99febece test(batch 12d): red test that the allowlists and the tool server are review tier C (code review 1, f
+1 0fda86f4 fix(batch 12d): the allowlists and the tool server are review tier C (code review 1, finding 10)
+1 2366f2a0 docs(batch 12d): progress after the breaker and the reviews; the side-by-side tool counts as the repo
+1 87932d46 test(batch 12d): red tests for typedTokens: linear on one long run, and a typed URL that ends in punc
+1 3f48696d docs(batch 12d): progress at the usage limit: the judged run stopped after 47 of 82 cases; checks row
+1 0889ee98 fix(batch 12d): typedTokens is linear on any text, and a typed URL counts as written (code review 1, 
+1 0acc8c26 docs(batch 12d): the record of code review 1 and its rows in checks.md
+1 4446177a docs(batch 12d): the tool that joins the two parts of the dev judged run into one record (task 7)
+1 fbe86e02 test(batch 12d): red tests for the closing section checks (code review 2, findings 1, 2 and 6)
+1 998f5018 fix(batch 12d): the closing heading in any form, alone or twice, passes neither check (code review 2,
+1 477ac4af fix(batch 12d): a closing section in another shape still counts by what its lines say (code review 2,
+1 d8044eb1 fix(batch 12d): a closing part with an empty value, or Aegis as the runner, does not count (code revi
+1 56bdf526 fix(batch 12d): the join tool names the long dash by its code, and the green run of the closing check
+1 e8fb343b test(batch 12d): red tests for the chat's signal handler (code review 2, findings 3 and 8)
+1 2e5e2416 fix(batch 12d): on a signal the chat removes only its typed file at once; the audit file waits for cl
+1 8e655ec9 fix(batch 12d): a claude that ignores the signal is killed after the grace, and the chat ends with 12
+1 86c6553c test(batch 12d): red test that a case that does not start keeps no earlier run's audit or typed file 
+1 0368838c fix(batch 12d): a case that does not start keeps no audit or typed file of an earlier run (code revie
+1 af7fc6d4 test(batch 12d): red test that a case whose typed file was not written says so in its record (code re
+1 ba3732f3 fix(batch 12d): a case whose typed file could not be written says so in its record (code review 2, fi
+1 05d94271 test(batch 12d): red test that the file that builds every sealed session's wall is review tier C (cod
+1 da444e27 fix(batch 12d): the file that builds every sealed session's wall is review tier C (code review 2, fin
+1 669d5ceb test(batch 12d): red tests for typedTokens (code review 2, findings 4, 11 and 12)
+1 2b7009ec docs(batch 12d): the record of code review 2, and round 1's row corrected (code review 2, finding 10)
+1 8047fab0 fix(batch 12d): a typed URL that ends in a bracket counts when sentence punctuation follows it (code 
+1 11a015b2 fix(batch 12d): the trim of a host token's ends is linear (code review 2, finding 11)
+1 92ec485d fix(batch 12d): an IPv6 address followed by a colon is typed (code review 2, finding 12)
+1 78e51540 docs(batch 12d): the dev judged run, 82 cases in two parts, with its summary and the side by side wit
+1 7e7bf48a test(batch 12d): red test that no sealed session gets the CLI's git status snapshot (task 2)
+1 5ef89251 fix(batch 12d): no sealed session gets the CLI's git status snapshot (task 2)
+1 9a653a30 test(batch 12d): red test that every tracked case file is under a deny rule
+1 3ea44d29 fix(batch 12d): the lane case files of batch 12 are denied to the sealed sessions; five real-session 
+1 e71e114c docs(batch 12d): the state file's batch 12d section, the remaining checks rows, progress after the pr
+1 3e583cd3 docs(batch 12d): SWE10 run again at the fixed head: the read of .git refused, no branch or commit of 
+1 db94ebe4 docs(batch 12d): the breaker's fourth round, at the head with the tokenizer fixes: all fixes hold
+1 c4a254d6 docs(batch 12d): progress: the breaker's fourth round holds and the 82 answers are scored at head; ne
+commits: 83; commits that add no scan file: 0
+scan files: 84; scans that do not end with exit 0: 1 (20261119T045100Z-breaker-evidence.txt )
+note: the commit that adds this file is scanned too, and its scan file is added with it.

@@ -123,6 +123,16 @@ port, cut at 500 characters), `decision` (`ok` or the failure state) and `reason
 is named by `--audit <file>`, created with mode 0600, opened append-only and never through a symbolic link; with no
 `--audit` the line goes to stderr.
 
+### The refused calls in the run records (batch 12d)
+
+`backends.toolServerRecord(auditFile)` reads one session's audit file into `{ calls, allowed, refused, other,
+refused_calls }`: `allowed` counts calls the server answered (`ok`), `refused` every decision that starts with
+`refused_`, `other` the rest (`bad_input`, `call_cap_reached`, `timeout`, `dns_failed`, `http_error`, `tls_error`,
+`too_large`, `internal_error`), and `refused_calls` keeps each refused call's `tool`, `input` (as the audit keeps it),
+`decision` and `reason`. The judged runner puts it in each case's record in `results.json` as `tool_server` (zeros for a
+case that did not run), and `report.md`'s Cases table shows allowed / refused per case, never the inputs. The Customer
+Desk puts it in each ticket's record in `run.json` as `tool_server` when the ticket's session ran.
+
 ## How a session loads it
 
 `backends.sutArgs` (scripts/eval/judged/backends.js) takes `tools` (default true) and `auditFile`. With tools on, the

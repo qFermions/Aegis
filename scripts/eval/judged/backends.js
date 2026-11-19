@@ -225,6 +225,28 @@ function toolCallRecord(call) {
   return rec;
 }
 
+// What the tool server decided for a session (batch 12d), from its audit file (one JSON line per call): allowed, a call
+// it answered (decision ok); refused, every decision that starts with refused_; other, the rest (bad input, the call
+// cap, a timeout, a DNS, HTTP or TLS failure); and each refused call's tool, input as the audit keeps it, decision and
+// reason, in order. No file named or none written: every count 0. A line that is not JSON is skipped.
+function toolServerRecord(file) {
+  const rec = { calls: 0, allowed: 0, refused: 0, other: 0, refused_calls: [] };
+  let text = '';
+  try { text = file ? fs.readFileSync(file, 'utf8') : ''; } catch { return rec; }
+  for (const line of text.split('\n')) {
+    let e;
+    try { e = JSON.parse(line); } catch { continue; }
+    if (!e || typeof e !== 'object' || typeof e.decision !== 'string') continue;
+    rec.calls += 1;
+    if (e.decision === 'ok') rec.allowed += 1;
+    else if (e.decision.startsWith('refused_')) {
+      rec.refused += 1;
+      rec.refused_calls.push({ tool: e.tool, input: e.input, decision: e.decision, reason: e.reason });
+    } else rec.other += 1;
+  }
+  return rec;
+}
+
 // The paths a session read outside the repository: a Read's file path, or the path argument of a Grep or a
 // Glob, when its given form or its real form (links followed) is outside the repository; a relative path
 // resolves against the repository root. A call the stream reports as refused or failed read nothing and is
@@ -412,6 +434,6 @@ function sutRecord(turns, c, repoRoot = REPO_ROOT) {
 
 module.exports = {
   SUT_TOOLS, WEB_TOOLS, PINNED_MODEL, isModelName, OUTPUT_CAP_REASON, ranUnpriced, isolationArgs, excludedMemoryFiles, readDenyRules, DEFAULT_MAX_TURNS, DEFAULT_TIMEOUT_MS, DEFAULT_GRACE_MS, MAX_PROMPT_BYTES, EVIDENCE_HEADER,
-  envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, outsideReads,
+  envNamesFromExample, readExampleNames, scrubEnv, buildSutPrompt, sutArgs, judgeArgs, parseStream, summarizeTurn, toolCallRecord, toolServerRecord, outsideReads,
   runChild, runTurn, runSut, promptTooLong,
 };

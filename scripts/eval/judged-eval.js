@@ -172,6 +172,7 @@ function notRunRecord(c, reason) {
     change_class: c.expected.change_class, escalate: c.expected.escalate,
     sut, checks: [], judge: null, rows: null, total: null, max: null, verdict: 'INCONCLUSIVE', reasons: [reason], off_model: false,
     ...batch12Record(c, sut),
+    tool_server: backends.toolServerRecord(null),
   };
 }
 
@@ -283,6 +284,8 @@ async function runCommand(opts, io, deps) {
       change_class: c.expected.change_class, escalate: c.expected.escalate,
       sut, checks: det, judge: jr, rows: v.rows, total: v.total, max: v.max, verdict: v.verdict, reasons: v.reasons, off_model: Boolean(v.off_model),
       ...batch12Record(c, sut),
+      // the tool server's calls allowed and refused, and each refused one with its reason, from the case's audit (batch 12d)
+      tool_server: backends.toolServerRecord(path.join(dir, `${c.id}-tool-audit.jsonl`)),
     };
     results.push(r);
     io.out(report.terminalLine(r));

@@ -528,6 +528,8 @@ async function ticketSteps({ ticket, customer, customerDir, tenantFile, tickets,
       const { turn, stdout, init } = await askAegis(prompt, ctx, path.join(tickets, `${ticket.id}-debug.log`), ctx.maxUsd, typed);
       // the tools the session listed (batch 12, task 5): the record shows which were available
       rec.tools_available = turn.tools_available;
+      // the tool server's calls allowed and refused, and each refused one with its reason, from this ticket's audit (batch 12d)
+      rec.tool_server = backends.toolServerRecord(path.join(tickets, `${ticket.id}-tool-audit.jsonl`));
       // a session that ran and reported no cost (killed at the timeout or the output cap, or started with no result): what
       // it spent is unknown; read through the judged runner's shared reader, never the cap reason's wording (code
       // review 3, finding 14)

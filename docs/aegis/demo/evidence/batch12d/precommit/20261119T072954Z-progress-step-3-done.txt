@@ -1,0 +1,7 @@
+staged for commit "progress-step-3-done" on feat/batch12-expert-lanes at parent db94ebe4:
+M	checks.md
+M	progress.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

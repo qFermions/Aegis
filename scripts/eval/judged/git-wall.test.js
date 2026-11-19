@@ -82,3 +82,22 @@ test('the agent worktrees inside the repository are denied whole, to every seale
     assert.ok(denyOf(args).includes(rule));
   }
 });
+
+// The judged run of batch 12d (SWE10): the read of .git was refused, and the answer still named this repository's
+// branch as the asker's. Claude Code itself gives a session a git status snapshot when it starts: the current branch,
+// the main branch, the status and the recent commits (code.claude.com/docs/en/settings-reference, includeGitInstructions).
+// Wrong implementations this catches: .git denied to the session's tools while the CLI hands the same facts to the
+// model; the setting turned off for one entrypoint only; the environment variable left to the caller's own value.
+test('no sealed session gets the git status snapshot: the setting is off in every session and in the environment', () => {
+  const settingsOf = (args) => JSON.parse(args[args.indexOf('--settings') + 1]);
+  const sessions = {
+    'judged first turn': backends.sutArgs({ prompt: 'P' }),
+    'judged follow-up': backends.sutArgs({ prompt: 'F', resume: 'sess-1' }),
+    'ask-aegis': askArgs('P', os.tmpdir(), '1'),
+    chat: chatArgs(null, os.tmpdir()),
+    judge: backends.judgeArgs({ prompt: 'J' }),
+  };
+  for (const [name, args] of Object.entries(sessions)) assert.equal(settingsOf(args).includeGitInstructions, false, name);
+  assert.equal(backends.scrubEnv({ PATH: '/usr/bin' }, new Set()).CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS, '1');
+  assert.equal(backends.scrubEnv({ PATH: '/usr/bin', CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS: '0' }, new Set()).CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS, '1', 'the caller\'s own value does not turn it back on');
+});

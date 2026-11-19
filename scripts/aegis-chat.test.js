@@ -355,3 +355,29 @@ test('batch 12d: the chat types the setup in its own folder, hands it to the ser
   assert.equal(await r3, 0);
   assert.ok(!('hooks' in JSON.parse(offArgs[offArgs.indexOf('--settings') + 1])));
 });
+
+// Code review 1 of batch 12d, finding 4. Wrong implementations it catches: the typed file removed only when claude
+// exits, so a closed terminal window (SIGHUP) or a kill (SIGTERM) ends the launcher first and leaves every message the
+// person typed on disk; a handler that tidies and never passes the signal on, which would leave claude running; handlers
+// left behind after the chat.
+test('batch 12d: a closed terminal or a kill removes the typed file at once and passes the signal to claude', async (t) => {
+  const { EventEmitter } = require('node:events');
+  for (const signal of ['SIGHUP', 'SIGTERM']) {
+    const home = tempDir(t);
+    const child = new EventEmitter();
+    const killed = [];
+    child.kill = (s) => { killed.push(s); return true; };
+    const before = process.listeners(signal);
+    let typedFile = null;
+    const running = chat.main(['--setup', 'Google Workspace'], { HOME: home }, { spawn: (cmd, args) => { typedFile = typedOf(args); return child; }, out: () => {}, err: () => {} });
+    fs.appendFileSync(typedFile, 'a later message the person typed\n');
+    const added = process.listeners(signal).filter((l) => !before.includes(l));
+    assert.equal(added.length, 1, `${signal}: one handler while claude runs`);
+    added[0](signal);
+    assert.equal(fs.existsSync(typedFile), false, `${signal}: the person's words are off the disk before claude has exited`);
+    assert.deepEqual(killed, [signal], `${signal}: passed on to claude`);
+    child.emit('exit', null);
+    assert.equal(await running, 2);
+    assert.deepEqual(process.listeners(signal), before, `${signal}: the handler is removed after the chat`);
+  }
+});

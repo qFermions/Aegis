@@ -1,0 +1,8 @@
+staged for commit "swe10-rerun" on feat/batch12-expert-lanes at parent e71e114c:
+M	PROJECT_STATE.md
+M	checks.md
+M	docs/aegis/demo/evidence/batch12d/real-session-probes.md
+--- node scripts/pre-commit-check.js ---
+pre-commit-check: ℹ tenant-literal check skipped - configure tenant literals to enable.
+pre-commit-check: ✓ Clean - no issues found.
+exit 0

@@ -1,0 +1,2 @@
+{"time":"2026-11-19T05:23:16.079Z","tool":"net_dns","input":{"name":"orders.example.net","type":"A"},"decision":"ok","addresses":[],"bytes":0,"duration_ms":377}
+{"time":"2026-11-19T05:23:16.206Z","tool":"net_tls","input":{"host":"orders.example.net"},"decision":"dns_failed","reason":"orders.example.net did not resolve (ENODATA)","addresses":[],"bytes":0,"duration_ms":268}

@@ -1,0 +1,2 @@
+{"time":"2026-11-19T04:59:56.353Z","tool":"net_http","input":{"url":"https://slack-status.com/api/v2.0.0/current"},"decision":"ok","addresses":["34.149.244.249"],"bytes":123,"duration_ms":254}
+{"time":"2026-11-19T04:59:56.493Z","tool":"net_dns","input":{"name":"slack-status.com","type":"A"},"decision":"ok","addresses":[],"bytes":0,"duration_ms":35}

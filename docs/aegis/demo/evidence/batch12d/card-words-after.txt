@@ -1,0 +1,23 @@
+$ node docs/aegis/demo/evidence/batch12d/tools/card-words.js docs/aegis/demo/evidence/batch12d/judged-dev-run/results.json
+== judged-dev-run/results.json: 82 answers
+answer | card words | slots: words/budget (* over) | steps over 14 | words in no slot
+DEV01 | 178 (over 150) | cause 18/12*, steps 92/70*, done 17/16*, stop 12/10*, now 10/14, when-done 12/10* | 3 of 5 | 0
+DEV02 | 138 | cause 11/12, steps 60/70, done 13/16, stop 7/10, now 18/14*, when-done 12/10* | 0 of 5 | 0
+DEV04 | 147 | cause 13/12*, steps 70/70, done 12/16, stop 10/10, now 13/14, when-done 12/10* | 3 of 5 | 0
+DEV09 | 168 (over 150) | cause 15/12*, steps 78/70*, done 15/16, stop 13/10*, now 14/14, when-done 16/10* | 3 of 4 | 0
+DEV10 | 199 (over 150) | cause 16/12*, steps 104/70*, done 12/16, stop 21/10*, now 11/14, when-done 18/10* | 3 of 4 | 0
+DEV12 | 140 | cause 14/12*, steps 69/70, done 10/16, stop 10/10, now 12/14, when-done 8/10 | 1 of 5 | 0
+DEV13 | 195 (over 150) | cause 25/12*, steps 97/70*, done 15/16, stop 17/10*, now 14/14, when-done 10/10 | 3 of 4 | 0
+DEV15 | 141 | cause 12/12, steps 70/70, done 14/16, stop 9/10, now 11/14, when-done 8/10 | 2 of 5 | 0
+DEV16 | 138 | cause 12/12, steps 55/70, done 18/16*, stop 11/10*, now 14/14, when-done 11/10* | 0 of 5 | 0
+DEV17 | 180 (over 150) | cause 33/12*, steps 80/70*, done 13/16, stop 19/10*, now 9/14, when-done 9/10 | 3 of 4 | 0
+DEV18 | 223 (over 150) | cause 35/12*, steps 99/70*, done 14/16, stop 28/10*, now 19/14*, when-done 11/10* | 4 of 5 | 0
+DEV19 | 131 | cause 13/12*, steps 58/70, done 12/16, stop 7/10, now 14/14, when-done 10/10 | 0 of 5 | 0
+DEV20 | 142 | cause 13/12*, steps 65/70, done 14/16, stop 10/10, now 13/14, when-done 10/10 | 1 of 5 | 0
+DEV23 | 195 (over 150) | cause 10/12, steps 122/70*, done 8/16, stop 14/10*, now 13/14, when-done 11/10* | 4 of 4 | 0
+NET09 | 216 (over 150) | cause 15/12*, steps 129/70*, done 17/16*, stop 13/10*, now 13/14, when-done 12/10* | 5 of 5 | 0
+NET14 | 155 (over 150) | cause 21/12*, steps 59/70, done 11/16, stop 14/10*, now 21/14*, when-done 12/10* | 3 of 4 | 0
+SWE01 | 144 | cause 0/12, steps 0/70, done 0/16, stop 0/10, now 0/14, when-done 0/10 | 0 of 0 | 144
+cards: 17 of 82 answers; median 155 words; over 150: 9; slots over budget: 15 cards
+
+self-check: every count matches the fix_card_words a results.json recorded
